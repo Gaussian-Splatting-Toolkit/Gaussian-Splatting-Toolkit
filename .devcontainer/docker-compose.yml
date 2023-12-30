@@ -17,7 +17,6 @@ services:
     volumes:
       - ../:/workspace/
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ~/.Xauthority:/home/user/.Xauthority
       - ../../../dataset/:/data/
     working_dir: /workspace/
     command: /bin/bash

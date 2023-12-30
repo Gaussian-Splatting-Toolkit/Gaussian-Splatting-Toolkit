@@ -19,6 +19,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Singapore
 ## CUDA Home, required to find CUDA in some packages.
 ENV CUDA_HOME="/usr/local/cuda"
+## Set QT backend to software to prevent issues with OpenGL.
+ENV QT_QUICK_BACKEND=software
 
 # Install required apt packages and clear cache afterwards.
 RUN apt-get update && \
@@ -64,10 +66,6 @@ RUN apt-get update && \
     vim-tiny \
     wget && \
     rm -rf /var/lib/apt/lists/*
-
-RUN add-apt-repository ppa:xmake-io/xmake && \
-    apt update && \
-    apt install xmake
 
 RUN add-apt-repository ppa:kisak/kisak-mesa && \
     apt-get update
