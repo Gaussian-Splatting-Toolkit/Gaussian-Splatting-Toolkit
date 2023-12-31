@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
   parser.about(about);
 
   string outputFile = parser.get<string>(0);
+  outputFile = outputFile + "camera_calibrated.yaml";
 
   bool showChessboardCorners = parser.get<bool>("sc");
 
@@ -146,6 +147,7 @@ int main(int argc, char *argv[]) {
       aruco::drawDetectedMarkers(imageCopy, markerCorners);
     }
 
+    // visualization
     if (currentCharucoCorners.total() > 3) {
       aruco::drawDetectedCornersCharuco(imageCopy, currentCharucoCorners,
                                         currentCharucoIds);
@@ -161,6 +163,8 @@ int main(int argc, char *argv[]) {
     char key = (char)waitKey(waitTime);
 
     if (key == 27) {
+      std::cout << "ESC key pressed, calculating the camera intrinsics"
+                << std::endl;
       break;
     }
 

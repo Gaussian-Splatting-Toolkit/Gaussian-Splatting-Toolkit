@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   case 1:
     detectCharucoBoardWithCalibrationPose();
     break;
-  case 3:
+  case 2:
     detectCharucoMarkers();
     break;
   default:
