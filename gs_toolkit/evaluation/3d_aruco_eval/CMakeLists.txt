@@ -14,11 +14,16 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 ############## Source and Testing ##################
 include_directories(${PROJECT_SOURCE_DIR}/inc)
 
-add_executable(calibrate_camera src/calibrate_camera.cpp)
-target_link_libraries(calibrate_camera ${OpenCV_LIBS})
+# add_executable(calibrate_camera src/calibration.cpp)
+# target_link_libraries(calibrate_camera ${OpenCV_LIBS})
 
-add_executable(detect_markers src/detect_markers.cpp)
-target_link_libraries(detect_markers ${OpenCV_LIBS})
+# add_executable(detect_markers src/detection.cpp)
+# target_link_libraries(detect_markers ${OpenCV_LIBS})
 
-add_executable(generate src/generate.cpp)
-target_link_libraries(generate ${OpenCV_LIBS})
+# add_executable(generate src/generation.cpp)
+# target_link_libraries(generate ${OpenCV_LIBS})
+add_library(aruco_eval_lib src/aruco_eval.cpp)
+target_link_libraries(aruco_eval_lib ${OpenCV_LIBS})
+
+add_executable(3d_aruco_eval src/main.cpp)
+target_link_libraries(3d_aruco_eval ${OpenCV_LIBS} aruco_eval_lib)
