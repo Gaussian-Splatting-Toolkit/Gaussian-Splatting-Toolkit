@@ -9,27 +9,38 @@ const char *about = "Charuco board creation and detection of charuco board "
 const char *keys =
     "{c        |       | \nPut value of c=1 to detect charuco board with "
     "camera calibration and Pose Estimation;\nc=2 to detect the charuco "
-    "markers}";
+    "markers}"
+    "{@outfile |<none> | Output file with calibrated camera parameters }"
+    "{v        |       | Input from video file, if ommited, input comes from "
+    "camera }";
 } // namespace
 
-static inline void detectCharucoBoardWithCalibrationPose();
-static inline void detectCharucoMarkers();
+static inline void detectCharucoBoardWithCalibrationPose(cv::String inputPath,
+                                                         cv::String video);
+static inline void detectCharucoMarkers(cv::String inputPath, cv::String video);
 
 int main(int argc, char *argv[]) {
   cv::CommandLineParser parser(argc, argv, keys);
   parser.about(about);
-  if (argc < 2) {
+  if (argc < 4) {
     parser.printMessage();
     return 0;
+  }
+
+  cv::String inputPath = parser.get<cv::String>(0);
+
+  cv::String video;
+  if (parser.has("v")) {
+    video = parser.get<cv::String>("v");
   }
 
   int c = parser.get<int>("c");
   switch (c) {
   case 1:
-    detectCharucoBoardWithCalibrationPose();
+    detectCharucoBoardWithCalibrationPose(inputPath, video);
     break;
   case 2:
-    detectCharucoMarkers();
+    detectCharucoMarkers(inputPath, video);
     break;
   default:
     break;
@@ -38,11 +49,13 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-static inline void detectCharucoBoardWithCalibrationPose() {
+static inline void detectCharucoBoardWithCalibrationPose(cv::String inputPath,
+                                                         cv::String video) {
   cv::VideoCapture inputVideo;
-  inputVideo.open(0);
+  inputVideo.open(video);
   cv::Mat cameraMatrix, distCoeffs;
-  std::string filename = "calib.txt";
+  std::string filename = "camera_calibrated.yaml";
+  filename = inputPath + filename;
   bool readOk = readCameraParameters(filename, cameraMatrix, distCoeffs);
   if (!readOk) {
     std::cerr << "Invalid camera file" << std::endl;
@@ -96,11 +109,13 @@ static inline void detectCharucoBoardWithCalibrationPose() {
   }
 }
 
-static inline void detectCharucoMarkers() {
+static inline void detectCharucoMarkers(cv::String inputPath,
+                                        cv::String video) {
   cv::VideoCapture inputVideo;
-  inputVideo.open(0);
+  inputVideo.open(video);
   cv::Mat cameraMatrix, distCoeffs;
-  std::string filename = "calib.txt";
+  std::string filename = "camera_calibrated.yaml";
+  filename = inputPath + filename;
   bool readOk = readCameraParameters(filename, cameraMatrix, distCoeffs);
   if (!readOk) {
     std::cerr << "Invalid camera file" << std::endl;

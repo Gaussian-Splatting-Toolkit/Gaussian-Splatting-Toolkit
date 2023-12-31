@@ -45,4 +45,10 @@ Opencv **does not make any assumption on physical size or pattern size of your b
 
 ### Detection
 
+To detect the markers:
+
+```bash
+./detect_markers -c=2 -v=/mnt/f/dataset/robot-studio/evaluation/input/marker.mp4 /mnt/f/recon_workspace/gaussian-splatting-toolkit/gs_toolkit/configs/
+```
+
 ### Evaluation
