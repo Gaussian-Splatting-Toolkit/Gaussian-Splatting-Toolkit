@@ -7,9 +7,6 @@
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
   "initializeCommand": "echo 'Hello World!'",
-  "remoteEnv": {
-    "DISPLAY": "host.docker.internal:0"
-  },
   "customizations": {
     "vscode": {
       "settings": {

@@ -18,6 +18,8 @@ services:
       - ../:/workspace/
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ../../../dataset/:/data/
+      - $HOME/.Xauthority:/home/user/.Xauthority:rw
+      - $HOME/.ssh:/home/user/.ssh:rw
     working_dir: /workspace/
     command: /bin/bash
     deploy:
