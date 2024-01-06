@@ -18,6 +18,7 @@ classifiers = [
 dependencies = [
     "torch",
     "torchvision",
+    "plyfile==0.8.1",
 ]
 
 [project.optional-dependencies]
