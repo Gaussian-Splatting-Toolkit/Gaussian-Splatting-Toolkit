@@ -12,14 +12,14 @@ services:
     environment:
       NVIDIA_DRIVER_CAPABILITIES: compute,utility,graphics
       DISPLAY: $DISPLAY
+      WAYLAND_DISPLAY: $WAYLAND_DISPLAY
+      XDG_RUNTIME_DIR: $XDG_RUNTIME_DIR
+      PULSE_SERVER: $PULSE_SERVER
     ports:
       - "7007:7007"
     volumes:
       - ../:/workspace/
-      - /tmp/.X11-unix:/tmp/.X11-unix
       - ../../../dataset/:/data/
-      - $HOME/.Xauthority:/home/user/.Xauthority:rw
-      - $HOME/.ssh:/home/user/.ssh:rw
     working_dir: /workspace/
     command: /bin/bash
     deploy:
