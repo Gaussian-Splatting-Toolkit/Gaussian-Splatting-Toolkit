@@ -2,7 +2,7 @@ import sys
 import os
 
 # Get the path to the core of the project
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 if project_root not in sys.path:
     sys.path.append(project_root)
@@ -10,6 +10,7 @@ if project_root not in sys.path:
 submodules = [
     "engine",
     "models",
+    "model_components",
     "evaluation",
     "scene",
     "data",
@@ -17,7 +18,6 @@ submodules = [
     "third_party",
     "configs",
     "scripts",
-    "surface",
     "viewer",
 ]
 

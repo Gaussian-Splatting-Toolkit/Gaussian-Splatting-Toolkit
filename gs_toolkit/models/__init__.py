@@ -10,6 +10,7 @@ if project_root not in sys.path:
 submodules = [
     "engine",
     "models",
+    "model_components",
     "evaluation",
     "scene",
     "data",
@@ -17,7 +18,6 @@ submodules = [
     "third_party",
     "configs",
     "scripts",
-    "surface",
     "viewer",
 ]
 

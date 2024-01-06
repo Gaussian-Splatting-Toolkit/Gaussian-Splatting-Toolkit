@@ -19,6 +19,7 @@ dependencies = [
     "torch",
     "torchvision",
     "plyfile==0.8.1",
+    "rich",
 ]
 
 [project.optional-dependencies]
