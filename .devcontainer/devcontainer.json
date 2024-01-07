@@ -26,12 +26,6 @@
         "ms-vscode.cpptools-extension-pack",
         "tamasfe.even-better-toml",
         "yzhang.markdown-all-in-one"
-      ],
-      "mounts": [
-        "type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix",
-        "type=bind,source=${localEnv:HOME}/.ssh/,target=/home/user/.ssh/",
-        "type=bind,source=${localEnv:HOME}/.Xauthority,target=/home/user/.Xauthority",
-        "type=bind,source=/mnt/wslg,target=/mnt/wslg"
       ]
     }
   }

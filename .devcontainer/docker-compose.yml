@@ -20,6 +20,10 @@ services:
     volumes:
       - ../:/workspace/
       - ../../../dataset/:/data/
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/shm:/dev/shm
+      - $HOME/.Xauthority:/home/user/.Xauthority:rw
+      - $HOME/.ssh:/home/user/.ssh:rw
     working_dir: /workspace/
     command: /bin/bash
     deploy:
