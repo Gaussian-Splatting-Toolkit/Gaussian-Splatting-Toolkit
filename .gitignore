@@ -161,5 +161,6 @@ cython_debug/
 .vscode/
 
 # Intermedia data
+.ruff_cache
 gs_toolkit/evaluation/input
 gs_toolkit/evaluation/output

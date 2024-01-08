@@ -21,8 +21,8 @@ dependencies = [
     "torchvision",
     "plyfile==0.8.1",
     "rich",
-    "diff-gaussian-rasterization @ file:///home/user/gstoolkit/gs_toolkit/thrid_party/diff-gaussian-rasterization",
-    "simple-knn @ file:///home/user/gstoolkit/gs_toolkit/thrid_party/simple-knn",
+    "diff-gaussian-rasterization @ file:///workspace/gs_toolkit/thrid_party/diff-gaussian-rasterization",
+    "simple-knn @ file:///workspace/gs_toolkit/thrid_party/simple-knn",
 ]
 
 [project.optional-dependencies]

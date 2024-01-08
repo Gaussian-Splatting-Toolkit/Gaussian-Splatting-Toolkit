@@ -181,9 +181,9 @@ RUN chown -R user /home/user/gstoolkit
 USER ${USER_ID}
 
 # Install gaussian splatting toolkit dependencies.
-RUN cd gstoolkit && \
-    python3.10 -m pip install -e . && \
-    cd ..
+# RUN cd gstoolkit && \
+#     python3.10 -m pip install -e . && \
+#     cd ..
 
 # Change working directory
 WORKDIR /workspace
