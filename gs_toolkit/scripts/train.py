@@ -2,7 +2,7 @@ import tyro
 from gs_toolkit.engine.trainer import Trainer
 from gs_toolkit.configs.method_config import AnnotatedBaseConfigUnion
 from gs_toolkit.data.dataparsers.gs_dataparser import gs_parser
-from configs.config_utils import convert_markup_to_ansi
+from gs_toolkit.configs.config_utils import convert_markup_to_ansi
 
 
 def main() -> None:

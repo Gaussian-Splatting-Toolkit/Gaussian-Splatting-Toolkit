@@ -2,7 +2,7 @@ import os
 import sys
 from PIL import Image
 from typing import NamedTuple
-from data.colmap_loader import (
+from gs_toolkit.data.colmap_loader import (
     read_extrinsics_text,
     read_intrinsics_text,
     qvec2rotmat,

@@ -9,10 +9,10 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
-from model_components.cameras import Camera
+from gs_toolkit.model_components.cameras import Camera
 import numpy as np
-from utils.gaussian_utils import PILtoTorch
-from utils.graphics_utils import fov2focal
+from gs_toolkit.utils.gaussian_utils import PILtoTorch
+from gs_toolkit.utils.graphics_utils import fov2focal
 
 WARNED = False
 

@@ -38,4 +38,5 @@ dev = [
 ]
 
 [project.scripts]
+gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"
 gs-train = "gs_toolkit.scripts.train:entrypoint"

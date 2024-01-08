@@ -1,5 +1,9 @@
 from argparse import ArgumentParser
-from dataparsers.base_dataparser import ModelParams, OptimizationParams, PipelineParams
+from gs_toolkit.data.dataparsers.base_dataparser import (
+    ModelParams,
+    OptimizationParams,
+    PipelineParams,
+)
 
 
 def gs_parser() -> [ArgumentParser, ModelParams, OptimizationParams, PipelineParams]:

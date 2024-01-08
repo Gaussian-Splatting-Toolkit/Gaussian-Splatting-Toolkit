@@ -4,8 +4,8 @@ from diff_gaussian_rasterization import (
     GaussianRasterizationSettings,
     GaussianRasterizer,
 )
-from models.gaussian_splatting import GaussianModel
-from utils.sh_utils import eval_sh
+from gs_toolkit.models.gaussian_splatting import GaussianModel
+from gs_toolkit.utils.sh_utils import eval_sh
 
 
 def render(

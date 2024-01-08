@@ -6,12 +6,12 @@ from random import randint
 from argparse import Namespace
 from dataclasses import dataclass
 from rich.progress import track
-from data.dataparsers.base_dataparser import GroupParams
-from model_components.scene import Scene
-from model_components.renderer import render
-from model_components.losses import l1_loss, ssim
-from models.gaussian_splatting import GaussianModel
-from utils.image_utils import psnr
+from gs_toolkit.data.dataparsers.base_dataparser import GroupParams
+from gs_toolkit.model_components.scene import Scene
+from gs_toolkit.model_components.renderer import render
+from gs_toolkit.model_components.losses import l1_loss, ssim
+from gs_toolkit.models.gaussian_splatting import GaussianModel
+from gs_toolkit.utils.image_utils import psnr
 
 
 @dataclass
