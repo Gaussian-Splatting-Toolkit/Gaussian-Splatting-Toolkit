@@ -17,6 +17,7 @@ classifiers = [
 # Dependencies
 dependencies = [
     "torch",
+    "tyro",
     "torchvision",
     "plyfile==0.8.1",
     "rich",
@@ -35,3 +36,6 @@ dev = [
     "ruff",
     "sshconfig",
 ]
+
+[project.scripts]
+gs-train = "gs_toolkit.scripts.train:entrypoint"

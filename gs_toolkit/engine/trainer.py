@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from random import randint
 from argparse import Namespace
+from dataclasses import dataclass
 from rich.progress import track
-from data.dataparsers.gs_dataparser import gs_parser
 from data.dataparsers.base_dataparser import GroupParams
 from model_components.scene import Scene
 from model_components.renderer import render
@@ -13,12 +13,10 @@ from model_components.losses import l1_loss, ssim
 from models.gaussian_splatting import GaussianModel
 from utils.image_utils import psnr
 
-try:
-    from torch.utils.tensorboard import SummaryWriter
 
-    TENSORBOARD_FOUND = True
-except ImportError:
-    TENSORBOARD_FOUND = False
+@dataclass
+class TrainerConfig:
+    pass
 
 
 class Trainer:
@@ -293,32 +291,3 @@ class Trainer:
         os.makedirs(args.model_path, exist_ok=True)
         with open(os.path.join(args.model_path, "cfg_args"), "w") as cfg_log_f:
             cfg_log_f.write(str(Namespace(**vars(args))))
-
-        # Create Tensorboard writer
-        tb_writer = None
-        if TENSORBOARD_FOUND:
-            tb_writer = SummaryWriter(args.model_path)
-        else:
-            print("Tensorboard not available: not logging progress")
-        return tb_writer
-
-
-if __name__ == "__main__":
-    parser, lp, op, pp = gs_parser()
-    args = parser.parse_args()
-    args.save_iterations.append(args.iterations)
-
-    print("Optimizing " + args.model_path)
-    trainer = Trainer()
-    trainer.training(
-        lp.extract(args),
-        op.extract(args),
-        pp.extract(args),
-        args.test_iterations,
-        args.save_iterations,
-        args.checkpoint_iterations,
-        args.start_checkpoint,
-        args.debug_from,
-        args.start_entropy_iterations,
-        args.entropy_iterations_num,
-    )
