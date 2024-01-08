@@ -21,8 +21,8 @@ dependencies = [
     "torchvision",
     "plyfile==0.8.1",
     "rich",
-    "diff-gaussian-rasterization @ file:///workspace/gs_toolkit/thrid_party/diff-gaussian-rasterization",
-    "simple-knn @ file:///workspace/gs_toolkit/thrid_party/simple-knn",
+    "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
+    "simple_knn @ file:///workspace/thrid_party/simple-knn",
 ]
 
 [project.optional-dependencies]
@@ -40,3 +40,9 @@ dev = [
 [project.scripts]
 gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"
 gs-train = "gs_toolkit.scripts.train:entrypoint"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gs_toolkit", "third_party/*"]
+exclude = []
+namespaces = false

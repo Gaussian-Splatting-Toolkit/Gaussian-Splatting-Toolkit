@@ -2,10 +2,10 @@ import os
 import torch
 from torch import nn
 import numpy as np
-from third_party.simple_knn._C import distCUDA2
+from simple_knn._C import distCUDA2
 from plyfile import PlyData, PlyElement
-from utils.system_utils import mkdir_p
-from utils.gaussian_utils import (
+from gs_toolkit.utils.system_utils import mkdir_p
+from gs_toolkit.utils.gaussian_utils import (
     inverse_sigmoid,
     strip_symmetric,
     build_scaling_rotation,

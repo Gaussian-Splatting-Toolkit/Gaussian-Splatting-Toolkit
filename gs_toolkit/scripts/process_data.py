@@ -2,7 +2,7 @@ import os
 import tyro
 import logging
 from argparse import ArgumentParser
-from configs.config_utils import convert_markup_to_ansi
+from gs_toolkit.configs.config_utils import convert_markup_to_ansi
 from gs_toolkit.configs.method_config import AnnotatedBaseConfigUnion
 import shutil
 
