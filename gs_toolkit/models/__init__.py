@@ -7,6 +7,20 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+third_party = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "third_party")
+)
+
+diff_gaussian_rasterization_path = os.path.join(
+    third_party, "diff-gaussian-rasterization"
+)
+if diff_gaussian_rasterization_path not in sys.path:
+    sys.path.append(diff_gaussian_rasterization_path)
+
+simple_knn_path = os.path.join(third_party, "simple_knn")
+if simple_knn_path not in sys.path:
+    sys.path.append(simple_knn_path)
+
 submodules = [
     "engine",
     "models",
@@ -15,7 +29,6 @@ submodules = [
     "scene",
     "data",
     "utils",
-    "third_party",
     "configs",
     "scripts",
     "viewer",

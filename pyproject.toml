@@ -16,8 +16,8 @@ classifiers = [
 
 # Dependencies
 dependencies = [
-    "torch",
     "tyro",
+    "torch",
     "torchvision",
     "plyfile==0.8.1",
     "rich",

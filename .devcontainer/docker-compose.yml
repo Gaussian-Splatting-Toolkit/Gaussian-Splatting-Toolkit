@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   gstoolkit:
+    runtime: nvidia
     shm_size: '12gb'
     image: gstoolkit:latest
     build:

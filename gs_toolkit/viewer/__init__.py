@@ -15,7 +15,6 @@ submodules = [
     "scene",
     "data",
     "utils",
-    "third_party",
     "configs",
     "scripts",
     "viewer",

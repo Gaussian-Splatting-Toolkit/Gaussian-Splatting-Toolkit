@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=11.8.0
+ARG CUDA_VERSION=12.1.1
 ARG OS_VERSION=22.04
 ARG USER_ID=1000
 # Define base image.
@@ -11,6 +11,7 @@ ARG USER_ID
 ## CUDA architectures, required by Colmap and tiny-cuda-nn.
 ## NOTE: All commonly used GPU architectures are included and supported here. To speedup the image build process remove all architectures but the one of your explicit GPU. Find details here: https://developer.nvidia.com/cuda-gpus (8.6 translates to 86 in the line below) or in the docs.
 ARG CUDA_ARCHITECTURES=90;89;86;80;75;70
+ARG TCNN_CUDA_ARCHITEXTURES=${CUDA_ARCHITECTURES}
 
 # Set environment variables.
 ## Set non-interactive to prevent asking for user inputs blocking image creation.
@@ -21,6 +22,8 @@ ENV TZ=Asia/Singapore
 ENV CUDA_HOME="/usr/local/cuda"
 ## Set QT backend to software to prevent issues with OpenGL.
 ENV QT_QUICK_BACKEND=software
+ENV PATH /usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 # Install required apt packages and clear cache afterwards.
 RUN apt-get update && \
@@ -115,7 +118,7 @@ RUN git clone --branch 2.1.0 https://ceres-solver.googlesource.com/ceres-solver.
     rm -rf ceres-solver
 
 # Install colmap.
-RUN git clone --branch 3.8 https://github.com/colmap/colmap.git --single-branch && \
+RUN git clone --branch 3.9 https://github.com/colmap/colmap.git --single-branch && \
     cd colmap && \
     mkdir build && \
     cd build && \
@@ -166,8 +169,8 @@ SHELL ["/bin/bash", "-c"]
 RUN python3.10 -m pip install --upgrade pip setuptools pathtools promise pybind11
 # Install pytorch and submodules
 RUN CUDA_VER=${CUDA_VERSION%.*} && CUDA_VER=${CUDA_VER//./} && python3.10 -m pip install \
-    torch==2.0.1+cu${CUDA_VER} \
-    torchvision==0.15.2+cu${CUDA_VER} \
+    torch>=2.0.1+cu${CUDA_VER} \
+    torchvision>=0.15.2+cu${CUDA_VER} \
         --extra-index-url https://download.pytorch.org/whl/cu${CUDA_VER}
 # Install tynyCUDNN (we need to set the target architectures as environment variable first).
 ENV TCNN_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}
