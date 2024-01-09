@@ -2,8 +2,6 @@ import os
 import tyro
 import logging
 from argparse import ArgumentParser
-from gs_toolkit.configs.config_utils import convert_markup_to_ansi
-from gs_toolkit.configs.method_config import AnnotatedBaseConfigUnion
 import shutil
 
 # This Python script is based on the shell converter script provided in the MipNerF 360 repository.
@@ -169,12 +167,7 @@ def entrypoint():
     """Entrypoint for use with pyproject scripts."""
     # Choose a base configuration and override values.
     tyro.extras.set_accent_color("bright_yellow")
-    main(
-        tyro.cli(
-            AnnotatedBaseConfigUnion,
-            description=convert_markup_to_ansi(__doc__),
-        )
-    )
+    main()
 
 
 if __name__ == "__main__":

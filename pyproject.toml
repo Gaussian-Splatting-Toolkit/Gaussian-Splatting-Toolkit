@@ -1,9 +1,8 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "gstoolkit"
+authors = [
+    {name = "Hu Tianrun", email = "tianrunhu@gmail.com"},
+]
 version = "0.0.1"
 description = "All-in-one repository for state-of-the-art Gaussian Splatting"
 readme = "README.md"
@@ -14,6 +13,7 @@ classifiers = [
     "Programming Language :: Python",
 ]
 
+[tool.poetry.dependencies]
 # Dependencies
 dependencies = [
     "tyro",
@@ -24,6 +24,10 @@ dependencies = [
     "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
     "simple_knn @ file:///workspace/thrid_party/simple-knn",
 ]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 # Development dependencies
