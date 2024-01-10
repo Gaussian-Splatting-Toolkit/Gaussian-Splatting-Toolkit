@@ -35,13 +35,15 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
     """If True, resize images to 50%, 25% and 12.5% of the original size."""
     cache_dir: str = ".cache"
     """Path to the cache directory."""
-    
+
     def download_256_vocabtree(self) -> None:
         """Download the 256k vocab tree."""
         vocab_tree_url = "https://demuc.de/colmap/vocab_tree_flickr100K_words256K.bin"
         vocab_tree_path = Path(self.cache_dir) / "vocab_tree_flickr100K_words256K.bin"
         if not vocab_tree_path.exists():
-            CONSOLE.log(f"The VocabTree {vocab_tree_path} does not exist, downloading...")
+            CONSOLE.log(
+                f"The VocabTree {vocab_tree_path} does not exist, downloading..."
+            )
             with status(
                 msg="Downloading 256k vocab tree...",
                 spinner="bouncingBall",
@@ -54,13 +56,15 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
             CONSOLE.log("Downloaded 256k vocab tree.")
         else:
             CONSOLE.log("Vocab tree already downloaded.")
-            
+
     def downlaod_1M_vocabtree(self) -> None:
         """Download the 1M vocab tree."""
         vocab_tree_url = "https://demuc.de/colmap/vocab_tree_flickr100K_words1M.bin"
         vocab_tree_path = Path(self.cache_dir) / "vocab_tree_flickr100K_words1M.bin"
         if not vocab_tree_path.exists():
-            CONSOLE.log(f"The VocabTree {vocab_tree_path} does not exist, downloading...")
+            CONSOLE.log(
+                f"The VocabTree {vocab_tree_path} does not exist, downloading..."
+            )
             with status(
                 msg="Downloading 1m vocab tree...",
                 spinner="bouncingBall",
@@ -153,7 +157,7 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                     --SiftMatching.use_gpu "
                     + str(use_gpu)
                 )
-            
+
             with status(
                 "Matching features...", spinner="bouncingBall", verbose=self.verbose
             ):

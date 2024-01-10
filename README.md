@@ -64,13 +64,23 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 ```
 
 ## TODO
-- [ ] OpenCV marker ground truth measurement.
+- [x] OpenCV marker ground truth measurement.
 - [x] Surface distance module
+- [ ] Data preprocessing
+  - [x] Colmap preprocessing
+  - [ ] RGB-D Data processing
+  - [ ] Sensor interface
+    - [ ] Azure Kinect
+    - [ ] iPhone/ iPad
 - [ ] Gaussian Splatting module
-- [ ] Camera module
-- [ ] Ray module
-- [ ] Surface resonstruction module
+- [ ] Gaussian Refinement
+- [ ] Mesh extraction
+  - [ ] Marching cube
+  - [ ] TSDF
+  - [ ] Piossion reconstruction
 - [ ] SLAM
+  - [ ] SplaTAM
+- [ ] Visualization
 
 ## License 📝
 
