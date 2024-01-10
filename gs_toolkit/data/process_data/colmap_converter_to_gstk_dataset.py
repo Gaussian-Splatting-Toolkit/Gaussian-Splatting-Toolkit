@@ -41,7 +41,7 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
         # If the data is a video, extract the keyframes.
         if self.input.suffix in [".mp4", ".avi", ".mov", ".MP4", ".MOV"]:
             num_frames = self.extract_keyframes(self.fps)
-            
+
         assert num_frames > 0, "No frames extracted. Exiting."
         # TODO: Down the vocabtree if the number of frames is too large.
 
@@ -68,7 +68,9 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 --SiftExtraction.use_gpu "
                 + str(use_gpu)
             )
-            with status("Extracting features...", spinner="bouncingBall", verbose=self.verbose):
+            with status(
+                "Extracting features...", spinner="bouncingBall", verbose=self.verbose
+            ):
                 run_command(feat_extracton_cmd, verbose=self.verbose)
 
             ## Feature matching
@@ -81,7 +83,9 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 --SiftMatching.use_gpu "
                 + str(use_gpu)
             )
-            with status("Matching features...", spinner="bouncingBall", verbose=self.verbose):
+            with status(
+                "Matching features...", spinner="bouncingBall", verbose=self.verbose
+            ):
                 run_command(feat_matching_cmd, verbose=self.verbose)
 
             ### Bundle adjustment
@@ -101,7 +105,11 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 + "/distorted/sparse \
                 --Mapper.ba_global_function_tolerance=0.000001"
             )
-            with status("Running bundle adjustment...", spinner="bouncingBall", verbose=self.verbose):
+            with status(
+                "Running bundle adjustment...",
+                spinner="bouncingBall",
+                verbose=self.verbose,
+            ):
                 run_command(mapper_cmd, verbose=self.verbose)
 
         ### Image undistortion
@@ -120,7 +128,9 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
             + "\
             --output_type COLMAP"
         )
-        with status("Undistorting images...", spinner="bouncingBall", verbose=self.verbose):
+        with status(
+            "Undistorting images...", spinner="bouncingBall", verbose=self.verbose
+        ):
             run_command(img_undist_cmd, verbose=self.verbose)
 
         files = os.listdir(data_dir_str + "/sparse")

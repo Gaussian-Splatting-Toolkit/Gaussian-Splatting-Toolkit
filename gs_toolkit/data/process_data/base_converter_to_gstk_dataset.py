@@ -29,9 +29,16 @@ class BaseConverterToGstkDataset:
             fps: The number of frames per second to extract.
         """
         # Process data with ffmpeg and save the results into input dir.
-        with status(msg = "Extracting keyframes from video...", spinner="moon", verbose=self.verbose):
-            run_command(f"ffmpeg -i {self.input} -vf fps={fps} {self.input_dir}/%06d.png", verbose=self.verbose)
-            
+        with status(
+            msg="Extracting keyframes from video...",
+            spinner="moon",
+            verbose=self.verbose,
+        ):
+            run_command(
+                f"ffmpeg -i {self.input} -vf fps={fps} {self.input_dir}/%06d.png",
+                verbose=self.verbose,
+            )
+
         # Get the number of frames.
         frame_count = len(list(self.input_dir.glob("*.png")))
         CONSOLE.log(f"Extracted {frame_count} frames.")
