@@ -41,7 +41,7 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
             self.extract_keyframes(self.fps)
 
         use_gpu = 1 if not self.no_gpu else 0
-        
+
         data_dir_str = str(self.data_dir)
 
         if not self.skip_matching:
