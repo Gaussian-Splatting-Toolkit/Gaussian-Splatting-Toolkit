@@ -13,7 +13,7 @@ classifiers = [
     "Programming Language :: Python",
 ]
 
-[tool.poetry.dependencies]
+[tool.dependencies]
 # Dependencies
 dependencies = [
     "tyro",
@@ -21,8 +21,8 @@ dependencies = [
     "torchvision",
     "plyfile==0.8.1",
     "rich",
-    "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
-    "simple_knn @ file:///workspace/thrid_party/simple-knn",
+    # "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
+    # "simple_knn @ file:///workspace/thrid_party/simple-knn",
 ]
 
 [build-system]
