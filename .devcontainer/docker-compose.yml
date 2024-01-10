@@ -19,7 +19,7 @@ services:
       - "7007:7007"
     volumes:
       - ../:/workspace/
-      - ../../Data/Datasets/:/data/
+      - ../../Datasets/:/data/
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /dev/shm:/dev/shm
       - $HOME/.Xauthority:/home/user/.Xauthority:rw

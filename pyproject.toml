@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "gstoolkit"
 authors = [
@@ -13,21 +17,14 @@ classifiers = [
     "Programming Language :: Python",
 ]
 
-[tool.dependencies]
 # Dependencies
 dependencies = [
     "tyro",
-    "torch",
-    "torchvision",
     "plyfile==0.8.1",
     "rich",
-    # "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
-    # "simple_knn @ file:///workspace/thrid_party/simple-knn",
+    "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
+    "simple_knn @ file:///workspace/thrid_party/simple-knn",
 ]
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 # Development dependencies
