@@ -1,7 +1,8 @@
 import os
+from gs_toolkit.utils.rich_utils import CONSOLE, status
+from gs_toolkit.scripts.scripts import run_command
 from dataclasses import dataclass
 import shutil
-from gs_toolkit.utils.rich_utils import CONSOLE
 from gs_toolkit.data.process_data.base_converter_to_gstk_dataset import (
     BaseConverterToGstkDataset,
 )
@@ -35,10 +36,14 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
     def main(self) -> None:
         """Main function."""
         summary_log = []
+        num_frames = 0
 
         # If the data is a video, extract the keyframes.
         if self.input.suffix in [".mp4", ".avi", ".mov", ".MP4", ".MOV"]:
-            self.extract_keyframes(self.fps)
+            num_frames = self.extract_keyframes(self.fps)
+            
+        assert num_frames > 0, "No frames extracted. Exiting."
+        # TODO: Down the vocabtree if the number of frames is too large.
 
         use_gpu = 1 if not self.no_gpu else 0
 
@@ -63,12 +68,8 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 --SiftExtraction.use_gpu "
                 + str(use_gpu)
             )
-            exit_code = os.system(feat_extracton_cmd)
-            if exit_code != 0:
-                CONSOLE.log(
-                    f"Feature extraction failed with code {exit_code}. Exiting."
-                )
-                exit(exit_code)
+            with status("Extracting features...", spinner="bouncingBall", verbose=self.verbose):
+                run_command(feat_extracton_cmd, verbose=self.verbose)
 
             ## Feature matching
             feat_matching_cmd = (
@@ -80,10 +81,8 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 --SiftMatching.use_gpu "
                 + str(use_gpu)
             )
-            exit_code = os.system(feat_matching_cmd)
-            if exit_code != 0:
-                CONSOLE.log(f"Feature matching failed with code {exit_code}. Exiting.")
-                exit(exit_code)
+            with status("Matching features...", spinner="bouncingBall", verbose=self.verbose):
+                run_command(feat_matching_cmd, verbose=self.verbose)
 
             ### Bundle adjustment
             # The default Mapper tolerance is unnecessarily large,
@@ -102,10 +101,8 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 + "/distorted/sparse \
                 --Mapper.ba_global_function_tolerance=0.000001"
             )
-            exit_code = os.system(mapper_cmd)
-            if exit_code != 0:
-                CONSOLE.log(f"Mapper failed with code {exit_code}. Exiting.")
-                exit(exit_code)
+            with status("Running bundle adjustment...", spinner="bouncingBall", verbose=self.verbose):
+                run_command(mapper_cmd, verbose=self.verbose)
 
         ### Image undistortion
         ## We need to undistort our images into ideal pinhole intrinsics.
@@ -123,10 +120,8 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
             + "\
             --output_type COLMAP"
         )
-        exit_code = os.system(img_undist_cmd)
-        if exit_code != 0:
-            CONSOLE.log(f"Mapper failed with code {exit_code}. Exiting.")
-            exit(exit_code)
+        with status("Undistorting images...", spinner="bouncingBall", verbose=self.verbose):
+            run_command(img_undist_cmd, verbose=self.verbose)
 
         files = os.listdir(data_dir_str + "/sparse")
         os.makedirs(data_dir_str + "/sparse/0", exist_ok=True)

@@ -1,5 +1,5 @@
-import os
-from gs_toolkit.utils.rich_utils import CONSOLE
+from gs_toolkit.utils.rich_utils import CONSOLE, status
+from gs_toolkit.scripts.scripts import run_command
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,15 +22,20 @@ class BaseConverterToGstkDataset:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.input_dir.mkdir(parents=True, exist_ok=True)
 
-    def extract_keyframes(self, fps: int) -> None:
+    def extract_keyframes(self, fps: int) -> int:
         """Extract keyframes from the input video.
 
         Args:
             fps: The number of frames per second to extract.
         """
         # Process data with ffmpeg and save the results into input dir.
-        with CONSOLE.status("Extracting keyframes...", spinner="bouncingBall"):
-            os.system(f"ffmpeg -i {self.input} -vf fps={fps} {self.input_dir}/%06d.png")
+        with status(msg = "Extracting keyframes from video...", spinner="moon", verbose=self.verbose):
+            run_command(f"ffmpeg -i {self.input} -vf fps={fps} {self.input_dir}/%06d.png", verbose=self.verbose)
+            
+        # Get the number of frames.
+        frame_count = len(list(self.input_dir.glob("*.png")))
+        CONSOLE.log(f"Extracted {frame_count} frames.")
+        return frame_count
 
     @property
     def input_dir(self) -> Path:
