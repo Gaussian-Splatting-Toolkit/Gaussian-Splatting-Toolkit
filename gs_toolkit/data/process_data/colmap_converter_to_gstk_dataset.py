@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from gs_toolkit.utils.rich_utils import CONSOLE, status
 from gs_toolkit.scripts.scripts import run_command
 from dataclasses import dataclass
@@ -32,6 +33,46 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
     """If True, skip feature matching"""
     resize: bool = False
     """If True, resize images to 50%, 25% and 12.5% of the original size."""
+    cache_dir: str = ".cache"
+    """Path to the cache directory."""
+    
+    def download_256_vocabtree(self) -> None:
+        """Download the 256k vocab tree."""
+        vocab_tree_url = "https://demuc.de/colmap/vocab_tree_flickr100K_words256K.bin"
+        vocab_tree_path = Path(self.cache_dir) / "vocab_tree_flickr100K_words256K.bin"
+        if not vocab_tree_path.exists():
+            CONSOLE.log(f"The VocabTree {vocab_tree_path} does not exist, downloading...")
+            with status(
+                msg="Downloading 256k vocab tree...",
+                spinner="bouncingBall",
+                verbose=self.verbose,
+            ):
+                run_command(
+                    f"wget {vocab_tree_url} -P {self.cache_dir}",
+                    verbose=self.verbose,
+                )
+            CONSOLE.log("Downloaded 256k vocab tree.")
+        else:
+            CONSOLE.log("Vocab tree already downloaded.")
+            
+    def downlaod_1M_vocabtree(self) -> None:
+        """Download the 1M vocab tree."""
+        vocab_tree_url = "https://demuc.de/colmap/vocab_tree_flickr100K_words1M.bin"
+        vocab_tree_path = Path(self.cache_dir) / "vocab_tree_flickr100K_words1M.bin"
+        if not vocab_tree_path.exists():
+            CONSOLE.log(f"The VocabTree {vocab_tree_path} does not exist, downloading...")
+            with status(
+                msg="Downloading 1m vocab tree...",
+                spinner="bouncingBall",
+                verbose=self.verbose,
+            ):
+                run_command(
+                    f"wget {vocab_tree_url} -P {self.cache_dir}",
+                    verbose=self.verbose,
+                )
+            CONSOLE.log("Downloaded 1m vocab tree.")
+        else:
+            CONSOLE.log("Vocab tree already downloaded.")
 
     def main(self) -> None:
         """Main function."""
@@ -43,11 +84,11 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
             num_frames = self.extract_keyframes(self.fps)
 
         assert num_frames > 0, "No frames extracted. Exiting."
-        # TODO: Down the vocabtree if the number of frames is too large.
 
         use_gpu = 1 if not self.no_gpu else 0
 
         data_dir_str = str(self.data_dir)
+        abs_cache_dir_str = str(Path(self.cache_dir).absolute())
 
         if not self.skip_matching:
             os.makedirs(data_dir_str + "/distorted/sparse", exist_ok=True)
@@ -74,15 +115,45 @@ class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
                 run_command(feat_extracton_cmd, verbose=self.verbose)
 
             ## Feature matching
-            feat_matching_cmd = (
-                self.colmap_command
-                + " exhaustive_matcher \
-                --database_path "
-                + data_dir_str
-                + "/distorted/database.db \
-                --SiftMatching.use_gpu "
-                + str(use_gpu)
-            )
+            if num_frames <= 1_000:
+                feat_matching_cmd = (
+                    self.colmap_command
+                    + " exhaustive_matcher \
+                    --database_path "
+                    + data_dir_str
+                    + "/distorted/database.db \
+                    --SiftMatching.use_gpu "
+                    + str(use_gpu)
+                )
+            elif num_frames > 1_000 and num_frames <= 10_000:
+                self.download_256_vocabtree()
+                feat_matching_cmd = (
+                    self.colmap_command
+                    + " vocab_tree_matcher \
+                    --VocabTreeMatching.vocab_tree_path "
+                    + abs_cache_dir_str
+                    + "/vocab_tree_flickr100K_words256K.bin \
+                    --database_path "
+                    + data_dir_str
+                    + "/distorted/database.db \
+                    --SiftMatching.use_gpu "
+                    + str(use_gpu)
+                )
+            else:
+                self.downlaod_1M_vocabtree()
+                feat_matching_cmd = (
+                    self.colmap_command
+                    + " vocab_tree_matcher \
+                    --VocabTreeMatching.vocab_tree_path "
+                    + abs_cache_dir_str
+                    + "/vocab_tree_flickr100K_words1M.bin \
+                    --database_path "
+                    + data_dir_str
+                    + "/distorted/database.db \
+                    --SiftMatching.use_gpu "
+                    + str(use_gpu)
+                )
+            
             with status(
                 "Matching features...", spinner="bouncingBall", verbose=self.verbose
             ):

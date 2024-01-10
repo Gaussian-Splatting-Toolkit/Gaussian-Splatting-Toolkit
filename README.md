@@ -52,6 +52,10 @@ Here are some basic steps to get started:
 
 For detailed usage instructions, refer to the documentation in each module's directory.
 
+```bash
+gs-process-data --input /data/gs-recon/robot_studio.MOV --data-dir /data/gs-recon/rls
+```
+
 ## Contribute
 
 If you want to add a new submodule, run

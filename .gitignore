@@ -164,4 +164,4 @@ cython_debug/
 .ruff_cache
 gs_toolkit/evaluation/input
 gs_toolkit/evaluation/output
-cache
+.cache
