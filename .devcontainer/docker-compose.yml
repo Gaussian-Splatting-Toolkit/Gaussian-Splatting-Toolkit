@@ -2,7 +2,6 @@ version: "3.8"
 
 services:
   gstoolkit:
-    runtime: nvidia
     shm_size: '12gb'
     image: gstoolkit:latest
     build:
@@ -20,7 +19,7 @@ services:
       - "7007:7007"
     volumes:
       - ../:/workspace/
-      - ../../../dataset/:/data/
+      - ../../Data/Datasets/:/data/
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /dev/shm:/dev/shm
       - $HOME/.Xauthority:/home/user/.Xauthority:rw
