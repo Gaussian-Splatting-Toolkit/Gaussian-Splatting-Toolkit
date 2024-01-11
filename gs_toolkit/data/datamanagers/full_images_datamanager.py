@@ -31,7 +31,7 @@ import numpy as np
 import torch
 from copy import deepcopy
 from torch.nn import Parameter
-from tqdm import tqdm
+from rich.progress import track
 
 from gs_toolkit.cameras.cameras import Cameras, CameraType
 from gs_toolkit.configs.dataparser_configs import AnnotatedDataParserUnion
@@ -135,8 +135,10 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
     def cache_images(self, cache_images_option):
         cached_train = []
         cached_eval = []
-        CONSOLE.log("Caching / undistorting train images")
-        for i in tqdm(range(len(self.train_dataset)), leave=False):
+        for i in track(
+            range(len(self.train_dataset)),
+            description="Caching / undistorting train images",
+        ):
             # cv2.undistort the images / cameras
             data = self.train_dataset.get_data(i)
             camera = self.train_dataset.cameras[i].reshape(())
@@ -236,8 +238,10 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
             self.train_dataset.cameras.cx[i] = float(K[0, 2])
             self.train_dataset.cameras.cy[i] = float(K[1, 2])
 
-        CONSOLE.log("Caching / undistorting eval images")
-        for i in tqdm(range(len(self.eval_dataset)), leave=False):
+        for i in track(
+            range(len(self.eval_dataset)),
+            description="Caching / undistorting eval images",
+        ):
             # cv2.undistort the images / cameras
             data = self.eval_dataset.get_data(i)
             camera = self.eval_dataset.cameras[i].reshape(())

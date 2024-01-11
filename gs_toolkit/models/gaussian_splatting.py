@@ -729,7 +729,7 @@ class GaussianSplattingModel(Model):
         # shift the camera to center of scene looking at center
         R = camera.camera_to_worlds[0, :3, :3]  # 3 x 3
         T = camera.camera_to_worlds[0, :3, 3:4]  # 3 x 1
-        # flip the z and y axes to align with gsplat conventions
+        # flip the z and y axes to align with rasterizer conventions
         R_edit = torch.diag(
             torch.tensor([1, -1, -1], device=self.device, dtype=R.dtype)
         )
@@ -822,9 +822,7 @@ class GaussianSplattingModel(Model):
         camera.rescale_output_resolution(camera_downscale)
 
         # avoid empty rasterization
-        num_intersects, _ = compute_cumulative_intersects(
-            self.xys.size(0), num_tiles_hit
-        )
+        num_intersects, _ = compute_cumulative_intersects(num_tiles_hit)
         assert num_intersects > 0
 
         rgb = rasterize_gaussians(
@@ -842,7 +840,7 @@ class GaussianSplattingModel(Model):
         rgb = torch.clamp(rgb, max=1.0)  # type: ignore
         depth_im = None
         if not self.training:
-            depth_im = RasterizeGaussians.apply(  # type: ignore
+            depth_im = rasterize_gaussians(  # type: ignore
                 self.xys,
                 depths,
                 self.radii,
