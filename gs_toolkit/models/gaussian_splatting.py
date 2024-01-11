@@ -11,11 +11,11 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
-from gsplat._torch_impl import quat_to_rotmat
-from gsplat.compute_cumulative_intersects import compute_cumulative_intersects
-from gsplat.project_gaussians import ProjectGaussians
-from gsplat.rasterize import RasterizeGaussians
-from gsplat.sh import SphericalHarmonics, num_sh_bases
+from rasterizer._torch_impl import quat_to_rotmat
+from rasterizer.utils import compute_cumulative_intersects
+from rasterizer.project_gaussians import project_gaussians
+from rasterizer.rasterize import rasterize_gaussians
+from rasterizer.sh import spherical_harmonics, num_sh_bases
 from pytorch_msssim import SSIM
 from sklearn.neighbors import NearestNeighbors
 from torch.nn import Parameter
@@ -781,7 +781,7 @@ class GaussianSplattingModel(Model):
             conics,
             num_tiles_hit,
             cov3d,
-        ) = ProjectGaussians.apply(
+        ) = project_gaussians(
             means_crop,
             torch.exp(scales_crop),
             1,
@@ -813,7 +813,7 @@ class GaussianSplattingModel(Model):
             )  # (N, 3)
             viewdirs = viewdirs / viewdirs.norm(dim=-1, keepdim=True)
             n = min(self.step // self.config.sh_degree_interval, self.config.sh_degree)
-            rgbs = SphericalHarmonics.apply(n, viewdirs, colors_crop)
+            rgbs = spherical_harmonics(n, viewdirs, colors_crop)
             rgbs = torch.clamp(rgbs + 0.5, min=0.0)  # type: ignore
         else:
             rgbs = torch.sigmoid(colors_crop[:, 0, :])
@@ -827,7 +827,7 @@ class GaussianSplattingModel(Model):
         )
         assert num_intersects > 0
 
-        rgb = RasterizeGaussians.apply(
+        rgb = rasterize_gaussians(
             self.xys,
             depths,
             self.radii,

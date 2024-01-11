@@ -25,8 +25,7 @@ dependencies = [
     "jaxtyping",
     "opencv-python",
     "rich",
-    "diff_gaussian_rasterization @ file:///workspace/thrid_party/diff-gaussian-rasterization",
-    "simple_knn @ file:///workspace/thrid_party/simple-knn",
+    "rasterizer @ file:///workspace/gs_toolkit/gs_components",
 ]
 
 [project.optional-dependencies]

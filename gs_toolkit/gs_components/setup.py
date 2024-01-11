@@ -7,7 +7,8 @@ import sys
 from setuptools import find_packages, setup
 
 __version__ = None
-exec(open("gsplat/version.py", "r").read())
+# Print current location
+exec(open("rasterizer/version.py", "r").read())
 
 BUILD_NO_CUDA = os.getenv("BUILD_NO_CUDA", "0") == "1"
 WITH_SYMBOLS = os.getenv("WITH_SYMBOLS", "0") == "1"
@@ -25,7 +26,7 @@ def get_extensions():
     from torch.__config__ import parallel_info
     from torch.utils.cpp_extension import CUDAExtension
 
-    extensions_dir = osp.join("gsplat", "cuda", "csrc")
+    extensions_dir = osp.join("rasterizer", "cuda", "csrc")
     sources = glob.glob(osp.join(extensions_dir, "*.cu")) + glob.glob(
         osp.join(extensions_dir, "*.cpp")
     )
@@ -43,7 +44,7 @@ def get_extensions():
     define_macros = []
 
     if sys.platform == "win32":
-        define_macros += [("gsplat_EXPORTS", None)]
+        define_macros += [("rasterizer_EXPORTS", None)]
 
     extra_compile_args = {"cxx": ["-O3"]}
     if not os.name == "nt":  # Not on Windows:
@@ -86,7 +87,7 @@ def get_extensions():
         extra_compile_args["nvcc"] += ["-DWIN32_LEAN_AND_MEAN"]
 
     extension = CUDAExtension(
-        "gsplat.csrc",
+        "rasterizer.csrc",
         sources,
         include_dirs=[osp.join(extensions_dir, "third_party", "glm")],
         define_macros=define_macros,
@@ -99,7 +100,7 @@ def get_extensions():
 
 
 setup(
-    name="gsplat",
+    name="rasterizer",
     version=__version__,
     description=" Python package for differentiable rasterization of gaussians",
     keywords="gaussian, splatting, cuda",
@@ -111,7 +112,7 @@ setup(
         "typing_extensions; python_version<'3.8'",
     ],
     extras_require={
-        # dev dependencies. Install them by `pip install gsplat[dev]`
+        # dev dependencies. Install them by `pip install rasterizer[dev]`
         "dev": [
             "black[jupyter]==22.3.0",
             "isort==5.10.1",
