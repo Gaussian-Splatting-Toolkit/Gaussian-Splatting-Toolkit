@@ -429,7 +429,7 @@ def export_textured_mesh(
         metadata={"directions_norm": directions_norm},
     )
 
-    CONSOLE.print("Creating texture image by rendering with NeRF...")
+    CONSOLE.print("Creating texture image by rendering with Gaussian Splatting...")
     with torch.no_grad():
         outputs = pipeline.model.get_outputs_for_camera_ray_bundle(camera_ray_bundle)
     # TODO: this can be done better by using the alpha channel

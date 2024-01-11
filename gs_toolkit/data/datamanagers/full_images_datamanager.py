@@ -41,7 +41,7 @@ from gs_toolkit.data.datamanagers.base_datamanager import (
     TDataset,
 )
 from gs_toolkit.data.dataparsers.base_dataparser import DataparserOutputs
-from gs_toolkit.data.dataparsers.gs_toolkit_dataparser import NerfstudioDataParserConfig
+from gs_toolkit.data.dataparsers.gs_toolkit_dataparser import GSToolkitDataParserConfig
 from gs_toolkit.data.datasets.base_dataset import InputDataset
 from gs_toolkit.utils.misc import get_orig_class
 from gs_toolkit.utils.rich_utils import CONSOLE
@@ -50,7 +50,7 @@ from gs_toolkit.utils.rich_utils import CONSOLE
 @dataclass
 class FullImageDatamanagerConfig(DataManagerConfig):
     _target: Type = field(default_factory=lambda: FullImageDatamanager)
-    dataparser: AnnotatedDataParserUnion = NerfstudioDataParserConfig()
+    dataparser: AnnotatedDataParserUnion = GSToolkitDataParserConfig()
     camera_res_scale_factor: float = 1.0
     """The scale factor for scaling spatial data such as images, mask, semantics
     along with relevant information about camera intrinsics

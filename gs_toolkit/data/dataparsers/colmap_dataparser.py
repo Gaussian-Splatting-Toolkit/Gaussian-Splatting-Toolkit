@@ -37,7 +37,7 @@ MAX_AUTO_RESOLUTION = 1600
 
 @dataclass
 class ColmapDataParserConfig(DataParserConfig):
-    """Nerfstudio dataset config"""
+    """GSToolkit dataset config"""
 
     _target: Type = field(default_factory=lambda: ColmapDataParser)
     """target class to instantiate"""

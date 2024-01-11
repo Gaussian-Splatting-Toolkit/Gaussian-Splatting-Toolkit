@@ -25,7 +25,7 @@ except ImportError:
 ARIA_CAMERA_MODEL = "FISHEYE624"
 
 # The Aria coordinate system is different than the Blender/NerfStudio coordinate system.
-# Blender / Nerfstudio: +Z = back, +Y = up, +X = right
+# Blender / GSToolkit: +Z = back, +Y = up, +X = right
 # Surreal: +Z = forward, +Y = down, +X = right
 T_ARIA_NERFSTUDIO = SE3.from_matrix(
     np.array(

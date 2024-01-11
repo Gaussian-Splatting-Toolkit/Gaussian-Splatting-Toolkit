@@ -122,8 +122,8 @@ class DataManager(nn.Module):
         pixels, etc needed to actually train, score, etc the model
 
     Rationale:
-    Because of this abstraction we've added, we can support more NeRF paradigms beyond the
-    vanilla nerf paradigm of single-scene, fixed-images, no-learnt-latents.
+    Because of this abstraction we've added, we can support more GS paradigms beyond the
+    vanilla GS paradigm of single-scene, fixed-images, no-learnt-latents.
     We can now support variable scenes, variable number of images, and arbitrary latents.
 
 

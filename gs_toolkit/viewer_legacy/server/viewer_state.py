@@ -1,17 +1,3 @@
-# Copyright 2022 the Regents of the University of California, Nerfstudio Team and contributors. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """ Manage the state of the viewer """
 from __future__ import annotations
 
@@ -53,7 +39,7 @@ from gs_toolkit.viewer_legacy.viser.messages import (
     CameraPathPayloadMessage,
     ClickMessage,
     CropParamsMessage,
-    NerfstudioMessage,
+    GSToolkitMessage,
     SaveCheckpointMessage,
     TimeConditionMessage,
     TrainingStateMessage,
@@ -234,20 +220,20 @@ class ViewerLegacyState:
                 RenderAction("rerender", self.camera_message)
             )
 
-    def _handle_training_state_message(self, message: NerfstudioMessage) -> None:
+    def _handle_training_state_message(self, message: GSToolkitMessage) -> None:
         """Handle training state message from viewer."""
         assert isinstance(message, TrainingStateMessage)
         self.train_btn_state = message.training_state
         self.training_state = message.training_state
         self.viser_server.set_training_state(message.training_state)
 
-    def _handle_save_checkpoint(self, message: NerfstudioMessage) -> None:
+    def _handle_save_checkpoint(self, message: GSToolkitMessage) -> None:
         """Handle save checkpoint message from viewer."""
         assert isinstance(message, SaveCheckpointMessage)
         if self.trainer is not None:
             self.trainer.save_checkpoint(self.step)
 
-    def _handle_camera_update(self, message: NerfstudioMessage) -> None:
+    def _handle_camera_update(self, message: GSToolkitMessage) -> None:
         """Handle camera update message from viewer."""
         assert isinstance(message, CameraMessage)
         self.camera_message = message
@@ -259,7 +245,7 @@ class ViewerLegacyState:
             self.render_statemachine.action(RenderAction("static", self.camera_message))
             self.training_state = self.train_btn_state
 
-    def _handle_camera_path_option_request(self, message: NerfstudioMessage) -> None:
+    def _handle_camera_path_option_request(self, message: GSToolkitMessage) -> None:
         """Handle camera path option request message from viewer."""
         assert isinstance(message, CameraPathOptionsRequest)
         camera_path_dir = self.datapath / "camera_paths"
@@ -270,7 +256,7 @@ class ViewerLegacyState:
                     all_path_dict[path.stem] = load_from_json(path)
             self.viser_server.send_camera_paths(all_path_dict)
 
-    def _handle_camera_path_payload(self, message: NerfstudioMessage) -> None:
+    def _handle_camera_path_payload(self, message: GSToolkitMessage) -> None:
         """Handle camera path payload message from viewer."""
         assert isinstance(message, CameraPathPayloadMessage)
         camera_path_filename = message.camera_path_filename + ".json"
@@ -279,7 +265,7 @@ class ViewerLegacyState:
         camera_paths_directory.mkdir(parents=True, exist_ok=True)
         write_to_json(camera_paths_directory / camera_path_filename, camera_path)
 
-    def _handle_crop_params_message(self, message: NerfstudioMessage) -> None:
+    def _handle_crop_params_message(self, message: GSToolkitMessage) -> None:
         """Handle crop parameters message from viewer."""
         assert isinstance(message, CropParamsMessage)
         self.control_panel.crop_viewport = message.crop_enabled
@@ -291,13 +277,13 @@ class ViewerLegacyState:
         self.control_panel.crop_min = tuple(crop_min.tolist())  # type: ignore
         self.control_panel.crop_max = tuple(crop_max.tolist())  # type: ignore
 
-    def _handle_click_message(self, message: NerfstudioMessage) -> None:
+    def _handle_click_message(self, message: GSToolkitMessage) -> None:
         """Handle click message from viewer."""
         assert isinstance(message, ClickMessage)
         for controls in self.viewer_controls:
             controls.on_click(message)
 
-    def _handle_time_condition_message(self, message: NerfstudioMessage) -> None:
+    def _handle_time_condition_message(self, message: GSToolkitMessage) -> None:
         """Handle time conditioning message from viewer."""
         assert isinstance(message, TimeConditionMessage)
         self.control_panel.time = message.time

@@ -423,7 +423,7 @@ class Trainer:
         if load_dir is not None:
             load_step = self.config.load_step
             if load_step is None:
-                print("Loading latest Nerfstudio checkpoint from load_dir...")
+                print("Loading latest GSToolkit checkpoint from load_dir...")
                 # NOTE: this is specific to the checkpoint name format
                 load_step = sorted(
                     int(x[x.find("-") + 1 : x.find(".")]) for x in os.listdir(load_dir)
@@ -438,7 +438,7 @@ class Trainer:
             if "schedulers" in loaded_state and self.config.load_scheduler:
                 self.optimizers.load_schedulers(loaded_state["schedulers"])
             self.grad_scaler.load_state_dict(loaded_state["scalers"])
-            CONSOLE.print(f"Done loading Nerfstudio checkpoint from {load_path}")
+            CONSOLE.print(f"Done loading GSToolkit checkpoint from {load_path}")
         elif load_checkpoint is not None:
             assert (
                 load_checkpoint.exists()
@@ -451,9 +451,9 @@ class Trainer:
             if "schedulers" in loaded_state and self.config.load_scheduler:
                 self.optimizers.load_schedulers(loaded_state["schedulers"])
             self.grad_scaler.load_state_dict(loaded_state["scalers"])
-            CONSOLE.print(f"Done loading Nerfstudio checkpoint from {load_checkpoint}")
+            CONSOLE.print(f"Done loading GSToolkit checkpoint from {load_checkpoint}")
         else:
-            CONSOLE.print("No Nerfstudio checkpoint to load, so training from scratch.")
+            CONSOLE.print("No GSToolkit checkpoint to load, so training from scratch.")
 
     @check_main_thread
     def save_checkpoint(self, step: int) -> None:

@@ -1,17 +1,3 @@
-# Copyright 2022 the Regents of the University of California, Nerfstudio Team and contributors. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """Message type definitions. For synchronization with the TypeScript definitions, see
 `_typescript_interface_gen.py.`"""
 
@@ -24,7 +10,7 @@ import viser.infra
 from typing_extensions import override
 
 
-class NerfstudioMessage(viser.infra.Message):
+class GSToolkitMessage(viser.infra.Message):
     """Base message type for controlling our viewer."""
 
     @override
@@ -33,7 +19,7 @@ class NerfstudioMessage(viser.infra.Message):
 
 
 @dataclasses.dataclass
-class BackgroundImageMessage(NerfstudioMessage):
+class BackgroundImageMessage(GSToolkitMessage):
     """Message for rendering a background image."""
 
     media_type: Literal["image/jpeg", "image/png"]
@@ -41,7 +27,7 @@ class BackgroundImageMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class GuiAddMessage(NerfstudioMessage):
+class GuiAddMessage(GSToolkitMessage):
     """Sent server->client to add a new GUI input."""
 
     name: str
@@ -54,7 +40,7 @@ class GuiAddMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class GuiRemoveMessage(NerfstudioMessage):
+class GuiRemoveMessage(GSToolkitMessage):
     """Sent server->client to add a new GUI input."""
 
     name: str
@@ -65,7 +51,7 @@ class GuiRemoveMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class GuiUpdateMessage(NerfstudioMessage):
+class GuiUpdateMessage(GSToolkitMessage):
     """Sent client->server when a GUI input is changed."""
 
     name: str
@@ -77,7 +63,7 @@ class GuiUpdateMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class GuiSetHiddenMessage(NerfstudioMessage):
+class GuiSetHiddenMessage(GSToolkitMessage):
     """Sent client->server when a GUI input is changed."""
 
     name: str
@@ -89,7 +75,7 @@ class GuiSetHiddenMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class GuiSetValueMessage(NerfstudioMessage):
+class GuiSetValueMessage(GSToolkitMessage):
     """Sent server->client to set the value of a particular input."""
 
     name: str
@@ -101,7 +87,7 @@ class GuiSetValueMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class GuiSetLevaConfMessage(NerfstudioMessage):
+class GuiSetLevaConfMessage(GSToolkitMessage):
     """Sent server->client to override some part of an input's Leva config."""
 
     name: str
@@ -113,7 +99,7 @@ class GuiSetLevaConfMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class FilePathInfoMessage(NerfstudioMessage):
+class FilePathInfoMessage(GSToolkitMessage):
     """Experiment file path info"""
 
     config_base_dir: str
@@ -125,7 +111,7 @@ class FilePathInfoMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class SetCameraMessage(NerfstudioMessage):
+class SetCameraMessage(GSToolkitMessage):
     """Set the current camera."""
 
     fov: Optional[float]
@@ -139,7 +125,7 @@ class SetCameraMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class CameraMessage(NerfstudioMessage):
+class CameraMessage(GSToolkitMessage):
     """Render camera data."""
 
     aspect: float
@@ -176,7 +162,7 @@ class CameraMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class SceneBoxMessage(NerfstudioMessage):
+class SceneBoxMessage(GSToolkitMessage):
     """Scene Box data."""
 
     min: Tuple[float, float, float]
@@ -186,7 +172,7 @@ class SceneBoxMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class DatasetImageMessage(NerfstudioMessage):
+class DatasetImageMessage(GSToolkitMessage):
     """Message for rendering a dataset image frustum."""
 
     idx: str
@@ -200,7 +186,7 @@ class DatasetImageMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class TrainingStateMessage(NerfstudioMessage):
+class TrainingStateMessage(GSToolkitMessage):
     """Whether the scene is in training mode or not."""
 
     training_state: Literal["training", "paused", "completed"]
@@ -208,7 +194,7 @@ class TrainingStateMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class CameraPathPayloadMessage(NerfstudioMessage):
+class CameraPathPayloadMessage(GSToolkitMessage):
     """Camera path"""
 
     camera_path_filename: str
@@ -218,12 +204,12 @@ class CameraPathPayloadMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class CameraPathOptionsRequest(NerfstudioMessage):
+class CameraPathOptionsRequest(GSToolkitMessage):
     """Request list of existing camera paths"""
 
 
 @dataclasses.dataclass
-class CameraPathsMessage(NerfstudioMessage):
+class CameraPathsMessage(GSToolkitMessage):
     """Dictionary of camera paths"""
 
     payload: Any
@@ -231,7 +217,7 @@ class CameraPathsMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class CropParamsMessage(NerfstudioMessage):
+class CropParamsMessage(GSToolkitMessage):
     """Crop parameters"""
 
     crop_enabled: bool
@@ -245,7 +231,7 @@ class CropParamsMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class StatusMessage(NerfstudioMessage):
+class StatusMessage(GSToolkitMessage):
     """Status message."""
 
     eval_res: str
@@ -255,17 +241,17 @@ class StatusMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class SaveCheckpointMessage(NerfstudioMessage):
+class SaveCheckpointMessage(GSToolkitMessage):
     """Save checkpoint message."""
 
 
 @dataclasses.dataclass
-class UseTimeConditioningMessage(NerfstudioMessage):
+class UseTimeConditioningMessage(GSToolkitMessage):
     """Use time conditioning message."""
 
 
 @dataclasses.dataclass
-class TimeConditionMessage(NerfstudioMessage):
+class TimeConditionMessage(GSToolkitMessage):
     """Time conditioning message."""
 
     time: float
@@ -273,7 +259,7 @@ class TimeConditionMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class ClickMessage(NerfstudioMessage):
+class ClickMessage(GSToolkitMessage):
     """Click message."""
 
     origin: Tuple[float, float, float]
@@ -283,7 +269,7 @@ class ClickMessage(NerfstudioMessage):
 
 
 @dataclasses.dataclass
-class OutputOptionsMessage(NerfstudioMessage):
+class OutputOptionsMessage(GSToolkitMessage):
     """Output options message which are used in the export panel.
     TODO: remove when export panel is becomes python defined.
     """
