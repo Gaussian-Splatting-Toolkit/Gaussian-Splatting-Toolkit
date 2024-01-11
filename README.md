@@ -56,6 +56,10 @@ For detailed usage instructions, refer to the documentation in each module's dir
 gs-process-data video --data /data/gs-recon/robot_studio.MOV --output-dir /data/gs-recon/robot_studio --sfm-tool colmap --num-frames-target 1000
 ```
 
+```bash
+gs-train --data /data/gs-recon/robot_studio
+```
+
 ## Contribute
 
 If you want to add a new submodule, run
