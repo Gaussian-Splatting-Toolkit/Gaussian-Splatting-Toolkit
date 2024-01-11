@@ -72,15 +72,21 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
   - [ ] Sensor interface
     - [ ] Azure Kinect
     - [ ] iPhone/ iPad
+- [ ] Benchmarking
 - [ ] Gaussian Splatting module
 - [ ] Gaussian Refinement
 - [ ] Mesh extraction
   - [ ] Marching cube
   - [ ] TSDF
   - [ ] Piossion reconstruction
+- [ ] Model
+  - [ ] SuGaR
+  - [ ] SplaTAM
+  - [ ] Feature GS
 - [ ] SLAM
   - [ ] SplaTAM
-- [ ] Visualization
+- [x] Visualization
+- [ ] ROS
 - [ ] Documentation
 - [ ] Tests
 

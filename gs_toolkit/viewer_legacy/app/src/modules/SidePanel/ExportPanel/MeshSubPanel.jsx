@@ -132,7 +132,7 @@ export default function MeshSubPanel(props) {
   let cmd = '';
   if (mesh_method_choice === 'tsdf') {
     cmd =
-      `ns-export ${mesh_method_choice}` +
+      `gs-export ${mesh_method_choice}` +
       ` --load-config ${config_filename}` +
       ` --output-dir ${controlValues.outputDir}` +
       ` --target-num-faces ${controlValues.numFaces}` +
@@ -142,7 +142,7 @@ export default function MeshSubPanel(props) {
       ` --bounding-box-max ${bbox_max[0]} ${bbox_max[1]} ${bbox_max[2]}`;
   } else if (mesh_method_choice === 'poisson') {
     cmd =
-      `ns-export ${mesh_method_choice}` +
+      `gs-export ${mesh_method_choice}` +
       ` --load-config ${config_filename}` +
       ` --output-dir ${controlValues.outputDir}` +
       ` --target-num-faces ${controlValues.numFaces}` +

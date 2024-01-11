@@ -100,7 +100,7 @@ def populate_point_cloud_tab(
         assert event.client is not None
         command = " ".join(
             [
-                "ns-export pointcloud",
+                "gs-export pointcloud",
                 f"--load-config {config_path}",
                 f"--output-dir {output_dir.value}",
                 f"--num-points {num_points.value}",
@@ -150,7 +150,7 @@ def populate_mesh_tab(
         assert event.client is not None
         command = " ".join(
             [
-                "ns-export poisson",
+                "gs-export poisson",
                 f"--load-config {config_path}",
                 f"--output-dir {output_directory.value}",
                 f"--target-num-faces {num_faces.value}",

@@ -220,7 +220,7 @@ def setup_event_writer(
     is_comet_enabled: bool,
     log_dir: Path,
     experiment_name: str,
-    project_name: str = "nerfstudio-project",
+    project_name: str = "gs-toolkit-project",
 ) -> None:
     """Initialization of all event writers specified in config
     Args:
@@ -331,7 +331,7 @@ class WandbWriter(Writer):
         self,
         log_dir: Path,
         experiment_name: str,
-        project_name: str = "nerfstudio-project",
+        project_name: str = "gs-toolkit-project",
     ):
         wandb.init(
             project=os.environ.get("WANDB_PROJECT", project_name),
@@ -391,7 +391,7 @@ class CometWriter(Writer):
         self,
         log_dir: Path,
         experiment_name: str,
-        project_name: str = "nerfstudio-project",
+        project_name: str = "gs-toolkit-project",
     ):
         self.experiment = comet_ml.Experiment(project_name=project_name)
         if experiment_name != "unnamed":

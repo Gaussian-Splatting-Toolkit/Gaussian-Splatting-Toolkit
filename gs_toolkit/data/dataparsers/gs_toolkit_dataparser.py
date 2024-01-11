@@ -1,4 +1,4 @@
-""" Data parser for nerfstudio datasets. """
+""" Data parser for gs-toolkit datasets. """
 
 from __future__ import annotations
 

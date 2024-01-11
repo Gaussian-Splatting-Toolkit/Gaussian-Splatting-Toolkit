@@ -108,7 +108,7 @@ export default function PointcloudSubPanel(props) {
   ];
 
   const cmd =
-    `ns-export pointcloud` +
+    `gs-export pointcloud` +
     ` --load-config ${config_filename}` +
     ` --output-dir ${controlValues.outputDir}` +
     ` --num-points ${controlValues.numPoints}` +
