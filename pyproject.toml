@@ -19,13 +19,17 @@ classifiers = [
 
 # Dependencies
 dependencies = [
-    "rawpy",
-    "tyro",
-    "plyfile==0.8.1",
+    "comet_ml",
     "jaxtyping",
     "opencv-python",
-    "rich",
+    "open3d",
+    "pathos",
+    "plyfile==0.8.1",
     "rasterizer @ file:///workspace/gs_toolkit/gs_components",
+    "rawpy",
+    "rich",
+    "splines",
+    "tyro",
 ]
 
 [project.optional-dependencies]
@@ -35,11 +39,14 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-xdist",
+    "pycolmap",
+    "projectaria_tools[all]",
+    "tensorboard",
     "typeguard",
     "ruff",
-    "pycolmap",
     "sshconfig",
-    "projectaria_tools[all]",
+    "viser",
+    "wandb",
 ]
 
 [project.scripts]

@@ -12,11 +12,12 @@ Example:
     rgb = rgb_renderer(rgb=field_outputs[FieldHeadNames.RGB], weights=weights)
 
 """
-# import contextlib
-# import math
-from typing import Literal, Optional, Union
+import contextlib
 
-# from typing import Generator, Tuple
+# import math
+from typing import Literal, Optional, Union, Generator
+
+# from typing import Tuple
 
 # import nerfacc
 # import torch
@@ -39,18 +40,18 @@ BackgroundColor = Union[
 BACKGROUND_COLOR_OVERRIDE: Optional[Float[Tensor, "3"]] = None
 
 
-# @contextlib.contextmanager
-# def background_color_override_context(
-#     mode: Float[Tensor, "3"]
-# ) -> Generator[None, None, None]:
-#     """Context manager for setting background mode."""
-#     global BACKGROUND_COLOR_OVERRIDE
-#     old_background_color = BACKGROUND_COLOR_OVERRIDE
-#     try:
-#         BACKGROUND_COLOR_OVERRIDE = mode
-#         yield
-#     finally:
-#         BACKGROUND_COLOR_OVERRIDE = old_background_color
+@contextlib.contextmanager
+def background_color_override_context(
+    mode: Float[Tensor, "3"]
+) -> Generator[None, None, None]:
+    """Context manager for setting background mode."""
+    global BACKGROUND_COLOR_OVERRIDE
+    old_background_color = BACKGROUND_COLOR_OVERRIDE
+    try:
+        BACKGROUND_COLOR_OVERRIDE = mode
+        yield
+    finally:
+        BACKGROUND_COLOR_OVERRIDE = old_background_color
 
 
 # class RGBRenderer(nn.Module):

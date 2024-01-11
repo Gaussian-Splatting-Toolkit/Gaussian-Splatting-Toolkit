@@ -25,7 +25,7 @@ else:
     # At runtime, populate a Union type dynamically. This is used by `tyro` to generate
     # subcommands in the CLI.
     DataParserUnion = tyro.extras.subcommand_type_from_defaults(
-        all_dataparsers,
+        dataparsers,
         prefix_names=False,  # Omit prefixes in subcommands themselves.
     )
 
