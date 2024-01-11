@@ -14,30 +14,29 @@
 #pragma once
 
 // Dependencies
-#include "../detail/setup.hpp"
-#include "../detail/qualifier.hpp"
 #include "../common.hpp"
-#include "../integer.hpp"
+#include "../detail/qualifier.hpp"
+#include "../detail/setup.hpp"
 #include "../exponential.hpp"
 #include "../ext/scalar_common.hpp"
 #include "../ext/vector_common.hpp"
+#include "../integer.hpp"
 #include <limits>
 
 #if GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_GTC_integer extension included")
+#pragma message("GLM: GLM_GTC_integer extension included")
 #endif
 
-namespace glm
-{
-	/// @addtogroup gtc_integer
-	/// @{
+namespace glm {
+/// @addtogroup gtc_integer
+/// @{
 
-	/// Returns the log2 of x for integer values. Useful to compute mipmap count from the texture size.
-	/// @see gtc_integer
-	template<typename genIUType>
-	GLM_FUNC_DECL genIUType log2(genIUType x);
+/// Returns the log2 of x for integer values. Useful to compute mipmap count
+/// from the texture size.
+/// @see gtc_integer
+template <typename genIUType> GLM_FUNC_DECL genIUType log2(genIUType x);
 
-	/// @}
-} //namespace glm
+/// @}
+} // namespace glm
 
 #include "integer.inl"

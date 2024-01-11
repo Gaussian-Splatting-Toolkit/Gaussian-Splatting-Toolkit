@@ -3069,13 +3069,13 @@ Concurrency::multi_link_registry<*>{
 Concurrency::details::_Queue<*>{
 	preview (
 		#(
-			"[", 
-			$e._M_count, 
+			"[",
+			$e._M_count,
 			"](",
 			#list(
 				head: $e._M_pHead,
 				next: _M_pNext,
-				size: _M_count 
+				size: _M_count
 			),
 			")"
 		)
@@ -3087,7 +3087,7 @@ Concurrency::details::_Queue<*>{
 			#list(
 				head: $e._M_pHead,
 				next: _M_pNext,
-				size: _M_count 
+				size: _M_count
 			)
 		)
 	)
@@ -3175,7 +3175,7 @@ Concurrency::call<*>{
 			$e._M_pFunc
 		)
 	)
-	
+
 	children (
 		#(
 			#(call_method: $e._M_pFunc),
@@ -3226,7 +3226,7 @@ Concurrency::choice<*>{
 			$e._M_sourceTuple
 		)
 	)
-	
+
 	children (
 		#(
 			#([input_count]: $e._M_pSingleAssignment->_M_connectedSources._M_links._M_vector._M_index),
@@ -3258,7 +3258,7 @@ Concurrency::join<*,*>::_MessageArray{
 			")"
 		)
 	)
-	
+
 	children (
 		#(
 			#([size]: $e._M_count),
@@ -3286,7 +3286,7 @@ Concurrency::join<*,*>::_SavedMessageIdArray{
 			")"
 		)
 	)
-	
+
 	children (
 		#(
 			#([size]: $e._M_count),
@@ -3316,7 +3316,7 @@ Concurrency::join<*,*>{
 			")"
 		)
 	)
-	
+
 	children (
 		#(
 			#([join_type]: (Concurrency::join_type)$T2),
@@ -3349,7 +3349,7 @@ Concurrency::multitype_join<*,*>{
 			$e._M_sourceTuple
 		)
 	)
-	
+
 	children (
 		#(
 			#([join_type]: (Concurrency::join_type)$T2),
@@ -3371,12 +3371,12 @@ Concurrency::multitype_join<*,*>{
 ;  Concurrency::timer from <agents.h>
 ;------------------------------------------------------------------------------
 Concurrency::timer<*>{
-	preview ( 
+	preview (
 		#(
 			$e._M_state
 		)
 	)
-	
+
 	children (
 		#(
 			#(state: $e._M_state),
@@ -3397,7 +3397,7 @@ Concurrency::timer<*>{
 ;  Concurrency::details::UMSThreadScheduler from <UMSThreadScheduler.h>
 ;------------------------------------------------------------------------------
 Concurrency::details::SchedulerBase|Concurrency::details::ThreadScheduler|Concurrency::details::UMSThreadScheduler{
-	preview ( 
+	preview (
 		#(
 			"[",
 			$e.m_id,
@@ -3426,7 +3426,7 @@ Concurrency::details::SchedulerBase|Concurrency::details::ThreadScheduler|Concur
 ;  Concurrency::details::FairScheduleGroup from <FairScheduleGroup.h>
 ;------------------------------------------------------------------------------
 Concurrency::details::ScheduleGroupBase|Concurrency::details::CacheLocalScheduleGroup|Concurrency::details::FairScheduleGroup{
-	preview ( 
+	preview (
 		#(
 			"[",
 			$e.m_id,
@@ -3451,7 +3451,7 @@ Concurrency::details::ScheduleGroupBase|Concurrency::details::CacheLocalSchedule
 ;  Concurrency::details::UMSThreadInternalContext from <UMSThreadInternalContext.h>
 ;------------------------------------------------------------------------------
 Concurrency::details::ContextBase|Concurrency::details::InternalContextBase|Concurrency::details::ThreadInternalContext|Concurrency::details::UMSThreadInternalContext{
-	preview ( 
+	preview (
 		#(
 			"[",
 			$e.m_threadId,
@@ -3478,7 +3478,7 @@ Concurrency::details::ContextBase|Concurrency::details::InternalContextBase|Conc
 ;  Concurrency::details::ExternalContextBase from <ExternalContextBase.h>
 ;------------------------------------------------------------------------------
 Concurrency::details::ExternalContextBase{
-	preview ( 
+	preview (
 		#(
 			"[",
 			$e.m_threadId,
@@ -3502,7 +3502,7 @@ Concurrency::details::ExternalContextBase{
 ;  Concurrency::SchedulerPolicy from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::SchedulerPolicy{
-	preview ( 
+	preview (
 		#(
 			$e._M_pPolicyBag->_M_values._M_specificValues._M_schedulerKind,
 			", Min=",
@@ -3531,7 +3531,7 @@ Concurrency::SchedulerPolicy{
 ;  Concurrency::event from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::event{
-	preview ( 
+	preview (
 		#(
 			#if ($e._M_pWaitChain == 1) ("set")
 			#else ("not_set")
@@ -3550,7 +3550,7 @@ Concurrency::event{
 ;  Concurrency::critical_section from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::critical_section{
-	preview ( 
+	preview (
 		#(
 			#if ($e._M_pHead != 0) ("locked")
 			#else ("not_locked")
@@ -3569,7 +3569,7 @@ Concurrency::critical_section{
 ;  Concurrency::critical_section::scoped_lock from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::critical_section::scoped_lock{
-	preview ( 
+	preview (
 		#(
 			$e._M_critical_section
 		)
@@ -3586,7 +3586,7 @@ Concurrency::critical_section::scoped_lock{
 ;  Concurrency::reader_writer_lock from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::reader_writer_lock{
-	preview ( 
+	preview (
 		#(
 			#if (($e._M_lockState < 8) && ($e._M_lockState & 2)) ("held_by_writer")
 			#elif ($e._M_lockState >= 8) (
@@ -3615,7 +3615,7 @@ Concurrency::reader_writer_lock{
 ;  Concurrency::reader_writer_lock::scoped_lock_read from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::reader_writer_lock::scoped_lock|Concurrency::reader_writer_lock::scoped_lock_read{
-	preview ( 
+	preview (
 		#(
 			$e._M_reader_writer_lock
 		)
@@ -3632,7 +3632,7 @@ Concurrency::reader_writer_lock::scoped_lock|Concurrency::reader_writer_lock::sc
 ;  Concurrency::details::_TaskCollectionBase from <concrt.h>
 ;------------------------------------------------------------------------------
 Concurrency::details::_TaskCollectionBase{
-	preview ( 
+	preview (
 		#(
 			#if ((((int)$e._M_pException & ~0x3) != 0) && (((int)$e._M_pException & ~0x3) != 0xC)) ("exception")
 			#else ("no_exception")
@@ -3652,7 +3652,7 @@ Concurrency::details::_TaskCollectionBase{
 ;  Concurrency::structured_task_group from <ppl.h>
 ;------------------------------------------------------------------------------
 Concurrency::task_group|Concurrency::structured_task_group{
-	preview ( 
+	preview (
 		#(
 			#if ((((int)$e._M_task_collection._M_pException & ~0x3) != 0) && (((int)$e._M_task_collection._M_pException & ~0x3) != 0xC)) ("exception")
 			#else ("no_exception")
@@ -3671,7 +3671,7 @@ Concurrency::task_group|Concurrency::structured_task_group{
 ;  Concurrency::task_handle from <ppl.h>
 ;------------------------------------------------------------------------------
 Concurrency::task_handle<*>{
-	preview ( 
+	preview (
 		#(
 			$e._M_function
 		)
@@ -3702,7 +3702,7 @@ Concurrency::combinable<*>{
 			) : $e._M_value,
 			")"
 		)
-	) 
+	)
 	children(
 		#(
 			#array(
@@ -3730,12 +3730,12 @@ Concurrency::concurrent_vector<*,*>{
 				expr: #(
 						 #if (($i >> 1) == 0) ((($T1*)$e._My_segment._M_value[0]._My_array)[$i])
 						 #else ((($T1*)$e._My_segment._M_value[__log2($i)]._My_array)[$i - (0x1 << __log2($i))])
-					   ), 
+					   ),
 				size: $e._My_early_size._M_value
 			),
 			")"
 		)
-	) 
+	)
 	children(
 		#(
 			[size] : $e._My_early_size._M_value,
@@ -3759,7 +3759,7 @@ Concurrency::details::_Vector_iterator<Concurrency::concurrent_vector<*,*>,*>{
 			#if (($e._My_index >> 1) == 0) ((($T1*)$e._My_vector->_My_segment._M_value[0]._My_array)[$e._My_index])
 			#else ((($T1*)$e._My_vector->_My_segment._M_value[__log2($e._My_index)]._My_array)[$e._My_index - (0x1 << __log2($e._My_index))])
 		)
-	) 
+	)
 	children(
 		#(
 			[ptr]: #if (($e._My_index >> 1) == 0) (&((($T1*)$e._My_vector->_My_segment._M_value[0]._My_array)[$e._My_index]))
@@ -3850,7 +3850,7 @@ Concurrency::details::_Concurrent_queue_iterator<Concurrency::concurrent_queue<*
 		#(
 			*(($T1*)$e._My_item)
 		)
-	) 
+	)
 	children(
 		#(
 			[ptr]: (($T1*)$e._My_item)

@@ -16,18 +16,17 @@
 #include "../mat4x2.hpp"
 
 #if GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_EXT_matrix_uint4x2 extension included")
+#pragma message("GLM: GLM_EXT_matrix_uint4x2 extension included")
 #endif
 
-namespace glm
-{
-	/// @addtogroup ext_matrix_uint4x2
-	/// @{
+namespace glm {
+/// @addtogroup ext_matrix_uint4x2
+/// @{
 
-	/// Unsigned integer 4x2 matrix.
-	///
-	/// @see ext_matrix_uint4x2
-	typedef mat<4, 2, uint, defaultp>	umat4x2;
+/// Unsigned integer 4x2 matrix.
+///
+/// @see ext_matrix_uint4x2
+typedef mat<4, 2, uint, defaultp> umat4x2;
 
-	/// @}
-}//namespace glm
+/// @}
+} // namespace glm

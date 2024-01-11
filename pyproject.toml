@@ -49,7 +49,7 @@ gs-train = "gs_toolkit.scripts.train:entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["gs_toolkit", "third_party/*"]
+include = ["gs_toolkit"]
 exclude = []
 namespaces = false
 

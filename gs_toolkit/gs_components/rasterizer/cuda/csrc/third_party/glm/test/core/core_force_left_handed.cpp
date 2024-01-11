@@ -1,12 +1,10 @@
 #define GLM_FORCE_LEFT_HANDED
 
-#include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <glm/glm.hpp>
 
-int main()
-{
-	int Error = 0;
+int main() {
+  int Error = 0;
 
-	return Error;
+  return Error;
 }
-

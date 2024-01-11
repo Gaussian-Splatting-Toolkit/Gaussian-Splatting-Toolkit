@@ -1,5 +1,5 @@
-attribute 
-const 
+attribute
+const
 uniform
 varying
 break
@@ -87,7 +87,7 @@ cast
 namespace
 using
 
-layout 
+layout
 location
 smooth
 flat

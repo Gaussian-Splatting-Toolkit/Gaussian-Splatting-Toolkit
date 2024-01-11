@@ -16,23 +16,22 @@
 #include "../mat4x4.hpp"
 
 #if GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_EXT_matrix_int4x4 extension included")
+#pragma message("GLM: GLM_EXT_matrix_int4x4 extension included")
 #endif
 
-namespace glm
-{
-	/// @addtogroup ext_matrix_int4x4
-	/// @{
+namespace glm {
+/// @addtogroup ext_matrix_int4x4
+/// @{
 
-	/// Signed integer 4x4 matrix.
-	///
-	/// @see ext_matrix_int4x4
-	typedef mat<4, 4, int, defaultp>	imat4x4;
+/// Signed integer 4x4 matrix.
+///
+/// @see ext_matrix_int4x4
+typedef mat<4, 4, int, defaultp> imat4x4;
 
-	/// Signed integer 4x4 matrix.
-	///
-	/// @see ext_matrix_int4x4
-	typedef mat<4, 4, int, defaultp>	imat4;
+/// Signed integer 4x4 matrix.
+///
+/// @see ext_matrix_int4x4
+typedef mat<4, 4, int, defaultp> imat4;
 
-	/// @}
-}//namespace glm
+/// @}
+} // namespace glm

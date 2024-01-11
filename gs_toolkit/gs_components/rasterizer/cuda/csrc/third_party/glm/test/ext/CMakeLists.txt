@@ -52,4 +52,3 @@ glmCreateTestGTC(ext_vector_uint4_sized)
 glmCreateTestGTC(ext_vector_reciprocal)
 glmCreateTestGTC(ext_vector_relational)
 glmCreateTestGTC(ext_vector_ulp)
-

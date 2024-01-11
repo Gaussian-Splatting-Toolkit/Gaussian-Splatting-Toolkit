@@ -13,17 +13,18 @@
 #pragma once
 
 #if defined(GLM_FORCE_MESSAGES) && !defined(GLM_EXT_INCLUDED)
-#	ifndef GLM_ENABLE_EXPERIMENTAL
-#		pragma message("GLM: GLM_GTX_hash is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it.")
-#	else
-#		pragma message("GLM: GLM_GTX_hash extension included")
-#	endif
+#ifndef GLM_ENABLE_EXPERIMENTAL
+#pragma message(                                                               \
+    "GLM: GLM_GTX_hash is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it.")
+#else
+#pragma message("GLM: GLM_GTX_hash extension included")
+#endif
 #endif
 
+#include "../gtc/vec1.hpp"
 #include "../vec2.hpp"
 #include "../vec3.hpp"
 #include "../vec4.hpp"
-#include "../gtc/vec1.hpp"
 
 #include "../gtc/quaternion.hpp"
 #include "../gtx/dual_quaternion.hpp"
@@ -143,4 +144,4 @@ namespace std
 
 #include "hash.inl"
 
-#endif //GLM_LANG & GLM_LANG_CXX11
+#endif // GLM_LANG & GLM_LANG_CXX11

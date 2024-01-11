@@ -16,17 +16,15 @@
 #include "../detail/type_vec1.hpp"
 
 #if GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_EXT_vector_uint1 extension included")
+#pragma message("GLM: GLM_EXT_vector_uint1 extension included")
 #endif
 
-namespace glm
-{
-	/// @addtogroup ext_vector_uint1
-	/// @{
+namespace glm {
+/// @addtogroup ext_vector_uint1
+/// @{
 
-	/// 1 component vector of unsigned integer numbers.
-	typedef vec<1, unsigned int, defaultp>			uvec1;
+/// 1 component vector of unsigned integer numbers.
+typedef vec<1, unsigned int, defaultp> uvec1;
 
-	/// @}
-}//namespace glm
-
+/// @}
+} // namespace glm

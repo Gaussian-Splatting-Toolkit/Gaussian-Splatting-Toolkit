@@ -137,10 +137,10 @@ a {
 	background-color: #FFFFFF;
 	padding-top:8px;
 	padding-bottom:8px;
-	padding-left:32px; 
+	padding-left:32px;
 	padding-right:32px;
 	margin:0px;
-	margin-left:auto; 
+	margin-left:auto;
 	margin-right:auto;
 	width:1216px;
 	border-bottom-left-radius: 8px;
@@ -174,11 +174,11 @@ a.elRef {
 }
 
 a.code, a.code:visited, a.line, a.line:visited {
-	color: #4665A2; 
+	color: #4665A2;
 }
 
 a.codeRef, a.codeRef:visited, a.lineRef, a.lineRef:visited {
-	color: #4665A2; 
+	color: #4665A2;
 }
 
 /* @end */
@@ -324,7 +324,7 @@ p.formulaDsp {
 }
 
 img.formulaDsp {
-	
+
 }
 
 img.formulaInl {
@@ -381,20 +381,20 @@ span.charliteral {
 	color: #008080
 }
 
-span.vhdldigit { 
-	color: #ff00ff 
+span.vhdldigit {
+	color: #ff00ff
 }
 
-span.vhdlchar { 
-	color: #000000 
+span.vhdlchar {
+	color: #000000
 }
 
-span.vhdlkeyword { 
-	color: #700070 
+span.vhdlkeyword {
+	color: #700070
 }
 
-span.vhdllogic { 
-	color: #ff0000 
+span.vhdllogic {
+	color: #ff0000
 }
 
 blockquote {
@@ -589,9 +589,9 @@ table.memberdecls {
 }
 
 .memdoc, dl.reflist dd {
-        border-bottom: 1px solid #bf6000;      
-        border-left: 1px solid #bf6000;      
-        border-right: 1px solid #bf6000; 
+        border-bottom: 1px solid #bf6000;
+        border-left: 1px solid #bf6000;
+        border-right: 1px solid #bf6000;
         padding: 6px 10px 2px 10px;
         border-top-width: 0;
         background-image:url('nav_g.png');
@@ -642,18 +642,18 @@ dl.reflist dd {
 .params, .retval, .exception, .tparams {
         margin-left: 0px;
         padding-left: 0px;
-}       
+}
 
 .params .paramname, .retval .paramname {
         font-weight: bold;
         vertical-align: top;
 }
-        
+
 .params .paramtype {
         font-style: italic;
         vertical-align: top;
-}       
-        
+}
+
 .params .paramdir {
         font-family: "courier new",courier,monospace;
         vertical-align: top;
@@ -905,8 +905,8 @@ table.fieldtable {
 
 .fieldtable td.fielddoc p:first-child {
         margin-top: 0px;
-}       
-        
+}
+
 .fieldtable td.fielddoc p:last-child {
         margin-bottom: 2px;
 }
@@ -980,7 +980,7 @@ table.fieldtable {
 	outline: none;
 	color: #bf6000;
 	font-family: 'Lucida Grande',Geneva,Helvetica,Arial,sans-serif;
-	text-decoration: none;        
+	text-decoration: none;
 }
 
 .navpath li.navelem a:hover
@@ -1034,7 +1034,7 @@ div.header
 
 	padding:0px;
 	margin:0px;
-	margin-left:auto; 
+	margin-left:auto;
 	margin-right:auto;
 	width:1280px;
 }
@@ -1123,12 +1123,12 @@ dl.section dd {
 	vertical-align: bottom;
 	border-collapse: separate;
 }
- 
+
 #projectlogo img
-{ 
+{
 	border: 0px none;
 }
- 
+
 #projectalign
 {
         vertical-align: middle;
@@ -1141,7 +1141,7 @@ dl.section dd {
 	padding: 2px 0px;
 	color: #FF8000;
 }
-    
+
 #projectbrief
 {
 	font: 120% Tahoma, Arial,sans-serif;
@@ -1241,7 +1241,7 @@ div.toc ul {
         list-style: none outside none;
         border: medium none;
         padding: 0px;
-}       
+}
 
 div.toc li.level1 {
         margin-left: 0px;
@@ -1470,7 +1470,7 @@ tr.heading h2 {
 
 #top
 {
-	margin-left:auto; 
+	margin-left:auto;
 	margin-right:auto;
 	width:1280px;
 }
@@ -1493,4 +1493,3 @@ tr.heading h2 {
     display:inline;
   }
 }
-

@@ -384,5 +384,3 @@ script:
   - cd ./build_test_cmake
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER $TRAVIS_BUILD_DIR/test/cmake/ -DCMAKE_PREFIX_PATH=$TRAVIS_BUILD_DIR/install
   - cmake --build .
-
-

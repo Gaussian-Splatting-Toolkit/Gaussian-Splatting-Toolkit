@@ -594,7 +594,7 @@ glm::mat4 camera(float Translate, glm::vec2 const& Rotate)
 - Removed GLM_FORCE_CUDA, Cuda is implicitly detected
 - Separated Apple Clang and LLVM compiler detection
 - Used pragma once
-- Undetected C++ compiler automatically compile with GLM_FORCE_CXX98 and 
+- Undetected C++ compiler automatically compile with GLM_FORCE_CXX98 and
   GLM_FORCE_PURE
 - Added not function (from GLSL specification) on VC12
 - Optimized bitfieldReverse and bitCount functions
@@ -734,7 +734,7 @@ glm::mat4 camera(float Translate, glm::vec2 const& Rotate)
 ---
 ### [GLM 0.9.4.6](https://github.com/g-truc/glm/releases/tag/0.9.4.6) - 2013-09-20
 - Fixed detection to select the last known compiler if newer version #106
-- Fixed is_int and is_uint code duplication with GCC and C++11 #107 
+- Fixed is_int and is_uint code duplication with GCC and C++11 #107
 - Fixed test suite build while using Clang in C++11 mode
 - Added c++1y mode support in CMake test suite
 - Removed ms extension mode to CMake when no using Visual C++
@@ -790,7 +790,7 @@ glm::mat4 camera(float Translate, glm::vec2 const& Rotate)
 - Fixed GCC warnings
 - Fixed packDouble2x32 on Xcode
 - Fixed mix for vec4 SSE implementation
-- Fixed 0x2013 dash character in comments that cause issue in Windows 
+- Fixed 0x2013 dash character in comments that cause issue in Windows
   Japanese mode
 - Fixed documentation warnings
 - Fixed CUDA warnings
@@ -878,7 +878,7 @@ glm::mat4 camera(float Translate, glm::vec2 const& Rotate)
 - Added new swizzle operators declared as functions
 - Added GLSL 4.20 length for vector and matrix types
 - Promoted GLM_GTC_noise extension: simplex, perlin, periodic noise functions
-- Promoted GLM_GTC_random extension: linear, gaussian and various random number 
+- Promoted GLM_GTC_random extension: linear, gaussian and various random number
 generation distribution
 - Added GLM_GTX_constants: provides useful constants
 - Added extension versioning
@@ -1227,4 +1227,3 @@ generation distribution
 - Add bvec2, bvec3, bvec4 GLSL types
 - Add mat2, mat3, mat4 GLSL types
 - Add almost all functions
-

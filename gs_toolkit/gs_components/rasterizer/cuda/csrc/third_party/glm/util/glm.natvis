@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- 
+<!--
   GLM debugger visualizers for Visual Studio
-  
+
   Makes debugging code using GLM easier by making data more easily accessible
-  from the debugger watch windows. 
-  
-  For example, a variable declared like this: 
-  
+  from the debugger watch windows.
+
+  For example, a variable declared like this:
+
   glm::vec4 v = glm::vec4(1, 2, 3, 4);
-  
+
   Will show up like this in the default debugger windows:
-  
+
    Name    Value
   ..............................................................
     v      {x=1.000000 r=1.000000 s=1.000000 y=2.000000 ...}
-  
+
   But if you use this file, it will show up like this:
-  
+
    Name   Value
   ..................
     v     [1 2 3 4]
-  
+
   === How to Use ===
-  
+
   Copy this file to the project directory of each project using GLM, or just copy it to
-  
+
   %USERPROFILE%\Douments\Visual Studio 2019\Visualizers\ (replace '2019' when necessary)
   or
   %VSINSTALLDIR%\Common7\Packages\Debugger\Visualizers\ (requires admin access)
-  
+
   if you want to use this from every project.
-  See also https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects 
+  See also https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects
 -->
 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
@@ -42,7 +42,7 @@
       <Item Name="x">x,g</Item>
     </Expand>
   </Type>
-  
+
   <Type Name="glm::vec&lt;2,*,*&gt;">
     <DisplayString>[{x,g} {y,g}]</DisplayString>
     <Expand HideRawView="1">
@@ -103,7 +103,7 @@
       <Item Name="w">w</Item>
     </Expand>
   </Type>
-  
+
   <Type Name="glm::vec&lt;2,float,*&gt;" Priority="High">
     <DisplayString>[{x,g} {y,g}]</DisplayString>
     <Expand HideRawView="1">
