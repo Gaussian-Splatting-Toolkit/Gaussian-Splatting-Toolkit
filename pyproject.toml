@@ -24,6 +24,8 @@ dependencies = [
     "opencv-python",
     "open3d",
     "pathos",
+    "pytorch_msssim",
+    "torchmetrics",
     "plyfile==0.8.1",
     "rasterizer @ file:///workspace/gs_toolkit/gs_components",
     "rawpy",
