@@ -1,293 +1,591 @@
+"""
+Code to train model.
+"""
+from __future__ import annotations
+
+import dataclasses
+import functools
 import os
-import uuid
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from threading import Lock
+from typing import Dict, List, Literal, Optional, Tuple, Type, cast, DefaultDict
+from collections import defaultdict
 import torch
-from torch import nn
-from random import randint
-from argparse import Namespace
-from dataclasses import dataclass
-from rich.progress import track
-from gs_toolkit.data.dataparsers.base_dataparser import GroupParams
-from gs_toolkit.model_components.scene import Scene
-from gs_toolkit.model_components.renderer import render
-from gs_toolkit.model_components.losses import l1_loss, ssim
-from gs_toolkit.models.gaussian_splatting import GaussianModel
-from gs_toolkit.utils.image_utils import psnr
+from gs_toolkit.configs.experiment_config import ExperimentConfig
+from gs_toolkit.engine.callbacks import (
+    TrainingCallback,
+    TrainingCallbackAttributes,
+    TrainingCallbackLocation,
+)
+from gs_toolkit.engine.optimizers import Optimizers
+from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
+from gs_toolkit.utils import profiler, writer
+from gs_toolkit.utils.decorators import (
+    check_eval_enabled,
+    check_main_thread,
+    check_viewer_enabled,
+)
+from gs_toolkit.utils.misc import step_check
+from gs_toolkit.utils.rich_utils import CONSOLE
+from gs_toolkit.utils.writer import EventName, TimeWriter
+from gs_toolkit.viewer_legacy.server.viewer_state import ViewerLegacyState
+from gs_toolkit.viewer.viewer import Viewer as ViewerState
+from rich import box, style
+from rich.panel import Panel
+from rich.table import Table
+from torch.cuda.amp.grad_scaler import GradScaler
+
+TRAIN_INTERATION_OUTPUT = Tuple[
+    torch.Tensor, Dict[str, torch.Tensor], Dict[str, torch.Tensor]
+]
+TORCH_DEVICE = str
 
 
 @dataclass
-class TrainerConfig:
-    pass
+class TrainerConfig(ExperimentConfig):
+    """Configuration for training regimen"""
+
+    _target: Type = field(default_factory=lambda: Trainer)
+    """target class to instantiate"""
+    steps_per_save: int = 1000
+    """Number of steps between saves."""
+    steps_per_eval_batch: int = 500
+    """Number of steps between randomly sampled batches of rays."""
+    steps_per_eval_image: int = 500
+    """Number of steps between single eval images."""
+    steps_per_eval_all_images: int = 25000
+    """Number of steps between eval all images."""
+    max_num_iterations: int = 1000000
+    """Maximum number of iterations to run."""
+    mixed_precision: bool = False
+    """Whether or not to use mixed precision for training."""
+    use_grad_scaler: bool = False
+    """Use gradient scaler even if the automatic mixed precision is disabled."""
+    save_only_latest_checkpoint: bool = True
+    """Whether to only save the latest checkpoint or all checkpoints."""
+    # optional parameters if we want to resume training
+    load_dir: Optional[Path] = None
+    """Optionally specify a pre-trained model directory to load from."""
+    load_step: Optional[int] = None
+    """Optionally specify model step to load from; if none, will find most recent model in load_dir."""
+    load_config: Optional[Path] = None
+    """Path to config YAML file."""
+    load_checkpoint: Optional[Path] = None
+    """Path to checkpoint file."""
+    log_gradients: bool = False
+    """Optionally log gradients during training"""
+    gradient_accumulation_steps: Dict = field(default_factory=lambda: {})
+    """Number of steps to accumulate gradients over. Contains a mapping of {param_group:num}"""
 
 
 class Trainer:
-    def __init__(self) -> None:
-        pass
+    """Trainer class
 
-    def training(
-        self,
-        dataset: GroupParams,
-        opt: GroupParams,
-        pipe: GroupParams,
-        testing_iterations: list[int],
-        saving_iterations: list[int],
-        checkpoint_iterations: int,
-        checkpoint: str,
-        debug_from: int,
-        start_entropy_iterations: int,
-        entropy_iterations_num: int,
-    ):
-        first_iter = 0
-        tb_writer = self.prepare_output_and_logger(dataset)
-        gaussians = GaussianModel(dataset.sh_degree)
-        scene = Scene(dataset, gaussians)
-        gaussians.training_setup(opt)
-        if checkpoint:
-            (model_params, first_iter) = torch.load(checkpoint)
-            gaussians.restore(model_params, opt)
+    Args:
+        config: The configuration object.
+        local_rank: Local rank of the process.
+        world_size: World size of the process.
 
-        bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
-        background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+    Attributes:
+        config: The configuration object.
+        local_rank: Local rank of the process.
+        world_size: World size of the process.
+        device: The device to run the training on.
+        pipeline: The pipeline object.
+        optimizers: The optimizers object.
+        callbacks: The callbacks object.
+        training_state: Current model training state.
+    """
 
-        iter_start = torch.cuda.Event(enable_timing=True)
-        iter_end = torch.cuda.Event(enable_timing=True)
+    pipeline: VanillaPipeline
+    optimizers: Optimizers
+    callbacks: List[TrainingCallback]
 
-        viewpoint_stack = None
-        ema_loss_for_log = 0.0
-        progress_bar = track(
-            range(first_iter, opt.iterations), description="Training progress"
+    def __init__(
+        self, config: TrainerConfig, local_rank: int = 0, world_size: int = 1
+    ) -> None:
+        self.train_lock = Lock()
+        self.config = config
+        self.local_rank = local_rank
+        self.world_size = world_size
+        self.device: TORCH_DEVICE = config.machine.device_type
+        if self.device == "cuda":
+            self.device += f":{local_rank}"
+        self.mixed_precision: bool = self.config.mixed_precision
+        self.use_grad_scaler: bool = self.mixed_precision or self.config.use_grad_scaler
+        self.training_state: Literal["training", "paused", "completed"] = "training"
+        self.gradient_accumulation_steps: DefaultDict = defaultdict(lambda: 1)
+        self.gradient_accumulation_steps.update(self.config.gradient_accumulation_steps)
+
+        if self.device == "cpu":
+            self.mixed_precision = False
+            CONSOLE.print("Mixed precision is disabled for CPU training.")
+        self._start_step: int = 0
+        # optimizers
+        self.grad_scaler = GradScaler(enabled=self.use_grad_scaler)
+
+        self.base_dir: Path = config.get_base_dir()
+        # directory to save checkpoints
+        self.checkpoint_dir: Path = config.get_checkpoint_dir()
+        CONSOLE.log(f"Saving checkpoints to: {self.checkpoint_dir}")
+
+        self.viewer_state = None
+
+    def setup(self, test_mode: Literal["test", "val", "inference"] = "val") -> None:
+        """Setup the Trainer by calling other setup functions.
+
+        Args:
+            test_mode:
+                'val': loads train/val datasets into memory
+                'test': loads train/test datasets into memory
+                'inference': does not load any dataset into memory
+        """
+        self.pipeline = self.config.pipeline.setup(
+            device=self.device,
+            test_mode=test_mode,
+            world_size=self.world_size,
+            local_rank=self.local_rank,
+            grad_scaler=self.grad_scaler,
         )
-        first_iter += 1
-        for iteration in range(first_iter, opt.iterations + 1):
-            iter_start.record()
+        self.optimizers = self.setup_optimizers()
 
-            gaussians.update_learning_rate(iteration)
-
-            # Every 1000 its we increase the levels of SH up to a maximum degree
-            if iteration % 1000 == 0:
-                gaussians.oneupSHdegree()
-
-            # Pick a random Camera
-            if not viewpoint_stack:
-                viewpoint_stack = scene.getTrainCameras().copy()
-            viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack) - 1))
-
-            # Render
-            if (iteration - 1) == debug_from:
-                pipe.debug = True
-
-            bg = torch.rand((3), device="cuda") if opt.random_background else background
-
-            render_pkg = render(viewpoint_cam, gaussians, pipe, bg)
-            image, viewspace_point_tensor, visibility_filter, radii = (
-                render_pkg["render"],
-                render_pkg["viewspace_points"],
-                render_pkg["visibility_filter"],
-                render_pkg["radii"],
+        # set up viewer if enabled
+        viewer_log_path = self.base_dir / self.config.viewer.relative_log_filename
+        self.viewer_state, banner_messages = None, None
+        if self.config.is_viewer_legacy_enabled() and self.local_rank == 0:
+            datapath = self.config.data
+            if datapath is None:
+                datapath = self.base_dir
+            self.viewer_state = ViewerLegacyState(
+                self.config.viewer,
+                log_filename=viewer_log_path,
+                datapath=datapath,
+                pipeline=self.pipeline,
+                trainer=self,
+                train_lock=self.train_lock,
             )
-
-            # Loss
-            gt_image = viewpoint_cam.original_image.cuda()
-            Ll1 = l1_loss(image, gt_image)
-            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (
-                1.0 - ssim(image, gt_image)
+            banner_messages = [f"Legacy viewer at: {self.viewer_state.viewer_url}"]
+        if self.config.is_viewer_enabled() and self.local_rank == 0:
+            datapath = self.config.data
+            if datapath is None:
+                datapath = self.base_dir
+            self.viewer_state = ViewerState(
+                self.config.viewer,
+                log_filename=viewer_log_path,
+                datapath=datapath,
+                pipeline=self.pipeline,
+                trainer=self,
+                train_lock=self.train_lock,
+                share=self.config.viewer.make_share_url,
             )
-            loss.backward()
+            banner_messages = [f"Viewer at: {self.viewer_state.viewer_url}"]
+        self._check_viewer_warnings()
 
-            if (
-                iteration > start_entropy_iterations
-                and iteration < start_entropy_iterations + entropy_iterations_num
-            ):
-                # For the values of opacity that are close to 0 or 1, we use a cross entropy loss
-                loss_entropy = nn.BCELoss()
-                label = torch.zeros_like(
-                    gaussians.get_opacity, dtype=torch.long, device="cuda"
-                )
+        self._load_checkpoint()
 
-                # Make the label 1 for the values of opacity that are greater than 0.5
-                label[gaussians.get_opacity > 0.5] = 1
-                loss_entropy = loss_entropy(gaussians.get_opacity, label.float())
-                loss_entropy.backward()
-
-            iter_end.record()
-
-            with torch.no_grad():
-                # Progress bar
-                ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
-                if iteration % 10 == 0:
-                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
-                    progress_bar.update(10)
-                if iteration == opt.iterations:
-                    progress_bar.close()
-
-                # Log and save
-                self.training_report(
-                    tb_writer,
-                    iteration,
-                    Ll1,
-                    loss,
-                    l1_loss,
-                    iter_start.elapsed_time(iter_end),
-                    testing_iterations,
-                    scene,
-                    render,
-                    (pipe, background),
-                )
-                if iteration in saving_iterations:
-                    print("\n[ITER {}] Saving Gaussians".format(iteration))
-                    scene.save(iteration)
-
-                # Densification
-                if iteration < opt.densify_until_iter:
-                    # Keep track of max radii in image-space for pruning
-                    gaussians.max_radii2D[visibility_filter] = torch.max(
-                        gaussians.max_radii2D[visibility_filter],
-                        radii[visibility_filter],
-                    )
-                    gaussians.add_densification_stats(
-                        viewspace_point_tensor, visibility_filter
-                    )
-
-                    if (
-                        iteration > opt.densify_from_iter
-                        and iteration % opt.densification_interval == 0
-                    ):
-                        size_threshold = (
-                            20 if iteration > opt.opacity_reset_interval else None
-                        )
-                        gaussians.densify_and_prune(
-                            opt.densify_grad_threshold,
-                            0.005,
-                            scene.cameras_extent,
-                            size_threshold,
-                        )
-
-                    if iteration % opt.opacity_reset_interval == 0 or (
-                        dataset.white_background and iteration == opt.densify_from_iter
-                    ):
-                        gaussians.reset_opacity()
-
-                # Prune the gaussians whose opacity is less than 0.5
-                if iteration == start_entropy_iterations + entropy_iterations_num - 1:
-                    prune_mask = (gaussians.get_opacity < 0.5).squeeze()
-                    gaussians.prune_points(prune_mask)
-
-                # Optimizer step
-                if iteration < opt.iterations:
-                    gaussians.optimizer.step()
-                    gaussians.optimizer.zero_grad(set_to_none=True)
-
-                if iteration in checkpoint_iterations:
-                    print("\n[ITER {}] Saving Checkpoint".format(iteration))
-                    torch.save(
-                        (gaussians.capture(), iteration),
-                        scene.model_path + "/chkpnt" + str(iteration) + ".pth",
-                    )
-
-    def training_report(
-        self,
-        tb_writer,
-        iteration,
-        Ll1,
-        loss,
-        l1_loss,
-        elapsed,
-        testing_iterations,
-        scene: Scene,
-        renderFunc,
-        renderArgs,
-    ):
-        if tb_writer:
-            tb_writer.add_scalar("train_loss_patches/l1_loss", Ll1.item(), iteration)
-            tb_writer.add_scalar(
-                "train_loss_patches/total_loss", loss.item(), iteration
+        self.callbacks = self.pipeline.get_training_callbacks(
+            TrainingCallbackAttributes(
+                optimizers=self.optimizers,
+                grad_scaler=self.grad_scaler,
+                pipeline=self.pipeline,
             )
-            tb_writer.add_scalar("iter_time", elapsed, iteration)
+        )
 
-        # Report test and samples of training set
-        if iteration in testing_iterations:
-            torch.cuda.empty_cache()
-            validation_configs = (
-                {"name": "test", "cameras": scene.getTestCameras()},
-                {
-                    "name": "train",
-                    "cameras": [
-                        scene.getTrainCameras()[idx % len(scene.getTrainCameras())]
-                        for idx in range(5, 30, 5)
-                    ],
-                },
-            )
+        # set up writers/profilers if enabled
+        writer_log_path = self.base_dir / self.config.logging.relative_log_dir
+        writer.setup_event_writer(
+            self.config.is_wandb_enabled(),
+            self.config.is_tensorboard_enabled(),
+            self.config.is_comet_enabled(),
+            log_dir=writer_log_path,
+            experiment_name=self.config.experiment_name,
+            project_name=self.config.project_name,
+        )
+        writer.setup_local_writer(
+            self.config.logging,
+            max_iter=self.config.max_num_iterations,
+            banner_messages=banner_messages,
+        )
+        writer.put_config(
+            name="config", config_dict=dataclasses.asdict(self.config), step=0
+        )
+        profiler.setup_profiler(self.config.logging, writer_log_path)
 
-            for config in validation_configs:
-                if config["cameras"] and len(config["cameras"]) > 0:
-                    l1_test = 0.0
-                    psnr_test = 0.0
-                    for idx, viewpoint in enumerate(config["cameras"]):
-                        image = torch.clamp(
-                            renderFunc(viewpoint, scene.gaussians, *renderArgs)[
-                                "render"
-                            ],
-                            0.0,
-                            1.0,
-                        )
-                        gt_image = torch.clamp(
-                            viewpoint.original_image.to("cuda"), 0.0, 1.0
-                        )
-                        if tb_writer and (idx < 5):
-                            tb_writer.add_images(
-                                config["name"]
-                                + "_view_{}/render".format(viewpoint.image_name),
-                                image[None],
-                                global_step=iteration,
+    def setup_optimizers(self) -> Optimizers:
+        """Helper to set up the optimizers
+
+        Returns:
+            The optimizers object given the trainer config.
+        """
+        optimizer_config = self.config.optimizers.copy()
+        param_groups = self.pipeline.get_param_groups()
+        return Optimizers(optimizer_config, param_groups)
+
+    def train(self) -> None:
+        """Train the model."""
+        assert (
+            self.pipeline.datamanager.train_dataset is not None
+        ), "Missing DatsetInputs"
+
+        self.pipeline.datamanager.train_dataparser_outputs.save_dataparser_transform(
+            self.base_dir / "dataparser_transforms.json"
+        )
+
+        self._init_viewer_state()
+        with TimeWriter(writer, EventName.TOTAL_TRAIN_TIME):
+            num_iterations = self.config.max_num_iterations
+            step = 0
+            for step in range(self._start_step, self._start_step + num_iterations):
+                while self.training_state == "paused":
+                    time.sleep(0.01)
+                with self.train_lock:
+                    with TimeWriter(
+                        writer, EventName.ITER_TRAIN_TIME, step=step
+                    ) as train_t:
+                        self.pipeline.train()
+
+                        # training callbacks before the training iteration
+                        for callback in self.callbacks:
+                            callback.run_callback_at_location(
+                                step,
+                                location=TrainingCallbackLocation.BEFORE_TRAIN_ITERATION,
                             )
-                            if iteration == testing_iterations[0]:
-                                tb_writer.add_images(
-                                    config["name"]
-                                    + "_view_{}/ground_truth".format(
-                                        viewpoint.image_name
-                                    ),
-                                    gt_image[None],
-                                    global_step=iteration,
-                                )
-                        l1_test += l1_loss(image, gt_image).mean().double()
-                        psnr_test += psnr(image, gt_image).mean().double()
-                    psnr_test /= len(config["cameras"])
-                    l1_test /= len(config["cameras"])
-                    print(
-                        "\n[ITER {}] Evaluating {}: L1 {} PSNR {}".format(
-                            iteration, config["name"], l1_test, psnr_test
-                        )
+
+                        # time the forward pass
+                        loss, loss_dict, metrics_dict = self.train_iteration(step)
+
+                        # training callbacks after the training iteration
+                        for callback in self.callbacks:
+                            callback.run_callback_at_location(
+                                step,
+                                location=TrainingCallbackLocation.AFTER_TRAIN_ITERATION,
+                            )
+
+                # Skip the first two steps to avoid skewed timings that break the viewer rendering speed estimate.
+                if step > 1:
+                    writer.put_time(
+                        name=EventName.TRAIN_RAYS_PER_SEC,
+                        duration=self.world_size
+                        * self.pipeline.datamanager.get_train_rays_per_batch()
+                        / max(0.001, train_t.duration),
+                        step=step,
+                        avg_over_steps=True,
                     )
-                    if tb_writer:
-                        tb_writer.add_scalar(
-                            config["name"] + "/loss_viewpoint - l1_loss",
-                            l1_test,
-                            iteration,
-                        )
-                        tb_writer.add_scalar(
-                            config["name"] + "/loss_viewpoint - psnr",
-                            psnr_test,
-                            iteration,
-                        )
 
-            if tb_writer:
-                tb_writer.add_histogram(
-                    "scene/opacity_histogram", scene.gaussians.get_opacity, iteration
-                )
-                tb_writer.add_scalar(
-                    "total_points", scene.gaussians.get_xyz.shape[0], iteration
-                )
-            torch.cuda.empty_cache()
+                self._update_viewer_state(step)
 
-    def prepare_output_and_logger(self, args: GroupParams):
-        if not args.model_path:
-            if os.getenv("OAR_JOB_ID"):
-                unique_str = os.getenv("OAR_JOB_ID")
-            else:
-                unique_str = str(uuid.uuid4())
-            args.model_path = os.path.join("./output/", unique_str[0:10])
+                # a batch of train rays
+                if step_check(
+                    step, self.config.logging.steps_per_log, run_at_zero=True
+                ):
+                    writer.put_scalar(name="Train Loss", scalar=loss, step=step)
+                    writer.put_dict(
+                        name="Train Loss Dict", scalar_dict=loss_dict, step=step
+                    )
+                    writer.put_dict(
+                        name="Train Metrics Dict", scalar_dict=metrics_dict, step=step
+                    )
+                    # The actual memory allocated by Pytorch. This is likely less than the amount
+                    # shown in nvidia-smi since some unused memory can be held by the caching
+                    # allocator and some context needs to be created on GPU. See Memory management
+                    # (https://pytorch.org/docs/stable/notes/cuda.html#cuda-memory-management)
+                    # for more details about GPU memory management.
+                    writer.put_scalar(
+                        name="GPU Memory (MB)",
+                        scalar=torch.cuda.max_memory_allocated() / (1024**2),
+                        step=step,
+                    )
 
-        # Set up output folder
-        print("Output folder: {}".format(args.model_path))
-        os.makedirs(args.model_path, exist_ok=True)
-        with open(os.path.join(args.model_path, "cfg_args"), "w") as cfg_log_f:
-            cfg_log_f.write(str(Namespace(**vars(args))))
+                # Do not perform evaluation if there are no validation images
+                if self.pipeline.datamanager.eval_dataset:
+                    self.eval_iteration(step)
+
+                if step_check(step, self.config.steps_per_save):
+                    self.save_checkpoint(step)
+
+                writer.write_out_storage()
+
+        # save checkpoint at the end of training
+        self.save_checkpoint(step)
+
+        # write out any remaining events (e.g., total train time)
+        writer.write_out_storage()
+
+        table = Table(
+            title=None,
+            show_header=False,
+            box=box.MINIMAL,
+            title_style=style.Style(bold=True),
+        )
+        table.add_row("Config File", str(self.config.get_base_dir() / "config.yml"))
+        table.add_row("Checkpoint Directory", str(self.checkpoint_dir))
+        CONSOLE.print(
+            Panel(
+                table,
+                title="[bold][green]:tada: Training Finished :tada:[/bold]",
+                expand=False,
+            )
+        )
+
+        # after train end callbacks
+        for callback in self.callbacks:
+            callback.run_callback_at_location(
+                step=step, location=TrainingCallbackLocation.AFTER_TRAIN
+            )
+
+        if not self.config.viewer.quit_on_train_completion:
+            self._train_complete_viewer()
+
+    @check_main_thread
+    def _check_viewer_warnings(self) -> None:
+        """Helper to print out any warnings regarding the way the viewer/loggers are enabled"""
+        if (
+            (self.config.is_viewer_legacy_enabled() or self.config.is_viewer_enabled())
+            and not self.config.is_tensorboard_enabled()
+            and not self.config.is_wandb_enabled()
+            and not self.config.is_comet_enabled()
+        ):
+            string: str = (
+                "[NOTE] Not running eval iterations since only viewer is enabled.\n"
+                "Use [yellow]--vis {wandb, tensorboard, viewer+wandb, viewer+tensorboard}[/yellow] to run with eval."
+            )
+            CONSOLE.print(f"{string}")
+
+    @check_viewer_enabled
+    def _init_viewer_state(self) -> None:
+        """Initializes viewer scene with given train dataset"""
+        assert self.viewer_state and self.pipeline.datamanager.train_dataset
+        self.viewer_state.init_scene(
+            train_dataset=self.pipeline.datamanager.train_dataset,
+            train_state="training",
+            eval_dataset=self.pipeline.datamanager.eval_dataset,
+        )
+
+    @check_viewer_enabled
+    def _update_viewer_state(self, step: int) -> None:
+        """Updates the viewer state by rendering out scene with current pipeline
+        Returns the time taken to render scene.
+
+        Args:
+            step: current train step
+        """
+        assert self.viewer_state is not None
+        num_rays_per_batch: int = self.pipeline.datamanager.get_train_rays_per_batch()
+        try:
+            self.viewer_state.update_scene(step, num_rays_per_batch)
+        except RuntimeError:
+            time.sleep(0.03)  # sleep to allow buffer to reset
+            CONSOLE.log("Viewer failed. Continuing training.")
+
+    @check_viewer_enabled
+    def _train_complete_viewer(self) -> None:
+        """Let the viewer know that the training is complete"""
+        assert self.viewer_state is not None
+        self.training_state = "completed"
+        try:
+            self.viewer_state.training_complete()
+        except RuntimeError:
+            time.sleep(0.03)  # sleep to allow buffer to reset
+            CONSOLE.log("Viewer failed. Continuing training.")
+        CONSOLE.print("Use ctrl+c to quit", justify="center")
+        while True:
+            time.sleep(0.01)
+
+    @check_viewer_enabled
+    def _update_viewer_rays_per_sec(
+        self, train_t: TimeWriter, vis_t: TimeWriter, step: int
+    ) -> None:
+        """Performs update on rays/sec calculation for training
+
+        Args:
+            train_t: timer object carrying time to execute total training iteration
+            vis_t: timer object carrying time to execute visualization step
+            step: current step
+        """
+        train_num_rays_per_batch: int = (
+            self.pipeline.datamanager.get_train_rays_per_batch()
+        )
+        writer.put_time(
+            name=EventName.TRAIN_RAYS_PER_SEC,
+            duration=self.world_size
+            * train_num_rays_per_batch
+            / (train_t.duration - vis_t.duration),
+            step=step,
+            avg_over_steps=True,
+        )
+
+    def _load_checkpoint(self) -> None:
+        """Helper function to load pipeline and optimizer from prespecified checkpoint"""
+        load_dir = self.config.load_dir
+        load_checkpoint = self.config.load_checkpoint
+        if load_dir is not None:
+            load_step = self.config.load_step
+            if load_step is None:
+                print("Loading latest Nerfstudio checkpoint from load_dir...")
+                # NOTE: this is specific to the checkpoint name format
+                load_step = sorted(
+                    int(x[x.find("-") + 1 : x.find(".")]) for x in os.listdir(load_dir)
+                )[-1]
+            load_path: Path = load_dir / f"step-{load_step:09d}.ckpt"
+            assert load_path.exists(), f"Checkpoint {load_path} does not exist"
+            loaded_state = torch.load(load_path, map_location="cpu")
+            self._start_step = loaded_state["step"] + 1
+            # load the checkpoints for pipeline, optimizers, and gradient scalar
+            self.pipeline.load_pipeline(loaded_state["pipeline"], loaded_state["step"])
+            self.optimizers.load_optimizers(loaded_state["optimizers"])
+            if "schedulers" in loaded_state and self.config.load_scheduler:
+                self.optimizers.load_schedulers(loaded_state["schedulers"])
+            self.grad_scaler.load_state_dict(loaded_state["scalers"])
+            CONSOLE.print(f"Done loading Nerfstudio checkpoint from {load_path}")
+        elif load_checkpoint is not None:
+            assert (
+                load_checkpoint.exists()
+            ), f"Checkpoint {load_checkpoint} does not exist"
+            loaded_state = torch.load(load_checkpoint, map_location="cpu")
+            self._start_step = loaded_state["step"] + 1
+            # load the checkpoints for pipeline, optimizers, and gradient scalar
+            self.pipeline.load_pipeline(loaded_state["pipeline"], loaded_state["step"])
+            self.optimizers.load_optimizers(loaded_state["optimizers"])
+            if "schedulers" in loaded_state and self.config.load_scheduler:
+                self.optimizers.load_schedulers(loaded_state["schedulers"])
+            self.grad_scaler.load_state_dict(loaded_state["scalers"])
+            CONSOLE.print(f"Done loading Nerfstudio checkpoint from {load_checkpoint}")
+        else:
+            CONSOLE.print("No Nerfstudio checkpoint to load, so training from scratch.")
+
+    @check_main_thread
+    def save_checkpoint(self, step: int) -> None:
+        """Save the model and optimizers
+
+        Args:
+            step: number of steps in training for given checkpoint
+        """
+        # possibly make the checkpoint directory
+        if not self.checkpoint_dir.exists():
+            self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        # save the checkpoint
+        ckpt_path: Path = self.checkpoint_dir / f"step-{step:09d}.ckpt"
+        torch.save(
+            {
+                "step": step,
+                "pipeline": self.pipeline.module.state_dict()  # type: ignore
+                if hasattr(self.pipeline, "module")
+                else self.pipeline.state_dict(),
+                "optimizers": {
+                    k: v.state_dict() for (k, v) in self.optimizers.optimizers.items()
+                },
+                "schedulers": {
+                    k: v.state_dict() for (k, v) in self.optimizers.schedulers.items()
+                },
+                "scalers": self.grad_scaler.state_dict(),
+            },
+            ckpt_path,
+        )
+        # possibly delete old checkpoints
+        if self.config.save_only_latest_checkpoint:
+            # delete everything else in the checkpoint folder
+            for f in self.checkpoint_dir.glob("*"):
+                if f != ckpt_path:
+                    f.unlink()
+
+    @profiler.time_function
+    def train_iteration(self, step: int) -> TRAIN_INTERATION_OUTPUT:
+        """Run one iteration with a batch of inputs. Returns dictionary of model losses.
+
+        Args:
+            step: Current training step.
+        """
+
+        needs_zero = [
+            group
+            for group in self.optimizers.parameters.keys()
+            if step % self.gradient_accumulation_steps[group] == 0
+        ]
+        self.optimizers.zero_grad_some(needs_zero)
+        cpu_or_cuda_str: str = self.device.split(":")[0]
+        cpu_or_cuda_str = "cpu" if cpu_or_cuda_str == "mps" else cpu_or_cuda_str
+
+        with torch.autocast(device_type=cpu_or_cuda_str, enabled=self.mixed_precision):
+            _, loss_dict, metrics_dict = self.pipeline.get_train_loss_dict(step=step)
+            loss = functools.reduce(torch.add, loss_dict.values())
+        self.grad_scaler.scale(loss).backward()  # type: ignore
+        needs_step = [
+            group
+            for group in self.optimizers.parameters.keys()
+            if step % self.gradient_accumulation_steps[group]
+            == self.gradient_accumulation_steps[group] - 1
+        ]
+        self.optimizers.optimizer_scaler_step_some(self.grad_scaler, needs_step)
+
+        if self.config.log_gradients:
+            total_grad = 0
+            for tag, value in self.pipeline.model.named_parameters():
+                assert tag != "Total"
+                if value.grad is not None:
+                    grad = value.grad.norm()
+                    metrics_dict[f"Gradients/{tag}"] = grad  # type: ignore
+                    total_grad += grad
+
+            metrics_dict["Gradients/Total"] = cast(torch.Tensor, total_grad)  # type: ignore
+
+        scale = self.grad_scaler.get_scale()
+        self.grad_scaler.update()
+        # If the gradient scaler is decreased, no optimization step is performed so we should not step the scheduler.
+        if scale <= self.grad_scaler.get_scale():
+            self.optimizers.scheduler_step_all(step)
+
+        # Merging loss and metrics dict into a single output.
+        return loss, loss_dict, metrics_dict  # type: ignore
+
+    @check_eval_enabled
+    @profiler.time_function
+    def eval_iteration(self, step: int) -> None:
+        """Run one iteration with different batch/image/all image evaluations depending on step size.
+
+        Args:
+            step: Current training step.
+        """
+        # a batch of eval rays
+        if step_check(step, self.config.steps_per_eval_batch):
+            _, eval_loss_dict, eval_metrics_dict = self.pipeline.get_eval_loss_dict(
+                step=step
+            )
+            eval_loss = functools.reduce(torch.add, eval_loss_dict.values())
+            writer.put_scalar(name="Eval Loss", scalar=eval_loss, step=step)
+            writer.put_dict(
+                name="Eval Loss Dict", scalar_dict=eval_loss_dict, step=step
+            )
+            writer.put_dict(
+                name="Eval Metrics Dict", scalar_dict=eval_metrics_dict, step=step
+            )
+
+        # one eval image
+        if step_check(step, self.config.steps_per_eval_image):
+            with TimeWriter(writer, EventName.TEST_RAYS_PER_SEC, write=False) as test_t:
+                (
+                    metrics_dict,
+                    images_dict,
+                ) = self.pipeline.get_eval_image_metrics_and_images(step=step)
+            writer.put_time(
+                name=EventName.TEST_RAYS_PER_SEC,
+                duration=metrics_dict["num_rays"] / test_t.duration,
+                step=step,
+                avg_over_steps=True,
+            )
+            writer.put_dict(
+                name="Eval Images Metrics", scalar_dict=metrics_dict, step=step
+            )
+            group = "Eval Images"
+            for image_name, image in images_dict.items():
+                writer.put_image(name=group + "/" + image_name, image=image, step=step)
+
+        # all eval images
+        if step_check(step, self.config.steps_per_eval_all_images):
+            metrics_dict = self.pipeline.get_average_eval_image_metrics(step=step)
+            writer.put_dict(
+                name="Eval Images Metrics Dict (all images)",
+                scalar_dict=metrics_dict,
+                step=step,
+            )

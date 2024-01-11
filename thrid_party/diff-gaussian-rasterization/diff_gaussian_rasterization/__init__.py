@@ -10,7 +10,7 @@
 #
 
 from typing import NamedTuple
-import torch.nn as nn
+from torch import nn
 import torch
 from . import _C
 

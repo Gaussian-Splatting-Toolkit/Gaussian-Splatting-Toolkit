@@ -81,6 +81,8 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [ ] SLAM
   - [ ] SplaTAM
 - [ ] Visualization
+- [ ] Documentation
+- [ ] Tests
 
 ## License 📝
 
