@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Viser is used for the nerfstudio viewer backend """
+""" Viser is used for the gs_toolkit viewer backend """
 
 
 from .message_api import GuiHandle as GuiHandle

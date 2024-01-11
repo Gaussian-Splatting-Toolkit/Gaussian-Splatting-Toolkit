@@ -8,7 +8,7 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple, Literal
 from pathlib import Path
-from nerfstudio.viewer.control_panel import ControlPanel
+from gs_toolkit.viewer.control_panel import ControlPanel
 import splines
 import splines.quaternion
 import viser
@@ -489,7 +489,7 @@ def populate_render_tab(
     datapath: Path,
     control_panel: Optional[ControlPanel] = None,
 ) -> RenderTabState:
-    from nerfstudio.viewer.viewer import VISER_NERFSTUDIO_SCALE_RATIO
+    from gs_toolkit.viewer.viewer import VISER_NERFSTUDIO_SCALE_RATIO
 
     render_tab_state = RenderTabState(
         preview_render=False,

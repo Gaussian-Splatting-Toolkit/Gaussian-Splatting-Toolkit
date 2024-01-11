@@ -43,7 +43,7 @@ import numpy as onp
 import numpy.typing as onpt
 from typing_extensions import LiteralString, ParamSpec, assert_never
 
-from nerfstudio.data.scene_box import SceneBox
+from gs_toolkit.data.scene_box import SceneBox
 
 from . import messages
 from .gui import GuiHandle, GuiSelectHandle, _GuiHandleState

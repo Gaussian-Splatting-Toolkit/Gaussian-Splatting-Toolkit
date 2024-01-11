@@ -14,12 +14,12 @@ from rich.progress import track
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 
-from nerfstudio.cameras.cameras import Cameras
-from nerfstudio.cameras.rays import RayBundle
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.data.utils.nerfstudio_collate import nerfstudio_collate
-from nerfstudio.utils.misc import get_dict_to_torch
-from nerfstudio.utils.rich_utils import CONSOLE
+from gs_toolkit.cameras.cameras import Cameras
+from gs_toolkit.cameras.rays import RayBundle
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.data.utils.gs_toolkit_collate import gs_toolkit_collate
+from gs_toolkit.utils.misc import get_dict_to_torch
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 
 class CacheDataloader(DataLoader):
@@ -40,7 +40,7 @@ class CacheDataloader(DataLoader):
         num_images_to_sample_from: int = -1,
         num_times_to_repeat_images: int = -1,
         device: Union[torch.device, str] = "cpu",
-        collate_fn: Callable[[Any], Any] = nerfstudio_collate,
+        collate_fn: Callable[[Any], Any] = gs_toolkit_collate,
         exclude_batch_keys_from_device: Optional[List[str]] = None,
         **kwargs,
     ):

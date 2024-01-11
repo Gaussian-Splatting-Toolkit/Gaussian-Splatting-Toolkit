@@ -42,7 +42,7 @@ export default function Banner() {
         variant="outlined"
         startIcon={<GitHubIcon />}
         target="_blank"
-        href="https://github.com/nerfstudio-project/nerfstudio"
+        href="https://github.com/gs_toolkit-project/gs_toolkit"
         size="small"
       >
         Github

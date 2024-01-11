@@ -4,8 +4,8 @@ from pathlib import Path
 
 import viser
 import viser.transforms as vtf
-from nerfstudio.data.scene_box import OrientedBox
-from nerfstudio.viewer.control_panel import ControlPanel
+from gs_toolkit.data.scene_box import OrientedBox
+from gs_toolkit.viewer.control_panel import ControlPanel
 from typing_extensions import Literal
 
 

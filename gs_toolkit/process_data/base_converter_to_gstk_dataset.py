@@ -1,55 +1,51 @@
-from gs_toolkit.utils.rich_utils import CONSOLE, status
-from gs_toolkit.scripts.scripts import run_command
-from abc import abstractmethod
+# Copyright 2022 the Regents of the University of California, Nerfstudio Team and contributors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Base class to process images or video into a gs_toolkit dataset
+"""
+
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 
 @dataclass
-class BaseConverterToGstkDataset:
+class BaseConverterToGSToolkitDataset(ABC):
     """Base class to process images or video into a gs_toolkit dataset."""
 
-    input: Path
-    """Path to the data, either a video or a folder with images."""
-    data_dir: Path
+    data: Path
+    """Path the data, either a video file or a directory of images."""
+    output_dir: Path
     """Path to the output directory."""
-    eval_data: Path | None = None
-    """Path to the evaluation data, either a video or a folder with images. If set to None, the first will be used for both training and evaluation."""
+    eval_data: Optional[Path] = None
+    """Path the eval data, either a video file or a directory of images. If set to None, the first will be used both for training and eval"""
     verbose: bool = False
-    """If True, print more information."""
+    """If True, print extra logging."""
 
     def __post_init__(self) -> None:
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.input_dir.mkdir(parents=True, exist_ok=True)
-
-    def extract_keyframes(self, fps: int) -> int:
-        """Extract keyframes from the input video.
-
-        Args:
-            fps: The number of frames per second to extract.
-        """
-        # Process data with ffmpeg and save the results into input dir.
-        with status(
-            msg="Extracting keyframes from video...",
-            spinner="moon",
-            verbose=self.verbose,
-        ):
-            run_command(
-                f"ffmpeg -i {self.input} -vf fps={fps} {self.input_dir}/%06d.png",
-                verbose=self.verbose,
-            )
-
-        # Get the number of frames.
-        frame_count = len(list(self.input_dir.glob("*.png")))
-        CONSOLE.log(f"Extracted {frame_count} frames.")
-        return frame_count
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.image_dir.mkdir(parents=True, exist_ok=True)
 
     @property
-    def input_dir(self) -> Path:
-        """Path to the directory containing the images."""
-        return self.data_dir / "input"
+    def image_dir(self) -> Path:
+        return self.output_dir / "images"
 
     @abstractmethod
     def main(self) -> None:
         """This method implements the conversion logic for each type of data"""
-        raise NotImplementedError("The main method must be implemented.")
+        raise NotImplementedError(
+            "the main method for conversion needs to be implemented"
+        )

@@ -8,13 +8,13 @@ from typing import Literal, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
-from nerfstudio.cameras.rays import RaySamples
-from nerfstudio.data.scene_box import SceneBox
-from nerfstudio.field_components.activations import trunc_exp
-from nerfstudio.field_components.encodings import HashEncoding
-from nerfstudio.field_components.mlp import MLP
-from nerfstudio.field_components.spatial_distortions import SpatialDistortion
-from nerfstudio.fields.base_field import Field
+from gs_toolkit.cameras.rays import RaySamples
+from gs_toolkit.data.scene_box import SceneBox
+from gs_toolkit.field_components.activations import trunc_exp
+from gs_toolkit.field_components.encodings import HashEncoding
+from gs_toolkit.field_components.mlp import MLP
+from gs_toolkit.field_components.spatial_distortions import SpatialDistortion
+from gs_toolkit.fields.base_field import Field
 
 
 class HashMLPDensityField(Field):

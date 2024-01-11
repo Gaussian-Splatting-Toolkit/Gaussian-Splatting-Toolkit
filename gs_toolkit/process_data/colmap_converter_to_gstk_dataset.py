@@ -1,267 +1,243 @@
-import os
-import sys
-from pathlib import Path
-from gs_toolkit.utils.rich_utils import CONSOLE, status
-from gs_toolkit.scripts.scripts import run_command
+"""Base class to processes a video or image sequence to a gs_toolkit compatible dataset."""
+
 from dataclasses import dataclass
-import shutil
-from gs_toolkit.data.process_data.base_converter_to_gstk_dataset import (
-    BaseConverterToGstkDataset,
+from pathlib import Path
+from typing import Dict, List, Literal, Optional, Tuple
+
+from gs_toolkit.process_data import colmap_utils, hloc_utils, process_data_utils
+from gs_toolkit.process_data.base_converter_to_gstk_dataset import (
+    BaseConverterToGSToolkitDataset,
 )
+from gs_toolkit.process_data.process_data_utils import CAMERA_MODELS
+from gs_toolkit.utils import install_checks
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 
 @dataclass
-class ColmapConverterToGstkDataset(BaseConverterToGstkDataset):
-    """Process data using Colmap.
+class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
+    """Base class to process images or video into a gs_toolkit dataset using colmap"""
 
-    This script does the following:
-
-    1. Select keyframes from the input video.
-    2. Extract the pose and sparse point cloud using COLMAP.
+    camera_type: Literal["perspective", "fisheye", "equirectangular"] = "perspective"
+    """Camera model to use."""
+    matching_method: Literal["exhaustive", "sequential", "vocab_tree"] = "vocab_tree"
+    """Feature matching method to use. Vocab tree is recommended for a balance of speed
+    and accuracy. Exhaustive is slower but more accurate. Sequential is faster but
+    should only be used for videos."""
+    sfm_tool: Literal["any", "colmap", "hloc"] = "any"
+    """Structure from motion tool to use. Colmap will use sift features, hloc can use
+    many modern methods such as superpoint features and superglue matcher"""
+    refine_pixsfm: bool = False
+    """If True, runs refinement using Pixel Perfect SFM.
+    Only works with hloc sfm_tool"""
+    refine_intrinsics: bool = True
+    """If True, do bundle adjustment to refine intrinsics.
+    Only works with colmap sfm_tool"""
+    feature_type: Literal[
+        "any",
+        "sift",
+        "superpoint",
+        "superpoint_aachen",
+        "superpoint_max",
+        "superpoint_inloc",
+        "r2d2",
+        "d2net-ss",
+        "sosnet",
+        "disk",
+    ] = "any"
+    """Type of feature to use."""
+    matcher_type: Literal[
+        "any",
+        "NN",
+        "superglue",
+        "superglue-fast",
+        "NN-superpoint",
+        "NN-ratio",
+        "NN-mutual",
+        "adalam",
+        "disk+lightglue",
+        "superpoint+lightglue",
+    ] = "any"
+    """Matching algorithm."""
+    num_downscales: int = 3
+    """Number of times to downscale the images. Downscales by 2 each time. For example a value of 3 will downscale the
+       images by 2x, 4x, and 8x."""
+    skip_colmap: bool = False
+    """If True, skips COLMAP and generates transforms.json if possible."""
+    skip_image_processing: bool = False
+    """If True, skips copying and downscaling of images and only runs COLMAP if possible and enabled"""
+    colmap_model_path: Path = Path("colmap/sparse/0")
+    """Optionally sets the path of the colmap model. Used only when --skip-colmap is set to True. The path is relative
+       to the output directory.
     """
+    colmap_cmd: str = "colmap"
+    """How to call the COLMAP executable."""
+    images_per_equirect: Literal[8, 14] = 8
+    """Number of samples per image to take from each equirectangular image.
+       Used only when camera-type is equirectangular.
+    """
+    crop_factor: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+    """Portion of the image to crop. All values should be in [0,1]. (top, bottom, left, right)"""
+    crop_bottom: float = 0.0
+    """Portion of the image to crop from the bottom.
+       Can be used instead of `crop-factor 0.0 [num] 0.0 0.0` Should be in [0,1].
+    """
+    gpu: bool = True
+    """If True, use GPU."""
+    use_sfm_depth: bool = False
+    """If True, export and use depth maps induced from SfM points."""
+    include_depth_debug: bool = False
+    """If --use-sfm-depth and this flag is True, also export debug images showing Sf overlaid upon input images."""
+    same_dimensions: bool = True
+    """Whether to assume all images are same dimensions and so to use fast downscaling with no autorotation."""
 
-    fps: int = 3
-    """Number of frames per second to extract from the video."""
-    colmap_command: str = "colmap"
-    """Path to the colmap executable."""
-    magick_command: str = "magick"
-    """Path to the magick executable."""
-    camera: str = "OPENCV"
-    """Camera model to use for colmap."""
-    no_gpu: bool = False
-    """If True, disable GPU usage."""
-    skip_matching: bool = False
-    """If True, skip feature matching"""
-    resize: bool = False
-    """If True, resize images to 50%, 25% and 12.5% of the original size."""
-    cache_dir: str = ".cache"
-    """Path to the cache directory."""
+    @staticmethod
+    def default_colmap_path() -> Path:
+        return Path("colmap/sparse/0")
 
-    def download_256_vocabtree(self) -> None:
-        """Download the 256k vocab tree."""
-        vocab_tree_url = "https://demuc.de/colmap/vocab_tree_flickr100K_words256K.bin"
-        vocab_tree_path = Path(self.cache_dir) / "vocab_tree_flickr100K_words256K.bin"
-        if not vocab_tree_path.exists():
-            CONSOLE.log(
-                f"The VocabTree {vocab_tree_path} does not exist, downloading..."
-            )
-            with status(
-                msg="Downloading 256k vocab tree...",
-                spinner="bouncingBall",
-                verbose=self.verbose,
-            ):
-                run_command(
-                    f"wget {vocab_tree_url} -P {self.cache_dir}",
-                    verbose=self.verbose,
-                )
-            CONSOLE.log("Downloaded 256k vocab tree.")
-        else:
-            CONSOLE.log("Vocab tree already downloaded.")
+    @property
+    def absolute_colmap_model_path(self) -> Path:
+        return self.output_dir / self.colmap_model_path
 
-    def downlaod_1M_vocabtree(self) -> None:
-        """Download the 1M vocab tree."""
-        vocab_tree_url = "https://demuc.de/colmap/vocab_tree_flickr100K_words1M.bin"
-        vocab_tree_path = Path(self.cache_dir) / "vocab_tree_flickr100K_words1M.bin"
-        if not vocab_tree_path.exists():
-            CONSOLE.log(
-                f"The VocabTree {vocab_tree_path} does not exist, downloading..."
-            )
-            with status(
-                msg="Downloading 1m vocab tree...",
-                spinner="bouncingBall",
-                verbose=self.verbose,
-            ):
-                run_command(
-                    f"wget {vocab_tree_url} -P {self.cache_dir}",
-                    verbose=self.verbose,
-                )
-            CONSOLE.log("Downloaded 1m vocab tree.")
-        else:
-            CONSOLE.log("Vocab tree already downloaded.")
+    @property
+    def absolute_colmap_path(self) -> Path:
+        return self.output_dir / "colmap"
 
-    def main(self) -> None:
-        """Main function."""
+    def _save_transforms(
+        self,
+        num_frames: int,
+        image_id_to_depth_path: Optional[Dict[int, Path]] = None,
+        camera_mask_path: Optional[Path] = None,
+        image_rename_map: Optional[Dict[str, str]] = None,
+    ) -> List[str]:
+        """Save colmap transforms into the output folder
+
+        Args:
+            image_id_to_depth_path: When including sfm-based depth, embed these depth file paths in the exported json
+            image_rename_map: Use these image names instead of the names embedded in the COLMAP db
+        """
         summary_log = []
-        num_frames = 0
-
-        # If the data is a video, extract the keyframes.
-        if self.input.suffix in [".mp4", ".avi", ".mov", ".MP4", ".MOV"]:
-            num_frames = self.extract_keyframes(self.fps)
-
-        assert num_frames > 0, "No frames extracted. Exiting."
-
-        use_gpu = 1 if not self.no_gpu else 0
-
-        data_dir_str = str(self.data_dir)
-        abs_cache_dir_str = str(Path(self.cache_dir).absolute())
-
-        if not self.skip_matching:
-            os.makedirs(data_dir_str + "/distorted/sparse", exist_ok=True)
-
-            ## Feature extraction
-            feat_extracton_cmd = (
-                self.colmap_command + " feature_extractor "
-                "--database_path "
-                + data_dir_str
-                + "/distorted/database.db \
-                --image_path "
-                + data_dir_str
-                + "/input \
-                --ImageReader.single_camera 1 \
-                --ImageReader.camera_model "
-                + self.camera
-                + " \
-                --SiftExtraction.use_gpu "
-                + str(use_gpu)
-            )
-            with status(
-                "Extracting features...", spinner="bouncingBall", verbose=self.verbose
+        if (self.absolute_colmap_model_path / "cameras.bin").exists():
+            with CONSOLE.status(
+                "[bold yellow]Saving results to transforms.json", spinner="balloon"
             ):
-                run_command(feat_extracton_cmd, verbose=self.verbose)
-
-            ## Feature matching
-            if num_frames <= 1_000:
-                feat_matching_cmd = (
-                    self.colmap_command
-                    + " exhaustive_matcher \
-                    --database_path "
-                    + data_dir_str
-                    + "/distorted/database.db \
-                    --SiftMatching.use_gpu "
-                    + str(use_gpu)
+                num_matched_frames = colmap_utils.colmap_to_json(
+                    recon_dir=self.absolute_colmap_model_path,
+                    output_dir=self.output_dir,
+                    image_id_to_depth_path=image_id_to_depth_path,
+                    camera_mask_path=camera_mask_path,
+                    image_rename_map=image_rename_map,
                 )
-            elif num_frames > 1_000 and num_frames <= 10_000:
-                self.download_256_vocabtree()
-                feat_matching_cmd = (
-                    self.colmap_command
-                    + " vocab_tree_matcher \
-                    --VocabTreeMatching.vocab_tree_path "
-                    + abs_cache_dir_str
-                    + "/vocab_tree_flickr100K_words256K.bin \
-                    --database_path "
-                    + data_dir_str
-                    + "/distorted/database.db \
-                    --SiftMatching.use_gpu "
-                    + str(use_gpu)
-                )
-            else:
-                self.downlaod_1M_vocabtree()
-                feat_matching_cmd = (
-                    self.colmap_command
-                    + " vocab_tree_matcher \
-                    --VocabTreeMatching.vocab_tree_path "
-                    + abs_cache_dir_str
-                    + "/vocab_tree_flickr100K_words1M.bin \
-                    --database_path "
-                    + data_dir_str
-                    + "/distorted/database.db \
-                    --SiftMatching.use_gpu "
-                    + str(use_gpu)
-                )
-
-            with status(
-                "Matching features...", spinner="bouncingBall", verbose=self.verbose
-            ):
-                run_command(feat_matching_cmd, verbose=self.verbose)
-
-            ### Bundle adjustment
-            # The default Mapper tolerance is unnecessarily large,
-            # decreasing it speeds up bundle adjustment steps.
-            mapper_cmd = (
-                self.colmap_command
-                + " mapper \
-                --database_path "
-                + data_dir_str
-                + "/distorted/database.db \
-                --image_path "
-                + data_dir_str
-                + "/input \
-                --output_path "
-                + data_dir_str
-                + "/distorted/sparse \
-                --Mapper.ba_global_function_tolerance=0.000001"
+                summary_log.append(f"Colmap matched {num_matched_frames} images")
+            summary_log.append(
+                colmap_utils.get_matching_summary(num_frames, num_matched_frames)
             )
-            with status(
-                "Running bundle adjustment...",
-                spinner="bouncingBall",
+
+        else:
+            CONSOLE.log(
+                "[bold yellow]Warning: Could not find existing COLMAP results. "
+                "Not generating transforms.json"
+            )
+        return summary_log
+
+    def _export_depth(self) -> Tuple[Optional[Dict[int, Path]], List[str]]:
+        """If SFM is used for creating depth image, this method will create the depth images from image in
+        `self.image_dir`.
+
+        Returns:
+            Depth file paths indexed by COLMAP image id, logs
+        """
+        summary_log = []
+        if self.use_sfm_depth:
+            depth_dir = self.output_dir / "depth"
+            depth_dir.mkdir(parents=True, exist_ok=True)
+            image_id_to_depth_path = colmap_utils.create_sfm_depth(
+                recon_dir=self.output_dir / self.default_colmap_path(),
+                output_dir=depth_dir,
+                include_depth_debug=self.include_depth_debug,
+                input_images_dir=self.image_dir,
                 verbose=self.verbose,
-            ):
-                run_command(mapper_cmd, verbose=self.verbose)
+            )
+            summary_log.append(
+                process_data_utils.downscale_images(
+                    depth_dir,
+                    self.num_downscales,
+                    folder_name="depths",
+                    nearest_neighbor=True,
+                    verbose=self.verbose,
+                )
+            )
+            return image_id_to_depth_path, summary_log
+        return None, summary_log
 
-        ### Image undistortion
-        ## We need to undistort our images into ideal pinhole intrinsics.
-        img_undist_cmd = (
-            self.colmap_command
-            + " image_undistorter \
-            --image_path "
-            + data_dir_str
-            + "/input \
-            --input_path "
-            + data_dir_str
-            + "/distorted/sparse/0 \
-            --output_path "
-            + data_dir_str
-            + "\
-            --output_type COLMAP"
+    def _run_colmap(self, mask_path: Optional[Path] = None):
+        """
+        Args:
+            mask_path: Path to the camera mask. Defaults to None.
+        """
+        self.absolute_colmap_path.mkdir(parents=True, exist_ok=True)
+
+        (
+            sfm_tool,
+            feature_type,
+            matcher_type,
+        ) = process_data_utils.find_tool_feature_matcher_combination(
+            self.sfm_tool, self.feature_type, self.matcher_type
         )
-        with status(
-            "Undistorting images...", spinner="bouncingBall", verbose=self.verbose
-        ):
-            run_command(img_undist_cmd, verbose=self.verbose)
+        # check that sfm_tool is hloc if using refine_pixsfm
+        if self.refine_pixsfm:
+            assert sfm_tool == "hloc", "refine_pixsfm only works with sfm_tool hloc"
 
-        files = os.listdir(data_dir_str + "/sparse")
-        os.makedirs(data_dir_str + "/sparse/0", exist_ok=True)
-        # Copy each file from the source directory to the destination directory
-        for file in files:
-            if file == "0":
-                continue
-            source_file = os.path.join(data_dir_str, "sparse", file)
-            destination_file = os.path.join(data_dir_str, "sparse", "0", file)
-            shutil.move(source_file, destination_file)
+        # set the image_dir if didn't copy
+        if self.skip_image_processing:
+            image_dir = self.data
+        else:
+            image_dir = self.image_dir
 
-        if self.resize:
-            print("Copying and resizing...")
-
-            # Resize images.
-            os.makedirs(data_dir_str + "/images_2", exist_ok=True)
-            os.makedirs(data_dir_str + "/images_4", exist_ok=True)
-            os.makedirs(data_dir_str + "/images_8", exist_ok=True)
-            # Get the list of files in the source directory
-            files = os.listdir(data_dir_str + "/images")
-            # Copy each file from the source directory to the destination directory
-            for file in files:
-                source_file = os.path.join(data_dir_str, "images", file)
-
-                destination_file = os.path.join(data_dir_str, "images_2", file)
-                shutil.copy2(source_file, destination_file)
-                exit_code = os.system(
-                    self.magick_command + " mogrify -resize 50% " + destination_file
+        if sfm_tool == "colmap":
+            colmap_utils.run_colmap(
+                image_dir=image_dir,
+                colmap_dir=self.absolute_colmap_path,
+                camera_model=CAMERA_MODELS[self.camera_type],
+                camera_mask_path=mask_path,
+                gpu=self.gpu,
+                verbose=self.verbose,
+                matching_method=self.matching_method,
+                refine_intrinsics=self.refine_intrinsics,
+                colmap_cmd=self.colmap_cmd,
+            )
+        elif sfm_tool == "hloc":
+            if mask_path is not None:
+                raise RuntimeError(
+                    "Cannot use a mask with hloc. Please remove the cropping options "
+                    "and try again."
                 )
-                if exit_code != 0:
-                    CONSOLE.log(f"50% resize failed with code {exit_code}. Exiting.")
-                    sys.exit(exit_code)
 
-                destination_file = os.path.join(data_dir_str, "images_4", file)
-                shutil.copy2(source_file, destination_file)
-                exit_code = os.system(
-                    self.magick_command + " mogrify -resize 25% " + destination_file
-                )
-                if exit_code != 0:
-                    CONSOLE.log(f"25% resize failed with code {exit_code}. Exiting.")
-                    sys.exit(exit_code)
+            assert feature_type is not None
+            assert matcher_type is not None
+            assert matcher_type != "NN"  # Only used for colmap.
+            hloc_utils.run_hloc(
+                image_dir=image_dir,
+                colmap_dir=self.absolute_colmap_path,
+                camera_model=CAMERA_MODELS[self.camera_type],
+                verbose=self.verbose,
+                matching_method=self.matching_method,
+                feature_type=feature_type,
+                matcher_type=matcher_type,
+                refine_pixsfm=self.refine_pixsfm,
+            )
+        else:
+            raise RuntimeError(
+                "Invalid combination of sfm_tool, feature_type, and matcher_type, "
+                "exiting"
+            )
 
-                destination_file = os.path.join(data_dir_str, "images_8", file)
-                shutil.copy2(source_file, destination_file)
-                exit_code = os.system(
-                    self.magick_command + " mogrify -resize 12.5% " + destination_file
-                )
-                if exit_code != 0:
-                    CONSOLE.log(f"12.5% resize failed with code {exit_code}. Exiting.")
-                    sys.exit(exit_code)
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        install_checks.check_ffmpeg_installed()
+        install_checks.check_colmap_installed()
 
-        summary_log.append("Colmap processing complete.")
+        if self.crop_bottom < 0.0 or self.crop_bottom > 1:
+            raise RuntimeError("crop_bottom must be set between 0 and 1.")
 
-        CONSOLE.rule("[bold green]:tada: :tada: :tada: All DONE :tada: :tada: :tada:")
-        for summary in summary_log:
-            CONSOLE.print(summary, justify="center")
-        CONSOLE.rule()
+        if self.crop_bottom > 0.0:
+            self.crop_factor = (0.0, self.crop_bottom, 0.0, 0.0)

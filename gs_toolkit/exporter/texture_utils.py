@@ -16,10 +16,10 @@ import xatlas
 from jaxtyping import Float
 from torch import Tensor
 
-from nerfstudio.cameras.rays import RayBundle
-from nerfstudio.exporter.exporter_utils import Mesh
-from nerfstudio.pipelines.base_pipeline import Pipeline
-from nerfstudio.utils.rich_utils import CONSOLE, get_progress
+from gs_toolkit.cameras.rays import RayBundle
+from gs_toolkit.exporter.exporter_utils import Mesh
+from gs_toolkit.pipelines.base_pipeline import Pipeline
+from gs_toolkit.utils.rich_utils import CONSOLE, get_progress
 
 TORCH_DEVICE = Union[torch.device, str]
 
@@ -442,7 +442,7 @@ def export_textured_mesh(
     CONSOLE.print("Writing relevant OBJ information to files...")
     # create the .mtl file
     lines_mtl = [
-        "# Generated with nerfstudio",
+        "# Generated with gs_toolkit",
         "newmtl material_0",
         "Ka 1.000 1.000 1.000",
         "Kd 1.000 1.000 1.000",
@@ -459,7 +459,7 @@ def export_textured_mesh(
 
     # create the .obj file
     lines_obj = [
-        "# Generated with nerfstudio",
+        "# Generated with gs_toolkit",
         "mtllib material_0.mtl",
         "usemtl material_0",
     ]

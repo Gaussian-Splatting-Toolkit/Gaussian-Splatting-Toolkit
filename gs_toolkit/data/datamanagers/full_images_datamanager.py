@@ -33,18 +33,18 @@ from copy import deepcopy
 from torch.nn import Parameter
 from tqdm import tqdm
 
-from nerfstudio.cameras.cameras import Cameras, CameraType
-from nerfstudio.configs.dataparser_configs import AnnotatedDataParserUnion
-from nerfstudio.data.datamanagers.base_datamanager import (
+from gs_toolkit.cameras.cameras import Cameras, CameraType
+from gs_toolkit.configs.dataparser_configs import AnnotatedDataParserUnion
+from gs_toolkit.data.datamanagers.base_datamanager import (
     DataManager,
     DataManagerConfig,
     TDataset,
 )
-from nerfstudio.data.dataparsers.base_dataparser import DataparserOutputs
-from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.utils.misc import get_orig_class
-from nerfstudio.utils.rich_utils import CONSOLE
+from gs_toolkit.data.dataparsers.base_dataparser import DataparserOutputs
+from gs_toolkit.data.dataparsers.gs_toolkit_dataparser import NerfstudioDataParserConfig
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.utils.misc import get_orig_class
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 
 @dataclass

@@ -8,8 +8,8 @@ import torch
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from nerfstudio.field_components.encodings import Encoding, NeRFEncoding
-from nerfstudio.field_components.mlp import MLP
+from gs_toolkit.field_components.encodings import Encoding, NeRFEncoding
+from gs_toolkit.field_components.mlp import MLP
 
 
 class TemporalDistortion(nn.Module):

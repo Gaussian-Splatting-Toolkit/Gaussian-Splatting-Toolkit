@@ -355,9 +355,6 @@ def _compute_residual_and_jacobian(
     torch.Tensor,
 ]:
     """Auxiliary function of radial_and_tangential_undistort() that computes residuals and jacobians.
-    Adapted from MultiNeRF:
-    https://github.com/google-research/multinerf/blob/b02228160d3179300c7d499dca28cb9ca3677f32/internal/camera_utils.py#L427-L474
-
     Args:
         x: The updated x coordinates.
         y: The updated y coordinates.
@@ -420,9 +417,6 @@ def radial_and_tangential_undistort(
     max_iterations: int = 10,
 ) -> torch.Tensor:
     """Computes undistorted coords given opencv distortion parameters.
-    Adapted from MultiNeRF
-    https://github.com/google-research/multinerf/blob/b02228160d3179300c7d499dca28cb9ca3677f32/internal/camera_utils.py#L477-L509
-
     Args:
         coords: The distorted coordinates.
         distortion_params: The distortion parameters [k1, k2, k3, k4, p1, p2].

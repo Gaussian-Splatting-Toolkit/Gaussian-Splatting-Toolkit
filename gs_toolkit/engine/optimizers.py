@@ -10,8 +10,8 @@ import torch
 from torch.cuda.amp.grad_scaler import GradScaler
 from torch.nn.parameter import Parameter
 
-from nerfstudio.configs import base_config
-from nerfstudio.utils import writer
+from gs_toolkit.configs import base_config
+from gs_toolkit.utils import writer
 
 
 # Optimizer related configs
@@ -74,8 +74,8 @@ class Optimizers:
         for param_group_name, params in param_groups.items():
             # For deprecation, catch the camera_opt param group and fix it nicely
             if param_group_name == "camera_opt" and "camera_opt" not in config:
-                from nerfstudio.engine.schedulers import ExponentialDecaySchedulerConfig
-                from nerfstudio.utils.rich_utils import CONSOLE
+                from gs_toolkit.engine.schedulers import ExponentialDecaySchedulerConfig
+                from gs_toolkit.utils.rich_utils import CONSOLE
 
                 CONSOLE.print(
                     "\nThe 'camera_opt' param group should be assigned an optimizer in the config. Assigning default optimizers for now. This will be removed in a future release.\n",

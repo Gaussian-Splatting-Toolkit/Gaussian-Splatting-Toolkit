@@ -9,7 +9,7 @@ import torch
 from jaxtyping import Bool, Float
 from torch import Tensor
 
-from nerfstudio.data.scene_box import OrientedBox
+from gs_toolkit.data.scene_box import OrientedBox
 
 
 def components_from_spherical_harmonics(

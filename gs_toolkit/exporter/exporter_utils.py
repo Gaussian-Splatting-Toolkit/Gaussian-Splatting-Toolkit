@@ -14,7 +14,7 @@ import open3d as o3d
 import pymeshlab
 import torch
 from jaxtyping import Float
-from nerfstudio.cameras.rays import RayBundle
+from gs_toolkit.cameras.rays import RayBundle
 from rich.progress import (
     BarColumn,
     Progress,
@@ -24,11 +24,11 @@ from rich.progress import (
 )
 from torch import Tensor
 
-from nerfstudio.cameras.cameras import Cameras
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.data.scene_box import OrientedBox
-from nerfstudio.pipelines.base_pipeline import Pipeline, VanillaPipeline
-from nerfstudio.utils.rich_utils import CONSOLE, ItersPerSecColumn
+from gs_toolkit.cameras.cameras import Cameras
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.data.scene_box import OrientedBox
+from gs_toolkit.pipelines.base_pipeline import Pipeline, VanillaPipeline
+from gs_toolkit.utils.rich_utils import CONSOLE, ItersPerSecColumn
 
 
 @dataclass

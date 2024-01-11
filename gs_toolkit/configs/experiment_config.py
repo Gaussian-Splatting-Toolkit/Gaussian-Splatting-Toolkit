@@ -33,7 +33,7 @@ class ExperimentConfig(InstantiateConfig):
     """Method name. Required to set in python or via cli"""
     experiment_name: Optional[str] = None
     """Experiment name. If None, will automatically be set to dataset name"""
-    project_name: Optional[str] = "nerfstudio-project"
+    project_name: Optional[str] = "gstoolkit-project"
     """Project name."""
     timestamp: str = "{timestamp}"
     """Experiment timestamp."""
@@ -71,7 +71,7 @@ class ExperimentConfig(InstantiateConfig):
     """Alias for --pipeline.datamanager.data"""
     prompt: Optional[str] = None
     """Alias for --pipeline.model.prompt"""
-    relative_model_dir: Path = Path("nerfstudio_models/")
+    relative_model_dir: Path = Path("gstoolkit_models/")
     """Relative path to save all checkpoints."""
     load_scheduler: bool = True
     """Whether to load the scheduler state_dict to resume training, if it exists."""

@@ -1,4 +1,4 @@
-""" Data parser utils for nerfstudio datasets. """
+""" Data parser utils for gs_toolkit datasets. """
 
 import math
 import os

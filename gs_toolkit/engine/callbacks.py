@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 from torch.cuda.amp.grad_scaler import GradScaler
 
-from nerfstudio.engine.optimizers import Optimizers
+from gs_toolkit.engine.optimizers import Optimizers
 
 if TYPE_CHECKING:
-    from nerfstudio.pipelines.base_pipeline import Pipeline
+    from gs_toolkit.pipelines.base_pipeline import Pipeline
 
 
 @dataclass

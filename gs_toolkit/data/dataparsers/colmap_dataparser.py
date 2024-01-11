@@ -1,4 +1,4 @@
-""" Data parser for nerfstudio datasets. """
+""" Data parser for gs_toolkit datasets. """
 
 from __future__ import annotations
 
@@ -150,7 +150,7 @@ class ColmapDataParser(DataParser):
             # Convert from COLMAP's camera coordinate system (OpenCV) to ours (OpenGL)
             c2w[0:3, 1:3] *= -1
             # Why do we want to flip Z with a handedness transform?
-            # See https://github.com/nerfstudio-project/nerfstudio/issues/1504
+            # See https://github.com/gs_toolkit-project/gs_toolkit/issues/1504
             c2w = c2w[np.array([1, 0, 2, 3]), :]
             c2w[2, :] *= -1
 
@@ -185,7 +185,7 @@ class ColmapDataParser(DataParser):
         out = {}
         out["frames"] = frames
         # Why do we want to flip Z with a handedness transform?
-        # See https://github.com/nerfstudio-project/nerfstudio/issues/1504
+        # See https://github.com/gs_toolkit-project/gs_toolkit/issues/1504
         applied_transform = np.eye(4)[:3, :]
         applied_transform = applied_transform[np.array([1, 0, 2]), :]
         applied_transform[2, :] *= -1

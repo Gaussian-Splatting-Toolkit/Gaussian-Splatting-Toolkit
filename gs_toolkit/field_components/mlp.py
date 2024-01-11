@@ -8,12 +8,12 @@ import torch
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from nerfstudio.field_components.base_field_component import FieldComponent
-from nerfstudio.utils.printing import print_tcnn_speed_warning
-from nerfstudio.field_components.encodings import HashEncoding
+from gs_toolkit.field_components.base_field_component import FieldComponent
+from gs_toolkit.utils.printing import print_tcnn_speed_warning
+from gs_toolkit.field_components.encodings import HashEncoding
 
-from nerfstudio.utils.rich_utils import CONSOLE
-from nerfstudio.utils.external import TCNN_EXISTS, tcnn
+from gs_toolkit.utils.rich_utils import CONSOLE
+from gs_toolkit.utils.external import TCNN_EXISTS, tcnn
 
 
 def activation_to_tcnn_string(activation: Union[nn.Module, None]) -> str:

@@ -8,17 +8,17 @@ from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Tuple, get_args
 
 import numpy as np
 import torch
-from nerfstudio.cameras.cameras import Cameras
-from nerfstudio.model_components.renderers import background_color_override_context
-from nerfstudio.models.gaussian_splatting import GaussianSplattingModel
-from nerfstudio.utils import colormaps, writer
-from nerfstudio.utils.writer import GLOBAL_BUFFER, EventName, TimeWriter
-from nerfstudio.viewer_legacy.server import viewer_utils
-from nerfstudio.viewer.utils import CameraState, get_camera
+from gs_toolkit.cameras.cameras import Cameras
+from gs_toolkit.model_components.renderers import background_color_override_context
+from gs_toolkit.models.gaussian_splatting import GaussianSplattingModel
+from gs_toolkit.utils import colormaps, writer
+from gs_toolkit.utils.writer import GLOBAL_BUFFER, EventName, TimeWriter
+from gs_toolkit.viewer_legacy.server import viewer_utils
+from gs_toolkit.viewer.utils import CameraState, get_camera
 from viser import ClientHandle
 
 if TYPE_CHECKING:
-    from nerfstudio.viewer.viewer import Viewer
+    from gs_toolkit.viewer.viewer import Viewer
 
 RenderStates = Literal["low_move", "low_static", "high"]
 RenderActions = Literal["rerender", "move", "static", "step"]

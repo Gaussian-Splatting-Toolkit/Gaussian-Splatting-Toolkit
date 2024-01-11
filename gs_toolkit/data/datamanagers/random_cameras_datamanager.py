@@ -14,13 +14,13 @@ from torch.nn import Parameter
 from torch import Tensor
 from typing_extensions import Literal
 
-from nerfstudio.cameras.cameras import Cameras
-from nerfstudio.cameras.rays import RayBundle
-from nerfstudio.configs.config_utils import to_immutable_dict
-from nerfstudio.data.datamanagers.base_datamanager import DataManager, DataManagerConfig
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.data.scene_box import SceneBox
-from nerfstudio.data.utils.dataloaders import RandIndicesEvalDataloader
+from gs_toolkit.cameras.cameras import Cameras
+from gs_toolkit.cameras.rays import RayBundle
+from gs_toolkit.configs.config_utils import to_immutable_dict
+from gs_toolkit.data.datamanagers.base_datamanager import DataManager, DataManagerConfig
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.data.scene_box import SceneBox
+from gs_toolkit.data.utils.dataloaders import RandIndicesEvalDataloader
 
 CONSOLE = Console(width=120)
 

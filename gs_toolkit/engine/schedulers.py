@@ -13,7 +13,7 @@ except ImportError:
     # Backwards compatibility for PyTorch 1.x
     from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 
-from nerfstudio.configs.base_config import InstantiateConfig
+from gs_toolkit.configs.base_config import InstantiateConfig
 
 
 @dataclass

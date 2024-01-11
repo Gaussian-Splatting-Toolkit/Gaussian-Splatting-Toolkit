@@ -6,9 +6,9 @@ import numpy as np
 import torch
 import viser
 import viser.transforms as vtf
-from nerfstudio.data.scene_box import OrientedBox
-from nerfstudio.utils.colormaps import ColormapOptions, Colormaps
-from nerfstudio.viewer.viewer_elements import (  # ViewerButtonGroup,
+from gs_toolkit.data.scene_box import OrientedBox
+from gs_toolkit.utils.colormaps import ColormapOptions, Colormaps
+from gs_toolkit.viewer.viewer_elements import (  # ViewerButtonGroup,
     ViewerButtonGroup,
     ViewerCheckbox,
     ViewerDropdown,

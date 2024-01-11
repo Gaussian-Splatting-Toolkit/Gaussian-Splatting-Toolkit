@@ -76,7 +76,7 @@ class CameraOptimizer(nn.Module):
         num_cameras: int,
         device: Union[torch.device, str],
         non_trainable_camera_indices: Optional[
-            Int[Tensor, "num_non_trainable_cameras"]
+            Int[Tensor, "num_non_trainable_cameras"]  # noqa: F821
         ] = None,
         **kwargs,
     ) -> None:

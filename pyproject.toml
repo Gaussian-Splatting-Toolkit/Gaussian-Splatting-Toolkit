@@ -19,6 +19,7 @@ classifiers = [
 
 # Dependencies
 dependencies = [
+    "rawpy",
     "tyro",
     "plyfile==0.8.1",
     "jaxtyping",
@@ -37,7 +38,9 @@ dev = [
     "pytest-xdist",
     "typeguard",
     "ruff",
+    "pycolmap",
     "sshconfig",
+    "projectaria_tools[all]",
 ]
 
 [project.scripts]

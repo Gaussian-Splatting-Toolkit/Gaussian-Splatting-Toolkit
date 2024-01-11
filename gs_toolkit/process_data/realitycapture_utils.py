@@ -1,0 +1,121 @@
+"""Helper utils for processing reality capture data into the gs_toolkit format."""
+
+import csv
+import json
+from pathlib import Path
+from typing import Dict, List
+
+import numpy as np
+from PIL import Image
+
+from gs_toolkit.process_data.process_data_utils import CAMERA_MODELS
+from gs_toolkit.utils.rich_utils import CONSOLE
+
+
+def realitycapture_to_json(
+    image_filename_map: Dict[str, Path],
+    csv_filename: Path,
+    output_dir: Path,
+    verbose: bool = False,
+) -> List[str]:
+    """Convert RealityCapture data into a gs_toolkit dataset.
+
+    Args:
+        image_filenames: List of paths to the original images.
+        csv_filename: Path to the csv file containing the camera poses.
+        output_dir: Path to the output directory.
+        verbose: Whether to print verbose output.
+
+    Returns:
+        Summary of the conversion.
+    """
+    data = {}
+    data["camera_model"] = CAMERA_MODELS["perspective"].value
+    # Needs to be a string for camera_utils.auto_orient_and_center_poses
+    data["orientation_override"] = "none"
+
+    frames = []
+
+    with open(csv_filename, encoding="UTF-8") as file:
+        reader = csv.DictReader(file)
+        cameras = {}
+        for row in reader:
+            for column, value in row.items():
+                cameras.setdefault(column, []).append(value)
+
+    missing_image_data = 0
+
+    for i, name in enumerate(cameras["#name"]):
+        basename = name.rpartition(".")[0]
+        if basename not in image_filename_map:
+            if verbose:
+                CONSOLE.print(f"Missing image for camera data {basename}, Skipping")
+            missing_image_data += 1
+            continue
+
+        frame = {}
+        img = np.array(Image.open(output_dir / image_filename_map[basename]))
+        height, width, _ = img.shape
+        frame["h"] = int(height)
+        frame["w"] = int(width)
+        frame["file_path"] = image_filename_map[basename].as_posix()
+        frame["fl_x"] = float(cameras["f"][i]) * max(width, height) / 36
+        frame["fl_y"] = float(cameras["f"][i]) * max(width, height) / 36
+        # TODO: Unclear how to get the principal point from RealityCapture, here a guess...
+        frame["cx"] = float(cameras["px"][i]) / 36.0 + width / 2.0
+        frame["cy"] = float(cameras["py"][i]) / 36.0 + height / 2.0
+        # TODO: Not sure if RealityCapture uses this distortion model
+        frame["k1"] = cameras["k1"][i]
+        frame["k2"] = cameras["k2"][i]
+        frame["k3"] = cameras["k3"][i]
+        frame["k4"] = cameras["k4"][i]
+        frame["p1"] = cameras["t1"][i]
+        frame["p2"] = cameras["t2"][i]
+
+        # Transform matrix to gs_toolkit format. Please refer to the documentation for coordinate system conventions.
+        rot = _get_rotation_matrix(
+            -float(cameras["heading"][i]),
+            float(cameras["pitch"][i]),
+            float(cameras["roll"][i]),
+        )
+
+        transform = np.eye(4)
+        transform[:3, :3] = rot
+        transform[:3, 3] = np.array(
+            [float(cameras["x"][i]), float(cameras["y"][i]), float(cameras["alt"][i])]
+        )
+
+        frame["transform_matrix"] = transform.tolist()
+        frames.append(frame)
+    data["frames"] = frames
+
+    with open(output_dir / "transforms.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    summary = []
+    if missing_image_data > 0:
+        summary.append(f"Missing image data for {missing_image_data} cameras.")
+    if len(frames) < len(image_filename_map):
+        summary.append(
+            f"Missing camera data for {len(image_filename_map) - len(frames)} frames."
+        )
+    summary.append(f"Final dataset is {len(frames)} frames.")
+
+    return summary
+
+
+def _get_rotation_matrix(yaw, pitch, roll):
+    """Returns a rotation matrix given euler angles."""
+
+    s_yaw = np.sin(np.deg2rad(yaw))
+    c_yaw = np.cos(np.deg2rad(yaw))
+    s_pitch = np.sin(np.deg2rad(pitch))
+    c_pitch = np.cos(np.deg2rad(pitch))
+    s_roll = np.sin(np.deg2rad(roll))
+    c_roll = np.cos(np.deg2rad(roll))
+
+    rot_x = np.array([[1, 0, 0], [0, c_pitch, -s_pitch], [0, s_pitch, c_pitch]])
+    rot_y = np.array([[c_roll, 0, s_roll], [0, 1, 0], [-s_roll, 0, c_roll]])
+    rot_z = np.array([[c_yaw, -s_yaw, 0], [s_yaw, c_yaw, 0], [0, 0, 1]])
+
+    return rot_z @ rot_x @ rot_y

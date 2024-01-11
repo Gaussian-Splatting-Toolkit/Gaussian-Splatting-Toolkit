@@ -800,7 +800,7 @@ class Cameras(TensorDataclass):
                 -torch.cos(theta) * torch.sin(phi), mask
             ).float()
 
-            vr_ipd = 0.064  # IPD in meters (note: scale of NeRF must be true to life and can be adjusted with the Blender add-on)
+            vr_ipd = 0.064  # IPD in meters (note: scale of GS must be true to life and can be adjusted with the Blender add-on)
             isRightEye = 1 if eye == "right" else -1
 
             # find ODS camera position
@@ -877,7 +877,7 @@ class Cameras(TensorDataclass):
                 -torch.cos(theta) * torch.sin(phi), mask
             ).float()
 
-            vr_ipd = 0.064  # IPD in meters (note: scale of NeRF must be true to life and can be adjusted with the Blender add-on)
+            vr_ipd = 0.064  # IPD in meters (note: scale of GS must be true to life and can be adjusted with the Blender add-on)
             isRightEye = 1 if eye == "right" else -1
 
             # find VR180 camera position

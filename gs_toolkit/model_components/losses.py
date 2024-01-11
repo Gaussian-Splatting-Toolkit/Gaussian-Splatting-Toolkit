@@ -146,7 +146,7 @@ def distortion_loss(weights_list, ray_samples_list):
     return loss
 
 
-def nerfstudio_distortion_loss(
+def gs_toolkit_distortion_loss(
     ray_samples: RaySamples,
     densities: Optional[Float[Tensor, "*bs num_samples 1"]] = None,
     weights: Optional[Float[Tensor, "*bs num_samples 1"]] = None,

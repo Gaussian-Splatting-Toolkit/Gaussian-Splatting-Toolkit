@@ -8,14 +8,14 @@ import cv2
 import numpy as np
 import torch
 
-from nerfstudio.cameras import camera_utils
-from nerfstudio.cameras.cameras import Cameras, CameraType
-from nerfstudio.data.dataparsers.base_dataparser import (
+from gs_toolkit.cameras import camera_utils
+from gs_toolkit.cameras.cameras import Cameras, CameraType
+from gs_toolkit.data.dataparsers.base_dataparser import (
     DataParser,
     DataParserConfig,
     DataparserOutputs,
 )
-from nerfstudio.data.scene_box import SceneBox
+from gs_toolkit.data.scene_box import SceneBox
 
 
 @dataclass

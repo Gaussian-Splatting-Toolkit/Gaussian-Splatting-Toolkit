@@ -53,7 +53,7 @@ Here are some basic steps to get started:
 For detailed usage instructions, refer to the documentation in each module's directory.
 
 ```bash
-gs-process-data --input /data/gs-recon/robot_studio.MOV --data-dir /data/gs-recon/rls
+gs-process-data video --data /data/gs-recon/robot_studio.MOV --output-dir /data/gs-recon/robot_studio --sfm-tool colmap --num-frames-target 1000
 ```
 
 ## Contribute

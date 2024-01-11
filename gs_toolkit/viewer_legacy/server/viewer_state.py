@@ -25,29 +25,29 @@ from rich import box, style
 from rich.panel import Panel
 from rich.table import Table
 
-from nerfstudio.cameras.cameras import Cameras, CameraType
-from nerfstudio.configs import base_config as cfg
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.data.scene_box import SceneBox
-from nerfstudio.models.base_model import Model
-from nerfstudio.pipelines.base_pipeline import Pipeline
-from nerfstudio.utils.decorators import check_main_thread, decorate_all
-from nerfstudio.utils.io import load_from_json, write_to_json
-from nerfstudio.utils.rich_utils import CONSOLE
-from nerfstudio.utils.writer import GLOBAL_BUFFER, EventName
-from nerfstudio.viewer_legacy.server import viewer_utils
-from nerfstudio.viewer_legacy.server.control_panel import ControlPanel
-from nerfstudio.viewer_legacy.server.gui_utils import parse_object
-from nerfstudio.viewer_legacy.server.render_state_machine import (
+from gs_toolkit.cameras.cameras import Cameras, CameraType
+from gs_toolkit.configs import base_config as cfg
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.data.scene_box import SceneBox
+from gs_toolkit.models.base_model import Model
+from gs_toolkit.pipelines.base_pipeline import Pipeline
+from gs_toolkit.utils.decorators import check_main_thread, decorate_all
+from gs_toolkit.utils.io import load_from_json, write_to_json
+from gs_toolkit.utils.rich_utils import CONSOLE
+from gs_toolkit.utils.writer import GLOBAL_BUFFER, EventName
+from gs_toolkit.viewer_legacy.server import viewer_utils
+from gs_toolkit.viewer_legacy.server.control_panel import ControlPanel
+from gs_toolkit.viewer_legacy.server.gui_utils import parse_object
+from gs_toolkit.viewer_legacy.server.render_state_machine import (
     RenderAction,
     RenderStateMachine,
 )
-from nerfstudio.viewer_legacy.server.utils import (
+from gs_toolkit.viewer_legacy.server.utils import (
     get_intrinsics_matrix_and_camera_to_world_h,
 )
-from nerfstudio.viewer_legacy.server.viewer_elements import ViewerControl, ViewerElement
-from nerfstudio.viewer_legacy.viser import ViserServer
-from nerfstudio.viewer_legacy.viser.messages import (
+from gs_toolkit.viewer_legacy.server.viewer_elements import ViewerControl, ViewerElement
+from gs_toolkit.viewer_legacy.viser import ViserServer
+from gs_toolkit.viewer_legacy.viser.messages import (
     CameraMessage,
     CameraPathOptionsRequest,
     CameraPathPayloadMessage,
@@ -60,7 +60,7 @@ from nerfstudio.viewer_legacy.viser.messages import (
 )
 
 if TYPE_CHECKING:
-    from nerfstudio.engine.trainer import Trainer
+    from gs_toolkit.engine.trainer import Trainer
 
 
 @decorate_all([check_main_thread])

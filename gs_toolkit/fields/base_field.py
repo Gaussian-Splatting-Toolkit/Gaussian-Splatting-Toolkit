@@ -10,9 +10,9 @@ import torch
 from jaxtyping import Float, Shaped
 from torch import Tensor, nn
 
-from nerfstudio.cameras.rays import Frustums, RaySamples
-from nerfstudio.configs.base_config import InstantiateConfig
-from nerfstudio.field_components.field_heads import FieldHeadNames
+from gs_toolkit.cameras.rays import Frustums, RaySamples
+from gs_toolkit.configs.base_config import InstantiateConfig
+from gs_toolkit.field_components.field_heads import FieldHeadNames
 
 
 @dataclass

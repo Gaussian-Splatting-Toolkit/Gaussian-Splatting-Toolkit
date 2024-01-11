@@ -8,7 +8,7 @@ from functorch import jacrev, vmap
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from nerfstudio.utils.math import Gaussians
+from gs_toolkit.utils.math import Gaussians
 
 
 class SpatialDistortion(nn.Module):

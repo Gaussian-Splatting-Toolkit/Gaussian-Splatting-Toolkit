@@ -12,25 +12,25 @@ import torchvision
 import viser
 import viser.theme
 import viser.transforms as vtf
-from nerfstudio.cameras.camera_optimizers import CameraOptimizer
-from nerfstudio.cameras.cameras import CameraType
-from nerfstudio.configs import base_config as cfg
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.models.base_model import Model
-from nerfstudio.pipelines.base_pipeline import Pipeline
-from nerfstudio.utils.decorators import check_main_thread, decorate_all
-from nerfstudio.utils.writer import GLOBAL_BUFFER, EventName
-from nerfstudio.viewer_legacy.server import viewer_utils
-from nerfstudio.viewer.control_panel import ControlPanel
-from nerfstudio.viewer.export_panel import populate_export_tab
-from nerfstudio.viewer.render_panel import populate_render_tab
-from nerfstudio.viewer.render_state_machine import RenderAction, RenderStateMachine
-from nerfstudio.viewer.utils import CameraState, parse_object
-from nerfstudio.viewer.viewer_elements import ViewerControl, ViewerElement
+from gs_toolkit.cameras.camera_optimizers import CameraOptimizer
+from gs_toolkit.cameras.cameras import CameraType
+from gs_toolkit.configs import base_config as cfg
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.models.base_model import Model
+from gs_toolkit.pipelines.base_pipeline import Pipeline
+from gs_toolkit.utils.decorators import check_main_thread, decorate_all
+from gs_toolkit.utils.writer import GLOBAL_BUFFER, EventName
+from gs_toolkit.viewer_legacy.server import viewer_utils
+from gs_toolkit.viewer.control_panel import ControlPanel
+from gs_toolkit.viewer.export_panel import populate_export_tab
+from gs_toolkit.viewer.render_panel import populate_render_tab
+from gs_toolkit.viewer.render_state_machine import RenderAction, RenderStateMachine
+from gs_toolkit.viewer.utils import CameraState, parse_object
+from gs_toolkit.viewer.viewer_elements import ViewerControl, ViewerElement
 from typing_extensions import assert_never
 
 if TYPE_CHECKING:
-    from nerfstudio.engine.trainer import Trainer
+    from gs_toolkit.engine.trainer import Trainer
 
 
 VISER_NERFSTUDIO_SCALE_RATIO: float = 10.0
@@ -115,7 +115,7 @@ class Viewer:
             viser.theme.TitlebarButton(
                 text="Github",
                 icon="GitHub",
-                href="https://github.com/nerfstudio-project/nerfstudio",
+                href="https://github.com/gs_toolkit-project/gs_toolkit",
             ),
             viser.theme.TitlebarButton(
                 text="Documentation",

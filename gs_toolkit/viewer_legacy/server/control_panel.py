@@ -18,8 +18,8 @@ from typing import Callable, DefaultDict, List, Tuple, get_args
 
 import torch
 
-from nerfstudio.utils.colormaps import ColormapOptions, Colormaps
-from nerfstudio.viewer_legacy.server.viewer_elements import (
+from gs_toolkit.utils.colormaps import ColormapOptions, Colormaps
+from gs_toolkit.viewer_legacy.server.viewer_elements import (
     ViewerButtonGroup,
     ViewerCheckbox,
     ViewerDropdown,
@@ -29,7 +29,7 @@ from nerfstudio.viewer_legacy.server.viewer_elements import (
     ViewerSlider,
     ViewerVec3,
 )
-from nerfstudio.viewer_legacy.viser import ViserServer
+from gs_toolkit.viewer_legacy.viser import ViserServer
 
 
 class ControlPanel:

@@ -12,14 +12,14 @@ import torch.nn.functional as F
 from jaxtyping import Float, Int, Shaped
 from torch import Tensor, nn
 
-from nerfstudio.field_components.base_field_component import FieldComponent
-from nerfstudio.utils.external import TCNN_EXISTS, tcnn
-from nerfstudio.utils.math import (
+from gs_toolkit.field_components.base_field_component import FieldComponent
+from gs_toolkit.utils.external import TCNN_EXISTS, tcnn
+from gs_toolkit.utils.math import (
     components_from_spherical_harmonics,
     expected_sin,
     generate_polyhedron_basis,
 )
-from nerfstudio.utils.printing import print_tcnn_speed_warning
+from gs_toolkit.utils.printing import print_tcnn_speed_warning
 
 
 class Encoding(FieldComponent):

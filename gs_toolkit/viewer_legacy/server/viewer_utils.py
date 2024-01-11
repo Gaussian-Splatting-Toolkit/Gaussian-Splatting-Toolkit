@@ -24,9 +24,9 @@ from typing import Optional, Tuple
 
 import torch
 
-from nerfstudio.data.scene_box import SceneBox
-from nerfstudio.models.base_model import Model
-from nerfstudio.utils.io import load_from_json
+from gs_toolkit.data.scene_box import SceneBox
+from gs_toolkit.models.base_model import Model
+from gs_toolkit.utils.io import load_from_json
 
 
 def get_viewer_version() -> str:

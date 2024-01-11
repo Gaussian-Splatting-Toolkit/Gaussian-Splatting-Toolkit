@@ -7,7 +7,7 @@ import torch
 from jaxtyping import Shaped
 from torch import Tensor
 
-from nerfstudio.field_components.base_field_component import FieldComponent
+from gs_toolkit.field_components.base_field_component import FieldComponent
 
 
 class Embedding(FieldComponent):

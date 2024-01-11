@@ -32,29 +32,29 @@ from torch.nn import Parameter
 from torch.utils.data.distributed import DistributedSampler
 from typing_extensions import TypeVar
 
-from nerfstudio.cameras.camera_optimizers import CameraOptimizerConfig
-from nerfstudio.cameras.cameras import Cameras, CameraType
-from nerfstudio.cameras.rays import RayBundle
-from nerfstudio.configs.base_config import InstantiateConfig
-from nerfstudio.configs.dataparser_configs import AnnotatedDataParserUnion
-from nerfstudio.data.dataparsers.base_dataparser import DataparserOutputs
-from nerfstudio.data.dataparsers.blender_dataparser import BlenderDataParserConfig
-from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.data.pixel_samplers import (
+from gs_toolkit.cameras.camera_optimizers import CameraOptimizerConfig
+from gs_toolkit.cameras.cameras import Cameras, CameraType
+from gs_toolkit.cameras.rays import RayBundle
+from gs_toolkit.configs.base_config import InstantiateConfig
+from gs_toolkit.configs.dataparser_configs import AnnotatedDataParserUnion
+from gs_toolkit.data.dataparsers.base_dataparser import DataparserOutputs
+from gs_toolkit.data.dataparsers.blender_dataparser import BlenderDataParserConfig
+from gs_toolkit.data.datasets.base_dataset import InputDataset
+from gs_toolkit.data.pixel_samplers import (
     PatchPixelSamplerConfig,
     PixelSampler,
     PixelSamplerConfig,
 )
-from nerfstudio.data.utils.dataloaders import (
+from gs_toolkit.data.utils.dataloaders import (
     CacheDataloader,
     FixedIndicesEvalDataloader,
     RandIndicesEvalDataloader,
 )
-from nerfstudio.data.utils.nerfstudio_collate import nerfstudio_collate
-from nerfstudio.engine.callbacks import TrainingCallback, TrainingCallbackAttributes
-from nerfstudio.model_components.ray_generators import RayGenerator
-from nerfstudio.utils.misc import IterableWrapper, get_orig_class
-from nerfstudio.utils.rich_utils import CONSOLE
+from gs_toolkit.data.utils.gs_toolkit_collate import gs_toolkit_collate
+from gs_toolkit.engine.callbacks import TrainingCallback, TrainingCallbackAttributes
+from gs_toolkit.model_components.ray_generators import RayGenerator
+from gs_toolkit.utils.misc import IterableWrapper, get_orig_class
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 
 def variable_res_collate(batch: List[Dict]) -> Dict:
@@ -80,7 +80,7 @@ def variable_res_collate(batch: List[Dict]) -> Dict:
         for key in topop:
             del data[key]
 
-    new_batch = nerfstudio_collate(batch)
+    new_batch = gs_toolkit_collate(batch)
     new_batch["image"] = images
     new_batch.update(imgdata_lists)
 
@@ -323,7 +323,7 @@ class VanillaDataManagerConfig(DataManagerConfig):
     new images. If -1, never pick new images."""
     eval_image_indices: Optional[Tuple[int, ...]] = (0,)
     """Specifies the image indices to use during eval; if None, uses all."""
-    collate_fn: Callable[[Any], Any] = cast(Any, staticmethod(nerfstudio_collate))
+    collate_fn: Callable[[Any], Any] = cast(Any, staticmethod(gs_toolkit_collate))
     """Specifies the collate function to use for the train and eval dataloaders."""
     camera_res_scale_factor: float = 1.0
     """The scale factor for scaling spatial data such as images, mask, semantics
