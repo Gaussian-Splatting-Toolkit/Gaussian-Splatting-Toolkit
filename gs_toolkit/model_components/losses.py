@@ -220,7 +220,7 @@ def pred_normal_loss(
     )
 
 
-def ds_nerf_depth_loss(
+def ds_gs_depth_loss(
     weights: Float[Tensor, "*batch num_samples 1"],
     termination_depth: Float[Tensor, "*batch 1"],
     steps: Float[Tensor, "*batch num_samples 1"],
@@ -325,7 +325,7 @@ def depth_loss(
 
     if depth_loss_type == DepthLossType.DS_NERF:
         lengths = ray_samples.frustums.ends - ray_samples.frustums.starts
-        return ds_nerf_depth_loss(weights, termination_depth, steps, lengths, sigma)
+        return ds_gs_depth_loss(weights, termination_depth, steps, lengths, sigma)
 
     if depth_loss_type == DepthLossType.URF:
         return urban_radiance_field_depth_loss(

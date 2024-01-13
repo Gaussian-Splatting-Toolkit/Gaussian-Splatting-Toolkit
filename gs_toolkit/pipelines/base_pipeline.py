@@ -228,7 +228,7 @@ class VanillaPipelineConfig(InstantiateConfig):
 
 
 class VanillaPipeline(Pipeline):
-    """The pipeline class for the vanilla nerf setup of multiple cameras for one or a few scenes.
+    """The pipeline class for the vanilla gaussian splatting setup of multiple cameras for one or a few scenes.
 
     Args:
         config: configuration to instantiate pipeline

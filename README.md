@@ -77,8 +77,10 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
     - [ ] Azure Kinect
     - [ ] iPhone/ iPad
 - [ ] Benchmarking
-- [ ] Gaussian Splatting module
+- [x] Gaussian Splatting module
 - [ ] Gaussian Refinement
+- [ ] Depth Loss
+- [ ] Point cloud export
 - [ ] Mesh extraction
   - [ ] Marching cube
   - [ ] TSDF

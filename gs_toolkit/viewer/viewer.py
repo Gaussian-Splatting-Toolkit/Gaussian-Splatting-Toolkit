@@ -115,7 +115,7 @@ class Viewer:
             viser.theme.TitlebarButton(
                 text="Github",
                 icon="GitHub",
-                href="https://github.com/gs_toolkit-project/gs_toolkit",
+                href="https://github.com/H-tr/Gaussian-Splatting-Toolkit",
             ),
             viser.theme.TitlebarButton(
                 text="Documentation",
@@ -126,7 +126,7 @@ class Viewer:
         image = viser.theme.TitlebarImage(
             image_url_light="https://docs.nerf.studio/_static/imgs/logo.png",
             image_url_dark="https://docs.nerf.studio/_static/imgs/logo-dark.png",
-            image_alt="NerfStudio Logo",
+            image_alt="GSTK Logo",
             href="https://docs.nerf.studio/",
         )
         titlebar_theme = viser.theme.TitlebarConfig(buttons=buttons, image=image)

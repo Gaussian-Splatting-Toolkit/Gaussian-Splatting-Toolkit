@@ -491,7 +491,7 @@ class ProcessODM(BaseConverterToGSToolkitDataset):
             CONSOLE.print("[bold red]No images found, exiting")
             sys.exit(1)
         summary_log.extend(
-            odm_utils.cameras2nerfds(
+            odm_utils.cameras2gsds(
                 image_filename_map=image_filename_map,
                 cameras_file=cameras_file,
                 shots_file=shots_file,

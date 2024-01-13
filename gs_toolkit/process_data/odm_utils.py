@@ -37,7 +37,7 @@ def rodrigues_vec_to_rotation_mat(rodrigues_vec: np.ndarray) -> np.ndarray:
     return rotation_mat
 
 
-def cameras2nerfds(
+def cameras2gsds(
     image_filename_map: Dict[str, Path],
     cameras_file: Path,
     shots_file: Path,

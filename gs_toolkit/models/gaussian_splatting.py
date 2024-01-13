@@ -518,13 +518,13 @@ class GaussianSplattingModel(Model):
         This function deletes gaussians with under a certain opacity threshold
         extra_cull_mask: a mask indicates extra gaussians to cull besides existing culling criterion
         """
-        n_bef = self.num_points
+        # n_bef = self.num_points
         # cull transparent ones
         culls = (
             torch.sigmoid(self.opacities) < self.config.cull_alpha_thresh
         ).squeeze()
-        below_alpha_count = torch.sum(culls).item()
-        toobigs_count = 0
+        # below_alpha_count = torch.sum(culls).item()
+        # toobigs_count = 0
         if extra_cull_mask is not None:
             culls = culls | extra_cull_mask
         if self.step > self.config.refine_every * self.config.reset_alpha_every:
@@ -540,7 +540,7 @@ class GaussianSplattingModel(Model):
                     toobigs | (self.max_2Dsize > self.config.cull_screen_size).squeeze()
                 )
             culls = culls | toobigs
-            toobigs_count = torch.sum(toobigs).item()
+            # toobigs_count = torch.sum(toobigs).item()
         self.means = Parameter(self.means[~culls].detach())
         self.scales = Parameter(self.scales[~culls].detach())
         self.quats = Parameter(self.quats[~culls].detach())
@@ -548,10 +548,10 @@ class GaussianSplattingModel(Model):
         self.features_rest = Parameter(self.features_rest[~culls].detach())
         self.opacities = Parameter(self.opacities[~culls].detach())
 
-        CONSOLE.log(
-            f"Culled {n_bef - self.num_points} gaussians "
-            f"({below_alpha_count} below alpha thresh, {toobigs_count} too bigs, {self.num_points} remaining)"
-        )
+        # CONSOLE.log(
+        #     f"Culled {n_bef - self.num_points} gaussians "
+        #     f"({below_alpha_count} below alpha thresh, {toobigs_count} too bigs, {self.num_points} remaining)"
+        # )
 
         return culls
 
@@ -561,9 +561,9 @@ class GaussianSplattingModel(Model):
         """
 
         n_splits = split_mask.sum().item()
-        CONSOLE.log(
-            f"Splitting {split_mask.sum().item()/self.num_points} gaussians: {n_splits}/{self.num_points}"
-        )
+        # CONSOLE.log(
+        #     f"Splitting {split_mask.sum().item()/self.num_points} gaussians: {n_splits}/{self.num_points}"
+        # )
         centered_samples = torch.randn(
             (samps * n_splits, 3), device=self.device
         )  # Nx3 of axis-aligned scales
@@ -604,10 +604,10 @@ class GaussianSplattingModel(Model):
         """
         This function duplicates gaussians that are too small
         """
-        n_dups = dup_mask.sum().item()
-        CONSOLE.log(
-            f"Duplicating {dup_mask.sum().item()/self.num_points} gaussians: {n_dups}/{self.num_points}"
-        )
+        # n_dups = dup_mask.sum().item()
+        # CONSOLE.log(
+        #     f"Duplicating {dup_mask.sum().item()/self.num_points} gaussians: {n_dups}/{self.num_points}"
+        # )
         dup_means = self.means[dup_mask]
         dup_features_dc = self.features_dc[dup_mask]
         dup_features_rest = self.features_rest[dup_mask]

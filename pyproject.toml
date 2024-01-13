@@ -21,6 +21,7 @@ classifiers = [
 dependencies = [
     "comet_ml",
     "jaxtyping",
+    "mediapy",
     "opencv-python",
     "open3d",
     "pathos",
@@ -33,6 +34,7 @@ dependencies = [
     "rich",
     "splines",
     "tyro",
+    "xatlas",
 ]
 
 [project.optional-dependencies]
@@ -55,6 +57,7 @@ dev = [
 [project.scripts]
 gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"
 gs-train = "gs_toolkit.scripts.train:entrypoint"
+gs-export = "gs_toolkit.scripts.exporter:entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["."]
