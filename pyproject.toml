@@ -24,6 +24,7 @@ dependencies = [
     "opencv-python",
     "open3d",
     "pathos",
+    "pymeshlab",
     "pytorch_msssim",
     "torchmetrics",
     "plyfile==0.8.1",
