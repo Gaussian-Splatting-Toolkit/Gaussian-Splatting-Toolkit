@@ -20,6 +20,7 @@ from typing_extensions import Annotated, Literal
 
 from gs_toolkit.cameras.rays import RayBundle
 from gs_toolkit.data.datamanagers.base_datamanager import VanillaDataManager
+from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
 from gs_toolkit.data.datamanagers.parallel_datamanager import ParallelDataManager
 from gs_toolkit.data.scene_box import OrientedBox
 from gs_toolkit.exporter import texture_utils, tsdf_utils
@@ -136,7 +137,8 @@ class ExportPointCloud(Exporter):
 
         # Increase the batchsize to speed up the evaluation.
         assert isinstance(
-            pipeline.datamanager, (VanillaDataManager, ParallelDataManager)
+            pipeline.datamanager,
+            (VanillaDataManager, ParallelDataManager, FullImageDatamanager),
         )
         assert pipeline.datamanager.train_pixel_sampler is not None
         pipeline.datamanager.train_pixel_sampler.num_rays_per_batch = (
@@ -334,7 +336,8 @@ class ExportPoissonMesh(Exporter):
 
         # Increase the batchsize to speed up the evaluation.
         assert isinstance(
-            pipeline.datamanager, (VanillaDataManager, ParallelDataManager)
+            pipeline.datamanager,
+            (VanillaDataManager, ParallelDataManager, FullImageDatamanager),
         )
         assert pipeline.datamanager.train_pixel_sampler is not None
         pipeline.datamanager.train_pixel_sampler.num_rays_per_batch = (

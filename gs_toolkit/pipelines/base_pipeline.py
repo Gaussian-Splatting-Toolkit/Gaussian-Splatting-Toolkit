@@ -28,10 +28,8 @@ from gs_toolkit.configs.base_config import InstantiateConfig
 from gs_toolkit.data.datamanagers.base_datamanager import (
     DataManager,
     DataManagerConfig,
-    VanillaDataManager,
 )
 from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
-from gs_toolkit.data.datamanagers.parallel_datamanager import ParallelDataManager
 from gs_toolkit.engine.callbacks import TrainingCallback, TrainingCallbackAttributes
 from gs_toolkit.models.base_model import Model, ModelConfig
 from gs_toolkit.utils import profiler
@@ -383,7 +381,7 @@ class VanillaPipeline(Pipeline):
         metrics_dict_list = []
         assert isinstance(
             self.datamanager,
-            (VanillaDataManager, ParallelDataManager, FullImageDatamanager),
+            FullImageDatamanager,
         )
         num_images = len(self.datamanager.fixed_indices_eval_dataloader)
         with Progress(
