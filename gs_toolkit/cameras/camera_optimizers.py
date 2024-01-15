@@ -14,7 +14,6 @@ from torch import Tensor, nn
 from typing_extensions import assert_never
 
 from gs_toolkit.cameras.lie_groups import exp_map_SE3, exp_map_SO3xR3
-from gs_toolkit.cameras.rays import RayBundle
 from gs_toolkit.configs.base_config import InstantiateConfig
 from gs_toolkit.utils import poses as pose_utils
 from gs_toolkit.engine.optimizers import OptimizerConfig
@@ -135,15 +134,6 @@ class CameraOptimizer(nn.Module):
                 indices.shape[0], 1, 1
             )
         return functools.reduce(pose_utils.multiply, outputs)
-
-    def apply_to_raybundle(self, raybundle: RayBundle) -> None:
-        """Apply the pose correction to the raybundle"""
-        if self.config.mode != "off":
-            correction_matrices = self(raybundle.camera_indices.squeeze())  # type: ignore
-            raybundle.origins = raybundle.origins + correction_matrices[:, :3, 3]
-            raybundle.directions = torch.bmm(
-                correction_matrices[:, :3, :3], raybundle.directions[..., None]
-            ).squeeze()
 
     def apply_to_camera(self, camera: Cameras) -> None:
         """Apply the pose correction to the raybundle"""

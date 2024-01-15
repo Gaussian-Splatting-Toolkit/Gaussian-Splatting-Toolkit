@@ -138,8 +138,8 @@ class Pipeline(nn.Module):
         if self.world_size > 1 and step:
             assert self.datamanager.train_sampler is not None
             self.datamanager.train_sampler.set_epoch(step)
-        ray_bundle, batch = self.datamanager.next_train(step)
-        model_outputs = self.model(ray_bundle, batch)
+        cameras, batch = self.datamanager.next_train(step)
+        model_outputs = self.model(cameras, batch)
         metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
         loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
 
@@ -157,8 +157,8 @@ class Pipeline(nn.Module):
         if self.world_size > 1:
             assert self.datamanager.eval_sampler is not None
             self.datamanager.eval_sampler.set_epoch(step)
-        ray_bundle, batch = self.datamanager.next_eval(step)
-        model_outputs = self.model(ray_bundle, batch)
+        cameras, batch = self.datamanager.next_eval(step)
+        model_outputs = self.model(cameras, batch)
         metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
         loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
         self.train()
@@ -307,9 +307,9 @@ class VanillaPipeline(Pipeline):
         Args:
             step: current iteration step to update sampler if using DDP (distributed)
         """
-        ray_bundle, batch = self.datamanager.next_train(step)
+        cameras, batch = self.datamanager.next_train(step)
         model_outputs = self._model(
-            ray_bundle
+            cameras
         )  # train distributed data parallel model if world_size > 1
         metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
         loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
@@ -334,8 +334,8 @@ class VanillaPipeline(Pipeline):
             step: current iteration step
         """
         self.eval()
-        ray_bundle, batch = self.datamanager.next_eval(step)
-        model_outputs = self.model(ray_bundle)
+        cameras, batch = self.datamanager.next_eval(step)
+        model_outputs = self.model(cameras)
         metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
         loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
         self.train()
