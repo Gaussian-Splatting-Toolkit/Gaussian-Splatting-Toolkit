@@ -78,6 +78,20 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
                 same_dimensions=self.same_dimensions,
                 keep_image_dir=False,
             )
+            if self.depth_data is not None:
+                depth_image_rename_map_paths = process_data_utils.copy_images(
+                    self.depth_data,
+                    image_dir=self.depth_image_dir,
+                    crop_factor=self.crop_factor,
+                    image_prefix="frame_train_"
+                    if self.eval_data is not None
+                    else "frame_",
+                    verbose=self.verbose,
+                    num_downscales=self.num_downscales,
+                    same_dimensions=self.same_dimensions,
+                    keep_image_dir=False,
+                )
+                image_rename_map_paths.update(depth_image_rename_map_paths)
             if self.eval_data is not None:
                 eval_image_rename_map_paths = process_data_utils.copy_images(
                     self.eval_data,
@@ -122,6 +136,9 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
         # Export depth maps
         image_id_to_depth_path, log_tmp = self._export_depth()
         summary_log += log_tmp
+
+        # Align depth maps
+        self._align_depth()
 
         if (
             require_cameras_exist

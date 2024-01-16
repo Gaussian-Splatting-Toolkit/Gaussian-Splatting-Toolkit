@@ -634,6 +634,82 @@ def create_sfm_depth(
     return image_id_to_depth_path
 
 
+def align_depth(
+    recon_dir: Path,
+    depth_dir: Path,
+    verbose: bool = True,
+    min_depth: float = 0.001,
+    max_depth: float = 10000,
+    max_repoj_err: float = 2.5,
+    min_n_visible: int = 2,
+) -> float:
+    if not depth_dir.exists():
+        raise RuntimeError(f"You are required to provide depth maps in {depth_dir}")
+    ptid_to_info = read_points3D_binary(recon_dir / "points3D.bin")
+    cam_id_to_camera = read_cameras_binary(recon_dir / "cameras.bin")
+    im_id_to_image = read_images_binary(recon_dir / "images.bin")
+
+    # Only support first camera
+    CAMERA_ID = 1
+    W = cam_id_to_camera[CAMERA_ID].width
+    H = cam_id_to_camera[CAMERA_ID].height
+
+    if verbose:
+        iter_images = track(
+            im_id_to_image.items(),
+            total=len(im_id_to_image.items()),
+            description="Calculating depth maps ...",
+        )
+    else:
+        iter_images = iter(im_id_to_image.items())
+
+    total_scale = []
+    # cov = []
+    for im_id, im_data in iter_images:
+        # Replace jpg with png in im_data.name as depth name
+        depth_name = im_data.name.replace(".jpg", ".png")
+        depth_path = depth_dir / depth_name
+        # Read depth image
+        depth_img = cv2.imread(str(depth_path), cv2.IMREAD_ANYDEPTH)  # type: ignore
+        CONSOLE.print(f"Processing image {im_id}...")
+        CONSOLE.print(f"Processing image {im_data.name}...")
+        pids = [pid for pid in im_data.point3D_ids if pid != -1]
+        xyz_world = np.array([ptid_to_info[pid].xyz for pid in pids])
+        rotation = qvec2rotmat(im_data.qvec)
+        z = (rotation @ xyz_world.T)[-1] + im_data.tvec[-1]
+        errors = np.array([ptid_to_info[pid].error for pid in pids])
+        n_visible = np.array([len(ptid_to_info[pid].image_ids) for pid in pids])
+        uv = np.array(
+            [
+                im_data.xys[i]
+                for i in range(len(im_data.xys))
+                if im_data.point3D_ids[i] != -1
+            ]
+        )
+        idx = np.where(
+            (z >= min_depth)
+            & (z <= max_depth)
+            & (errors <= max_repoj_err)
+            & (n_visible >= min_n_visible)
+            & (uv[:, 0] >= 0)
+            & (uv[:, 0] < W)
+            & (uv[:, 1] >= 0)
+            & (uv[:, 1] < H)
+        )
+        z = z[idx]
+        uv = uv[idx]
+
+        uu, vv = uv[:, 0].astype(int), uv[:, 1].astype(int)
+        depth_measure = depth_img[vv, uu]
+        # Choose the idx that depth measure is not 0
+        idx = np.where(depth_measure != 0)
+        z = z[idx]
+        depth_measure = depth_measure[idx]
+        total_scale.append(np.mean(depth_measure / z))
+        # cov.append(np.cov(z, depth_measure)[0, 1])
+    return np.mean(total_scale)
+
+
 def get_matching_summary(num_initial_frames: int, num_matched_frames: int) -> str:
     """Returns a summary of the matching results.
 

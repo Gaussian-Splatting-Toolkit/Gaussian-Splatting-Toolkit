@@ -89,6 +89,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
     """If --use-sfm-depth and this flag is True, also export debug images showing Sf overlaid upon input images."""
     same_dimensions: bool = True
     """Whether to assume all images are same dimensions and so to use fast downscaling with no autorotation."""
+    depth_data: Optional[Path] = None
+    """Path to depth data. If set, will use this depth data instead of running COLMAP to generate depth data."""
 
     @staticmethod
     def default_colmap_path() -> Path:
@@ -168,6 +170,16 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
             )
             return image_id_to_depth_path, summary_log
         return None, summary_log
+
+    def _align_depth(self) -> float:
+        scale_factor = 1.0
+        if self.depth_data is not None:
+            scale_factor = colmap_utils.align_depth(
+                recon_dir=self.output_dir / self.default_colmap_path(),
+                depth_dir=self.depth_image_dir,
+            )
+        CONSOLE.print(f"Scale factor: {scale_factor}")
+        return scale_factor
 
     def _run_colmap(self, mask_path: Optional[Path] = None):
         """
