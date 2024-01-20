@@ -114,9 +114,10 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
                 style="bold yellow",
             )
             self.config.cache_images = "cpu"
-        self.cached_train, self.cached_eval = self.cache_images(
-            self.config.cache_images
-        )
+        if self.test_mode != "inference":
+            self.cached_train, self.cached_eval = self.cache_images(
+                self.config.cache_images
+            )
         self.exclude_batch_keys_from_device = (
             self.train_dataset.exclude_batch_keys_from_device
         )
