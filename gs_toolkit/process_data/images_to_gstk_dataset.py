@@ -138,7 +138,8 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
         summary_log += log_tmp
 
         # Align depth maps
-        self._align_depth()
+        scale_factor = 1.0
+        image_id_to_depth_path, scale_factor = self._align_depth()
 
         if (
             require_cameras_exist
@@ -149,6 +150,7 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
             )
 
         summary_log += self._save_transforms(
+            scale_factor,
             num_frames,
             image_id_to_depth_path,
             None,

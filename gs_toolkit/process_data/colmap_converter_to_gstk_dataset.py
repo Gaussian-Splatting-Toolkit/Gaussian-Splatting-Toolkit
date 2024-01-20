@@ -106,6 +106,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
 
     def _save_transforms(
         self,
+        scale_factor: float,
         num_frames: int,
         image_id_to_depth_path: Optional[Dict[int, Path]] = None,
         camera_mask_path: Optional[Path] = None,
@@ -123,6 +124,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
                 "[bold yellow]Saving results to transforms.json", spinner="balloon"
             ):
                 num_matched_frames = colmap_utils.colmap_to_json(
+                    scale_factor=scale_factor,
                     recon_dir=self.absolute_colmap_model_path,
                     output_dir=self.output_dir,
                     image_id_to_depth_path=image_id_to_depth_path,
@@ -174,12 +176,13 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
     def _align_depth(self) -> float:
         scale_factor = 1.0
         if self.depth_data is not None:
-            scale_factor = colmap_utils.align_depth(
+            image_id_to_depth_path, scale_factor = colmap_utils.align_depth(
                 recon_dir=self.output_dir / self.default_colmap_path(),
                 depth_dir=self.depth_image_dir,
             )
+            return image_id_to_depth_path, scale_factor
         CONSOLE.print(f"Scale factor: {scale_factor}")
-        return scale_factor
+        return None, scale_factor
 
     def _run_colmap(self, mask_path: Optional[Path] = None):
         """

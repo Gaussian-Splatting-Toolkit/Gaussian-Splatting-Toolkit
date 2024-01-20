@@ -4,7 +4,7 @@ Tools supporting the execution of COLMAP and preparation of COLMAP-based dataset
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, Union
 
 import appdirs
 import cv2
@@ -390,6 +390,7 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
 
 
 def colmap_to_json(
+    scale_factor: float,
     recon_dir: Path,
     output_dir: Path,
     camera_mask_path: Optional[Path] = None,
@@ -461,6 +462,7 @@ def colmap_to_json(
     if set(cam_id_to_camera.keys()) != {1}:
         raise RuntimeError("Only single camera shared for all images is supported.")
     out = parse_colmap_camera_params(cam_id_to_camera[1])
+    out["scale_factor"] = scale_factor
     out["frames"] = frames
 
     applied_transform = np.eye(4)[:3, :]
@@ -642,7 +644,7 @@ def align_depth(
     max_depth: float = 10000,
     max_repoj_err: float = 2.5,
     min_n_visible: int = 2,
-) -> float:
+) -> Union[Dict[int, Path], float]:
     if not depth_dir.exists():
         raise RuntimeError(f"You are required to provide depth maps in {depth_dir}")
     ptid_to_info = read_points3D_binary(recon_dir / "points3D.bin")
@@ -664,6 +666,7 @@ def align_depth(
         iter_images = iter(im_id_to_image.items())
 
     total_scale = []
+    image_id_to_depth_path = {}
     # cov = []
     for im_id, im_data in iter_images:
         # Replace jpg with png in im_data.name as depth name
@@ -671,8 +674,7 @@ def align_depth(
         depth_path = depth_dir / depth_name
         # Read depth image
         depth_img = cv2.imread(str(depth_path), cv2.IMREAD_ANYDEPTH)  # type: ignore
-        CONSOLE.print(f"Processing image {im_id}...")
-        CONSOLE.print(f"Processing image {im_data.name}...")
+        image_id_to_depth_path[im_id] = depth_path
         pids = [pid for pid in im_data.point3D_ids if pid != -1]
         xyz_world = np.array([ptid_to_info[pid].xyz for pid in pids])
         rotation = qvec2rotmat(im_data.qvec)
@@ -707,7 +709,7 @@ def align_depth(
         depth_measure = depth_measure[idx]
         total_scale.append(np.mean(depth_measure / z))
         # cov.append(np.cov(z, depth_measure)[0, 1])
-    return np.mean(total_scale)
+    return image_id_to_depth_path, np.mean(total_scale)
 
 
 def get_matching_summary(num_initial_frames: int, num_matched_frames: int) -> str:
