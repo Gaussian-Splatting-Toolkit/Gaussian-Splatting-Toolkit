@@ -125,7 +125,7 @@ class Model(nn.Module):
         """
 
     def forward(
-        self, ray_bundle: Union[RayBundle, Cameras]
+        self, cameras: Union[RayBundle, Cameras]
     ) -> Dict[str, Union[torch.Tensor, List]]:
         """Run forward starting with a ray bundle. This outputs different things depending on the configuration
         of the model and whether or not the batch is provided (whether or not we are training basically)
@@ -135,9 +135,9 @@ class Model(nn.Module):
         """
 
         if self.collider is not None:
-            ray_bundle = self.collider(ray_bundle)
+            cameras = self.collider(cameras)
 
-        return self.get_outputs(ray_bundle)
+        return self.get_outputs(cameras)
 
     def get_metrics_dict(self, outputs, batch) -> Dict[str, torch.Tensor]:
         """Compute and returns metrics.
