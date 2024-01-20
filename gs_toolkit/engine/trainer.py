@@ -313,6 +313,7 @@ class Trainer:
 
         # save checkpoint at the end of training
         self.save_checkpoint(step)
+        self.save_ply(step)
 
         # write out any remaining events (e.g., total train time)
         writer.write_out_storage()

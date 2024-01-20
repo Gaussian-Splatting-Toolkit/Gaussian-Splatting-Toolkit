@@ -231,7 +231,7 @@ class GaussianSplattingModel(Model):
 
     def load_state_dict(self, dict, **kwargs):  # type: ignore
         # resize the parameters to match the new number of points
-        self.step = 30000
+        self.step = 15_000
         newp = dict["means"].shape[0]
         self.means = torch.nn.Parameter(torch.zeros(newp, 3, device=self.device))
         self.scales = torch.nn.Parameter(torch.zeros(newp, 3, device=self.device))
@@ -690,7 +690,7 @@ class GaussianSplattingModel(Model):
             return 1
 
     def get_outputs(self, camera: Cameras) -> Dict[str, Union[torch.Tensor, List]]:
-        """Takes in a Ray Bundle and returns a dictionary of outputs.
+        """Takes in a camera and returns a dictionary of outputs.
 
         Args:
             ray_bundle: Input bundle of rays. This raybundle should have all the

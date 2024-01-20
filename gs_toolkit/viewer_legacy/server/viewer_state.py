@@ -232,6 +232,7 @@ class ViewerLegacyState:
         assert isinstance(message, SaveCheckpointMessage)
         if self.trainer is not None:
             self.trainer.save_checkpoint(self.step)
+            self.trainer.save_ply(self.step)
 
     def _handle_camera_update(self, message: GSToolkitMessage) -> None:
         """Handle camera update message from viewer."""
