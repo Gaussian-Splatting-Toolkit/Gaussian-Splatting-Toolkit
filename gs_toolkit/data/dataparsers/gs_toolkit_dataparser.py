@@ -97,6 +97,7 @@ class GSToolkit(DataParser):
         cy_fixed = "cy" in meta
         height_fixed = "h" in meta
         width_fixed = "w" in meta
+        self.config.scale_factor = "scale_factor" in meta
         distort_fixed = False
         for distort_key in ["k1", "k2", "k3", "p1", "p2", "distortion_params"]:
             if distort_key in meta:
