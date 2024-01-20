@@ -106,8 +106,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
 
     def _save_transforms(
         self,
-        scale_factor: float,
         num_frames: int,
+        scale_factor: float = 1.0,
         image_id_to_depth_path: Optional[Dict[int, Path]] = None,
         camera_mask_path: Optional[Path] = None,
         image_rename_map: Optional[Dict[str, str]] = None,

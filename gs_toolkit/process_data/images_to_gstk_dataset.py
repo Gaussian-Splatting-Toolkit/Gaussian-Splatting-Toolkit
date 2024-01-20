@@ -150,11 +150,11 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
             )
 
         summary_log += self._save_transforms(
-            scale_factor,
-            num_frames,
-            image_id_to_depth_path,
-            None,
-            image_rename_map,
+            num_frames=num_frames,
+            scale_factor=scale_factor,
+            image_id_to_depth_path=image_id_to_depth_path,
+            camera_mask_path=None,
+            image_rename_map=image_rename_map,
         )
 
         CONSOLE.log("[bold green]:tada: :tada: :tada: All DONE :tada: :tada: :tada:")

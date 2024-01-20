@@ -134,7 +134,9 @@ class VideoToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
         summary_log += log_tmp
 
         summary_log += self._save_transforms(
-            num_extracted_frames, image_id_to_depth_path, mask_path
+            num_frames=num_extracted_frames,
+            image_id_to_depth_path=image_id_to_depth_path,
+            camera_mask_path=mask_path,
         )
 
         CONSOLE.log("[bold green]:tada: :tada: :tada: All DONE :tada: :tada: :tada:")
