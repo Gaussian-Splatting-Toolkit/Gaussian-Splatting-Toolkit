@@ -43,7 +43,7 @@ pytest-xdist = "3.5.0"
 pycolmap = "0.5.0"
 projectaria_tools = "1.3.1"
 tensorboard = "2.15.1"
-typeguard = "4.1.5"
+typeguard = "2.13.3"
 ruff = "0.1.14"
 ssh-config = "0.1.5"
 viser = "0.1.21"
@@ -53,12 +53,6 @@ wandb = "0.16.2"
 gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"
 gs-train = "gs_toolkit.scripts.train:entrypoint"
 gs-export = "gs_toolkit.scripts.exporter:entrypoint"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["gs_toolkit"]
-exclude = []
-namespaces = false
 
 [tool.ruff]
 line-length = 120
