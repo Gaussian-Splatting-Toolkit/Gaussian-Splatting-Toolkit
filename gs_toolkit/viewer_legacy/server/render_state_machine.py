@@ -138,14 +138,10 @@ class RenderStateMachine(threading.Thread):
                     with background_color_override_context(
                         background_color
                     ), torch.no_grad():
-                        outputs = self.viewer.get_model().get_outputs_for_camera(
-                            camera
-                        )
+                        outputs = self.viewer.get_model().get_outputs_for_camera(camera)
                 else:
                     with torch.no_grad():
-                        outputs = self.viewer.get_model().get_outputs_for_camera(
-                            camera
-                        )
+                        outputs = self.viewer.get_model().get_outputs_for_camera(camera)
                 self.viewer.get_model().train()
         if True:
             num_rays = (camera.height * camera.width).item()
