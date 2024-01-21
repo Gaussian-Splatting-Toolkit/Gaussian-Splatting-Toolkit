@@ -83,9 +83,9 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
                     self.depth_data,
                     image_dir=self.depth_image_dir,
                     crop_factor=self.crop_factor,
-                    image_prefix="frame_train_"
+                    image_prefix="depth_train_"
                     if self.eval_data is not None
-                    else "frame_",
+                    else "depth_",
                     verbose=self.verbose,
                     num_downscales=self.num_downscales,
                     same_dimensions=self.same_dimensions,
@@ -109,6 +109,8 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
                 (a.name, b.name) for a, b in image_rename_map_paths.items()
             )
             num_frames = len(image_rename_map)
+            if self.depth_data is not None:
+                num_frames = num_frames // 2
             summary_log.append(f"Starting with {num_frames} images")
 
             # # Create mask

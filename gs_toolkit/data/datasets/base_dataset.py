@@ -82,6 +82,37 @@ class InputDataset(Dataset):
             ] + self._dataparser_outputs.alpha_color * (1.0 - image[:, :, -1:])
         return image
 
+    def get_numpy_depth_image(self, image_idx: int) -> npt.NDArray[np.uint8]:
+        """Returns the image of shape (H, W, 3 or 4).
+
+        Args:
+            image_idx: The image index in the dataset.
+        """
+        depth_filename = self._dataparser_outputs.metadata["depth_filenames"][image_idx]
+        pil_image = Image.open(depth_filename)
+        if self.scale_factor != 1.0:
+            width, height = pil_image.size
+            newsize = (int(width * self.scale_factor), int(height * self.scale_factor))
+            pil_image = pil_image.resize(newsize, resample=Image.BILINEAR)
+        depth = np.array(pil_image, dtype="uint8")  # shape is (h, w) or (h, w, 3 or 4)
+        assert len(depth.shape) == 3
+        assert depth.dtype == np.uint8
+        assert depth.shape[2] == 1, f"Image shape of {depth.shape} is in correct."
+        return depth
+
+    def get_depth_image(
+        self, depth_idx: int
+    ) -> Float[Tensor, "image_height image_width num_channels"]:
+        """Returns a 1 channel depth map.
+
+        Args:
+            depth_idx: The depth image index in the dataset.
+        """
+        depth = torch.from_numpy(
+            self.get_numpy_depth_image(depth_idx).astype("float32") / 255.0
+        )
+        return depth
+
     def get_data(self, image_idx: int) -> Dict:
         """Returns the ImageDataset data as a dictionary.
 
@@ -89,7 +120,8 @@ class InputDataset(Dataset):
             image_idx: The image index in the dataset.
         """
         image = self.get_image(image_idx)
-        data = {"image_idx": image_idx, "image": image}
+        depth = self.get_depth_image(image_idx)
+        data = {"image_idx": image_idx, "image": image, "depth": depth}
         if self._dataparser_outputs.mask_filenames is not None:
             mask_filepath = self._dataparser_outputs.mask_filenames[image_idx]
             data["mask"] = get_image_mask_tensor_from_path(

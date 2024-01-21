@@ -172,8 +172,8 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
                 # crop the image and update the intrinsics accordingly
                 x, y, w, h = roi
                 image = image[y : y + h, x : x + w]
-                if "depth_image" in data:
-                    data["depth_image"] = data["depth_image"][y : y + h, x : x + w]
+                if "depth" in data:
+                    data["depth"] = data["depth"][y : y + h, x : x + w]
                 # update the width, height
                 self.train_dataset.cameras.width[i] = w
                 self.train_dataset.cameras.height[i] = h

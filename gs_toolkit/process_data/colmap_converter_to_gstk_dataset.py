@@ -58,7 +58,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         "superpoint+lightglue",
     ] = "any"
     """Matching algorithm."""
-    num_downscales: int = 3
+    num_downscales: int = 0
     """Number of times to downscale the images. Downscales by 2 each time. For example a value of 3 will downscale the
        images by 2x, 4x, and 8x."""
     skip_colmap: bool = False

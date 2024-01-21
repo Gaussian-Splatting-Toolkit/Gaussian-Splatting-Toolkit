@@ -168,8 +168,8 @@ class GSToolkit(DataParser):
                 )
                 mask_filenames.append(mask_fname)
 
-            if "depth_file_path" in frame:
-                depth_filepath = Path(frame["depth_file_path"])
+            if "depth_path" in frame:
+                depth_filepath = Path(frame["depth_path"])
                 depth_fname = self._get_fname(
                     depth_filepath, data_dir, downsample_folder_prefix="depths_"
                 )

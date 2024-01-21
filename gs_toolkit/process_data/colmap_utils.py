@@ -454,9 +454,7 @@ def colmap_to_json(
             ).as_posix()
         if image_id_to_depth_path is not None:
             depth_path = image_id_to_depth_path[im_id]
-            frame["depth_file_path"] = str(
-                depth_path.relative_to(depth_path.parent.parent)
-            )
+            frame["depth_path"] = str(depth_path.relative_to(depth_path.parent.parent))
         frames.append(frame)
 
     if set(cam_id_to_camera.keys()) != {1}:
@@ -671,6 +669,8 @@ def align_depth(
     for im_id, im_data in iter_images:
         # Replace jpg with png in im_data.name as depth name
         depth_name = im_data.name.replace(".jpg", ".png")
+        # Replace prefix from "frame_" to "depth_"
+        depth_name = depth_name.replace("frame_", "depth_")
         depth_path = depth_dir / depth_name
         # Read depth image
         depth_img = cv2.imread(str(depth_path), cv2.IMREAD_ANYDEPTH)  # type: ignore

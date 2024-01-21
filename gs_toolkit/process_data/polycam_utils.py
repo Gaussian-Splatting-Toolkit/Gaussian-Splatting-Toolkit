@@ -55,9 +55,7 @@ def polycam_to_json(
         frame["h"] = frame_json["height"] - crop_border_pixels * 2
         frame["file_path"] = f"./images/frame_{i+1:05d}{image_filename.suffix}"
         if use_depth:
-            frame[
-                "depth_file_path"
-            ] = f"./depth/frame_{i+1:05d}{depth_filenames[i].suffix}"
+            frame["depth_path"] = f"./depth/depth_{i+1:05d}{depth_filenames[i].suffix}"
         # Transform matrix to gs_toolkit format. Please refer to the documentation for coordinate system conventions.
         frame["transform_matrix"] = [
             [
