@@ -69,7 +69,7 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [x] Gaussian Splatting module
 - [ ] Gaussian Refinement
 - [ ] Depth Loss
-- [ ] Point cloud export
+- [x] Point cloud export
 - [ ] Mesh extraction
   - [ ] Marching cube
   - [ ] TSDF
@@ -78,5 +78,7 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
   - [ ] SuGaR
   - [ ] SplaTAM
 - [x] Visualization
+- [ ] Render
+  - [ ] Render GS model without loading pipeline
 - [ ] Documentation
 - [ ] Tests
