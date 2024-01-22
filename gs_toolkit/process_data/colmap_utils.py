@@ -102,8 +102,6 @@ def run_colmap(
         colmap_cmd: Path to the COLMAP executable.
     """
 
-    colmap_version = get_colmap_version(colmap_cmd)
-
     colmap_database_path = colmap_dir / "database.db"
     colmap_database_path.unlink(missing_ok=True)
 
@@ -159,8 +157,6 @@ def run_colmap(
         f"--image_path {image_dir}",
         f"--output_path {sparse_dir}",
     ]
-    if colmap_version >= 3.7:
-        mapper_cmd.append("--Mapper.ba_global_function_tolerance=1e-6")
 
     mapper_cmd = " ".join(mapper_cmd)
 
@@ -184,6 +180,18 @@ def run_colmap(
             ]
             run_command(" ".join(bundle_adjuster_cmd), verbose=verbose)
         CONSOLE.log("[bold green]:tada: Done refining intrinsics.")
+
+    with status(
+        msg="[bold yellow]Extracting point cloud...", spinner="pipe", verbose=verbose
+    ):
+        point_cloud_cmd = [
+            f"{colmap_cmd} model_converter",
+            f"--input_path {sparse_dir}/0",
+            f"--output_path {colmap_dir}/point_cloud.ply",
+            "--output_type PLY",
+        ]
+        run_command(" ".join(point_cloud_cmd), verbose=verbose)
+    CONSOLE.log("[bold green]:tada: Done extracting point cloud.")
 
 
 def parse_colmap_camera_params(camera) -> Dict[str, Any]:
@@ -461,6 +469,7 @@ def colmap_to_json(
         raise RuntimeError("Only single camera shared for all images is supported.")
     out = parse_colmap_camera_params(cam_id_to_camera[1])
     out["applied_scale"] = scale_factor
+    out["ply_file_path"] = "colmap/point_cloud.ply"
     out["frames"] = frames
 
     applied_transform = np.eye(4)[:3, :]
@@ -706,7 +715,7 @@ def align_depth(
         # Choose the idx that depth measure is not 0
         idx = np.where(depth_measure != 0)
         z = z[idx]
-        depth_measure = depth_measure[idx]
+        depth_measure = depth_measure[idx] / 1000
         total_scale.append(np.mean(depth_measure / z))
         # cov.append(np.cov(z, depth_measure)[0, 1])
     return image_id_to_depth_path, np.mean(total_scale)

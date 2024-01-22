@@ -49,7 +49,7 @@ class GSToolkitDataParserConfig(DataParserConfig):
     """The method to use for orientation."""
     center_method: Literal["poses", "focus", "none"] = "poses"
     """The method to use to center the poses."""
-    auto_scale_poses: bool = True
+    auto_scale_poses: bool = False
     """Whether to automatically scale the poses to fit in +/- 1 bounding box."""
     eval_mode: Literal["fraction", "filename", "interval", "all"] = "fraction"
     """
@@ -97,6 +97,7 @@ class GSToolkit(DataParser):
         cy_fixed = "cy" in meta
         height_fixed = "h" in meta
         width_fixed = "w" in meta
+        self.config.scale_factor = "applied_scale" in meta
         distort_fixed = False
         for distort_key in ["k1", "k2", "k3", "p1", "p2", "distortion_params"]:
             if distort_key in meta:
@@ -256,6 +257,8 @@ class GSToolkit(DataParser):
         scale_factor = 1.0
         if self.config.auto_scale_poses:
             scale_factor /= float(torch.max(torch.abs(poses[:, :3, 3])))
+        scale_factor *= self.config.scale_factor
+        # scale_factor *= 2
 
         poses[:, :3, 3] *= scale_factor
 
@@ -367,9 +370,9 @@ class GSToolkit(DataParser):
                 ],
                 0,
             )
-        if "applied_scale" in meta:
-            applied_scale = float(meta["applied_scale"])
-            scale_factor *= applied_scale
+        # if "applied_scale" in meta:
+        #     applied_scale = float(meta["applied_scale"])
+        #     scale_factor *= applied_scale
 
         # Load 3D points
         metadata = {}
