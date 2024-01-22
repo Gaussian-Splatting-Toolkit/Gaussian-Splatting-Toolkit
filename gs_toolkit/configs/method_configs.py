@@ -16,7 +16,7 @@ from gs_toolkit.engine.schedulers import (
 )
 from gs_toolkit.engine.trainer import TrainerConfig
 from gs_toolkit.models.gaussian_splatting import GaussianSplattingModelConfig
-from gs_toolkit.data.dataparsers.colmap_dataparser import ColmapDataParserConfig
+from gs_toolkit.data.dataparsers.gs_toolkit_dataparser import GSToolkitDataParserConfig
 from gs_toolkit.pipelines.base_pipeline import VanillaPipelineConfig
 from gs_toolkit.data.datamanagers.full_images_datamanager import (
     FullImageDatamanagerConfig,
@@ -38,7 +38,7 @@ method_configs["gaussian-splatting"] = TrainerConfig(
     gradient_accumulation_steps={"camera_opt": 100},
     pipeline=VanillaPipelineConfig(
         datamanager=FullImageDatamanagerConfig(
-            dataparser=ColmapDataParserConfig(load_3D_points=True),
+            dataparser=GSToolkitDataParserConfig(),
         ),
         model=GaussianSplattingModelConfig(),
     ),

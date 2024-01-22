@@ -460,7 +460,7 @@ def colmap_to_json(
     if set(cam_id_to_camera.keys()) != {1}:
         raise RuntimeError("Only single camera shared for all images is supported.")
     out = parse_colmap_camera_params(cam_id_to_camera[1])
-    out["scale_factor"] = scale_factor
+    out["applied_scale"] = scale_factor
     out["frames"] = frames
 
     applied_transform = np.eye(4)[:3, :]

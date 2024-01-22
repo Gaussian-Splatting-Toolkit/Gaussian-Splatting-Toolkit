@@ -28,7 +28,7 @@ class InputDataset(Dataset):
         scale_factor: The scaling factor for the dataparser outputs
     """
 
-    exclude_batch_keys_from_device: List[str] = ["image", "mask"]
+    exclude_batch_keys_from_device: List[str] = ["image", "mask", "depth"]
     cameras: Cameras
 
     def __init__(
@@ -95,9 +95,9 @@ class InputDataset(Dataset):
             newsize = (int(width * self.scale_factor), int(height * self.scale_factor))
             pil_image = pil_image.resize(newsize, resample=Image.BILINEAR)
         depth = np.array(pil_image, dtype="uint8")  # shape is (h, w) or (h, w, 3 or 4)
-        assert len(depth.shape) == 3
+        # assert len(depth.shape) == 3
         assert depth.dtype == np.uint8
-        assert depth.shape[2] == 1, f"Image shape of {depth.shape} is in correct."
+        # assert depth.shape[2] == 1, f"Image shape of {depth.shape} is in correct."
         return depth
 
     def get_depth_image(

@@ -899,16 +899,16 @@ class GaussianSplattingModel(Model):
             ).permute(1, 2, 0)
         else:
             gt_img = batch["image"]
-            gt_depth_img = batch["depth"]
+            # gt_depth_img = batch["depth"]
         Ll1 = torch.abs(gt_img - outputs["rgb"]).mean()
         simloss = 1 - self.ssim(
             gt_img.permute(2, 0, 1)[None, ...],
             outputs["rgb"].permute(2, 0, 1)[None, ...],
         )
-        valid_depth_idx = gt_depth_img > 0
-        depth_l1 = torch.abs(
-            gt_depth_img[valid_depth_idx] - outputs["depth"][valid_depth_idx]
-        ).mean()
+        # valid_depth_idx = gt_depth_img > 0
+        # depth_l1 = torch.abs(
+        #     gt_depth_img[valid_depth_idx] - outputs["depth"][valid_depth_idx]
+        # ).mean()
         if self.config.use_scale_regularization and self.step % 10 == 0:
             scale_exp = torch.exp(self.scales)
             scale_reg = (
@@ -924,8 +924,8 @@ class GaussianSplattingModel(Model):
 
         return {
             "main_loss": (1 - self.config.ssim_lambda) * Ll1
-            + self.config.ssim_lambda * simloss
-            + depth_l1,
+            + self.config.ssim_lambda * simloss,
+            # + depth_l1,
             "scale_reg": scale_reg,
         }
 

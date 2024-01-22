@@ -7,15 +7,9 @@ from typing import TYPE_CHECKING
 import tyro
 
 from gs_toolkit.data.dataparsers.base_dataparser import DataParserConfig
-from gs_toolkit.data.dataparsers.blender_dataparser import BlenderDataParserConfig
-from gs_toolkit.data.dataparsers.colmap_dataparser import ColmapDataParserConfig
-from gs_toolkit.data.dataparsers.scannet_dataparser import ScanNetDataParserConfig
+from gs_toolkit.data.dataparsers.gs_toolkit_dataparser import GSToolkitDataParserConfig
 
-dataparsers = {
-    "blender-data": BlenderDataParserConfig(),
-    "scannet-data": ScanNetDataParserConfig(),
-    "colmap": ColmapDataParserConfig(),
-}
+dataparsers = {"gs-toolkit": GSToolkitDataParserConfig()}
 
 if TYPE_CHECKING:
     # For static analysis (tab completion, type checking, etc), just use the base
