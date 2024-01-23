@@ -285,6 +285,11 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
                         mask = cv2.undistort(mask, K, distortion_params, None, newK)  # type: ignore
                     mask = mask[y : y + h, x : x + w]
                     data["mask"] = torch.from_numpy(mask).bool()
+                if "depth" in data:
+                    depth = data["depth"].numpy()
+                    if np.any(distortion_params):
+                        depth = cv2.undistort(depth, K, distortion_params, None, newK)
+                    depth = depth[y : y + h, x : x + w]
                 K = newK
 
             elif camera.camera_type.item() == CameraType.FISHEYE.value:
@@ -326,6 +331,12 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
                         mask, K, distortion_params, None, newK
                     )
                     data["mask"] = torch.from_numpy(mask).bool()
+                if "depth" in data:
+                    depth = data["depth"].numpy()
+                    depth = cv2.fisheye.undistortImage(
+                        depth, K, distortion_params, None, newK
+                    )
+                    data["depth"] = torch.from_numpy(depth).float()
                 K = newK
             else:
                 raise NotImplementedError(

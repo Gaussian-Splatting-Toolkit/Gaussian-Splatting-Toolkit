@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-import os
-from PIL import Image
 from typing import Dict, List, Optional, Tuple, Type, Union
+import cv2
 
 import numpy as np
 import torch
@@ -913,23 +912,15 @@ class GaussianSplattingModel(Model):
             gt_img.permute(2, 0, 1)[None, ...],
             outputs["rgb"].permute(2, 0, 1)[None, ...],
         )
-        # valid_depth_idx = gt_depth_img > 0
-        # depth_l1 = torch.abs(
-        #     gt_depth_img[valid_depth_idx] - outputs["depth"][valid_depth_idx]
-        # ).mean()
-        # Visualize and save the depth loss in debug folder
-        # if self.config.debug:
-        #     depth_diff = torch.abs(gt_depth_img - outputs["depth"])
-        #     depth_diff = depth_diff.detach().cpu().numpy()
-        #     # depth_diff = np.clip(depth_diff, 0, 1)
-        #     # depth_diff = (depth_diff * 255).astype(np.uint8)
-        #     depth_diff = Image.fromarray(depth_diff)
-        #     depth_diff.save(
-        #         os.path.join(
-        #             self.config.debug_folder,
-        #             f"depth_loss_{self.step}.png",
-        #         )
-        #     )
+        depth_nonzero = gt_depth_img > 0
+        # Ll1_depth = torch.abs(gt_depth_img[depth_nonzero] - outputs["depth"][depth_nonzero]).mean()
+        if self.config.debug:
+            if self.step == 14_000:
+                cv2.imshow("rgb", outputs["rgb"].detach().cpu().numpy())
+                cv2.imshow("depth", outputs["depth"].detach().cpu().numpy())
+                cv2.imshow("gt_rgb", gt_img.detach().cpu().numpy())
+                cv2.imshow("gt_depth", gt_depth_img.detach().cpu().numpy())
+                cv2.waitKey(0)
         if self.config.use_scale_regularization and self.step % 10 == 0:
             scale_exp = torch.exp(self.scales)
             scale_reg = (
@@ -946,6 +937,7 @@ class GaussianSplattingModel(Model):
         return {
             "main_loss": (1 - self.config.ssim_lambda) * Ll1
             + self.config.ssim_lambda * simloss,
+            # + Ll1_depth,
             # + depth_l1,
             "scale_reg": scale_reg,
         }
