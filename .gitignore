@@ -166,6 +166,5 @@ gs_toolkit/evaluation/input
 gs_toolkit/evaluation/output
 .cache
 outputs
-scripts
 exports
 debug

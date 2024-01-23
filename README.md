@@ -9,6 +9,9 @@ The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed fo
   - [Introduction](#introduction)
   - [Installation](#installation)
   - [Usage](#usage)
+    - [Data processing](#data-processing)
+    - [Train the Gaussian Splatting](#train-the-gaussian-splatting)
+    - [Visualize the result](#visualize-the-result)
   - [Contribute](#contribute)
   - [TODO](#todo)
 
@@ -41,17 +44,24 @@ This repository also provides a devcontainer for your convenience.
 
 ## Usage
 
+### Data processing
 ```bash
 # Extract from video
-gs-process-data video --data /data/gs-recon/robot_studio.MOV --output-dir /data/gs-recon/robot_studio --num-frames-target 1000
+gs-process-data video --data /path/to/video --output-dir /path/to/output-dir --num-frames-target 1000
 # Extract from images
-gs-process-data images --data /data/depth_scan/half_rls/rgb --output-dir /data/gs-recon/half_rls_rgb
+gs-process-data images --data /path/to/image/folder --output-dir /path/to/output-dir
 # Extract with both rgb and depth
-gs-process-data images --data /data/depth_scan/half_rls/rgb --depth-data /data/depth_scan/half_rls/depth --output-dir /data/gs-recon/half_rls_full
+gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/folder --output-dir /path/to/output-dir
 ```
 
+### Train the Gaussian Splatting
 ```bash
 gs-train --data /data/gs-recon/robot_studio
+```
+
+### Visualize the result
+```bash
+gs-viewer --load-config outputs/path/to/config.yml
 ```
 
 ## Contribute
