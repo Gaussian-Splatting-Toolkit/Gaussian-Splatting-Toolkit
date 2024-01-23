@@ -939,8 +939,7 @@ class GaussianSplattingModel(Model):
             scale_reg = torch.tensor(0.0).to(self.device)
 
         return {
-            "main_loss": (1 - self.config.ssim_lambda)
-            - self.config.depth_lambda * Ll1
+            "main_loss": (1 - self.config.ssim_lambda - self.config.depth_lambda) * Ll1
             + self.config.ssim_lambda * simloss
             + self.config.depth_lambda * Ll1_depth,
             "scale_reg": scale_reg,
