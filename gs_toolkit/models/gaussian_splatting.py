@@ -135,6 +135,8 @@ class GaussianSplattingModelConfig(ModelConfig):
     """whether to initialize the positions uniformly randomly (not SFM points)"""
     ssim_lambda: float = 0.2
     """weight of ssim loss"""
+    depth_lambda: float = 0.2
+    """weight of depth loss"""
     stop_split_at: int = 15000
     """stop splitting at this step"""
     sh_degree: int = 3
@@ -149,7 +151,7 @@ class GaussianSplattingModelConfig(ModelConfig):
     """threshold of ratio of gaussian max to min scale before applying regularization
     loss from the PhysGaussian paper
     """
-    debug: bool = True
+    debug: bool = False
     """If enabled, the model will print out debug information."""
     debug_folder: str = "debug"
     """If debug is enabled, the model will save debug images to this folder."""
@@ -913,7 +915,9 @@ class GaussianSplattingModel(Model):
             outputs["rgb"].permute(2, 0, 1)[None, ...],
         )
         depth_nonzero = gt_depth_img > 0
-        # Ll1_depth = torch.abs(gt_depth_img[depth_nonzero] - outputs["depth"][depth_nonzero]).mean()
+        Ll1_depth = torch.abs(
+            gt_depth_img[depth_nonzero] - outputs["depth"][depth_nonzero]
+        ).mean()
         if self.config.debug:
             if self.step == 14_000:
                 cv2.imshow("rgb", outputs["rgb"].detach().cpu().numpy())
@@ -935,10 +939,10 @@ class GaussianSplattingModel(Model):
             scale_reg = torch.tensor(0.0).to(self.device)
 
         return {
-            "main_loss": (1 - self.config.ssim_lambda) * Ll1
-            + self.config.ssim_lambda * simloss,
-            # + Ll1_depth,
-            # + depth_l1,
+            "main_loss": (1 - self.config.ssim_lambda)
+            - self.config.depth_lambda * Ll1
+            + self.config.ssim_lambda * simloss
+            + self.config.depth_lambda * Ll1_depth,
             "scale_reg": scale_reg,
         }
 

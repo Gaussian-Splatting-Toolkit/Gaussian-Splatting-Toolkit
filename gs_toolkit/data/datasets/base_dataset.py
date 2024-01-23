@@ -109,7 +109,7 @@ class InputDataset(Dataset):
             depth_idx: The depth image index in the dataset.
         """
         depth = torch.from_numpy(
-            self.get_numpy_depth_image(depth_idx).astype("float32") / 255.0
+            self.get_numpy_depth_image(depth_idx).astype("float32") / 1000.0
         )
         return depth
 
