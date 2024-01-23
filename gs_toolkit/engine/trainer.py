@@ -33,7 +33,6 @@ from gs_toolkit.utils.decorators import (
 from gs_toolkit.utils.misc import step_check
 from gs_toolkit.utils.rich_utils import CONSOLE
 from gs_toolkit.utils.writer import EventName, TimeWriter
-from gs_toolkit.viewer_legacy.server.viewer_state import ViewerLegacyState
 from gs_toolkit.viewer.viewer import Viewer as ViewerState
 from rich import box, style
 from rich.panel import Panel
@@ -157,33 +156,19 @@ class Trainer:
         # set up viewer if enabled
         viewer_log_path = self.base_dir / self.config.viewer.relative_log_filename
         self.viewer_state, banner_messages = None, None
-        if self.config.is_viewer_legacy_enabled() and self.local_rank == 0:
-            datapath = self.config.data
-            if datapath is None:
-                datapath = self.base_dir
-            self.viewer_state = ViewerLegacyState(
-                self.config.viewer,
-                log_filename=viewer_log_path,
-                datapath=datapath,
-                pipeline=self.pipeline,
-                trainer=self,
-                train_lock=self.train_lock,
-            )
-            banner_messages = [f"Legacy viewer at: {self.viewer_state.viewer_url}"]
-        if self.config.is_viewer_enabled() and self.local_rank == 0:
-            datapath = self.config.data
-            if datapath is None:
-                datapath = self.base_dir
-            self.viewer_state = ViewerState(
-                self.config.viewer,
-                log_filename=viewer_log_path,
-                datapath=datapath,
-                pipeline=self.pipeline,
-                trainer=self,
-                train_lock=self.train_lock,
-                share=self.config.viewer.make_share_url,
-            )
-            banner_messages = [f"Viewer at: {self.viewer_state.viewer_url}"]
+        datapath = self.config.data
+        if datapath is None:
+            datapath = self.base_dir
+        self.viewer_state = ViewerState(
+            self.config.viewer,
+            log_filename=viewer_log_path,
+            datapath=datapath,
+            pipeline=self.pipeline,
+            trainer=self,
+            train_lock=self.train_lock,
+            share=self.config.viewer.make_share_url,
+        )
+        banner_messages = self.viewer_state.viewer_info
         self._check_viewer_warnings()
 
         self._load_checkpoint()
