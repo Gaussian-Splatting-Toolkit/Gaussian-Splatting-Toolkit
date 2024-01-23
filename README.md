@@ -42,7 +42,12 @@ This repository also provides a devcontainer for your convenience.
 ## Usage
 
 ```bash
-gs-process-data video --data /data/gs-recon/robot_studio.MOV --output-dir /data/gs-recon/robot_studio --sfm-tool colmap --num-frames-target 1000
+# Extract from video
+gs-process-data video --data /data/gs-recon/robot_studio.MOV --output-dir /data/gs-recon/robot_studio --num-frames-target 1000
+# Extract from images
+gs-process-data images --data /data/depth_scan/half_rls/rgb --output-dir /data/gs-recon/half_rls_rgb
+# Extract with both rgb and depth
+gs-process-data images --data /data/depth_scan/half_rls/rgb --depth-data /data/depth_scan/half_rls/depth --output-dir /data/gs-recon/half_rls_full
 ```
 
 ```bash
@@ -68,7 +73,7 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [ ] Benchmarking
 - [x] Gaussian Splatting module
 - [ ] Gaussian Refinement
-- [ ] Depth Loss
+- [x] Depth Loss
 - [x] Point cloud export
 - [ ] Mesh extraction
   - [ ] Marching cube

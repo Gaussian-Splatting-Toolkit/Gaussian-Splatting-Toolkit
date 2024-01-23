@@ -905,19 +905,25 @@ class GaussianSplattingModel(Model):
             gt_img = TF.resize(
                 batch["image"].permute(2, 0, 1), newsize, antialias=None
             ).permute(1, 2, 0)
+            if "depth" in batch:
+                gt_depth_img = TF.resize(
+                    batch["depth"].permute(2, 0, 1), newsize, antialias=None
+                ).permute(1, 2, 0)
         else:
             gt_img = batch["image"]
-            gt_depth_img = batch["depth"]
-            gt_depth_img = gt_depth_img[:, :, None]
+            if "depth" in batch:
+                gt_depth_img = batch["depth"]
+                gt_depth_img = gt_depth_img[:, :, None]
         Ll1 = torch.abs(gt_img - outputs["rgb"]).mean()
         simloss = 1 - self.ssim(
             gt_img.permute(2, 0, 1)[None, ...],
             outputs["rgb"].permute(2, 0, 1)[None, ...],
         )
-        depth_nonzero = gt_depth_img > 0
-        Ll1_depth = torch.abs(
-            gt_depth_img[depth_nonzero] - outputs["depth"][depth_nonzero]
-        ).mean()
+        if "depth" in batch:
+            depth_nonzero = gt_depth_img > 0
+            Ll1_depth = torch.abs(
+                gt_depth_img[depth_nonzero] - outputs["depth"][depth_nonzero]
+            ).mean()
         if self.config.debug:
             if self.step == 14_000:
                 cv2.imshow("rgb", outputs["rgb"].detach().cpu().numpy())
@@ -938,12 +944,20 @@ class GaussianSplattingModel(Model):
         else:
             scale_reg = torch.tensor(0.0).to(self.device)
 
-        return {
-            "main_loss": (1 - self.config.ssim_lambda - self.config.depth_lambda) * Ll1
-            + self.config.ssim_lambda * simloss
-            + self.config.depth_lambda * Ll1_depth,
-            "scale_reg": scale_reg,
-        }
+        if "depth" in batch:
+            return {
+                "main_loss": (1 - self.config.ssim_lambda - self.config.depth_lambda)
+                * Ll1
+                + self.config.ssim_lambda * simloss
+                + self.config.depth_lambda * Ll1_depth,
+                "scale_reg": scale_reg,
+            }
+        else:
+            return {
+                "main_loss": (1 - self.config.ssim_lambda) * Ll1
+                + self.config.ssim_lambda * simloss,
+                "scale_reg": scale_reg,
+            }
 
     @torch.no_grad()
     def get_outputs_for_camera(

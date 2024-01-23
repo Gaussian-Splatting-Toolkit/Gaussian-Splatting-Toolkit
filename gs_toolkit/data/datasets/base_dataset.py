@@ -120,8 +120,11 @@ class InputDataset(Dataset):
             image_idx: The image index in the dataset.
         """
         image = self.get_image(image_idx)
-        depth = self.get_depth_image(image_idx)
-        data = {"image_idx": image_idx, "image": image, "depth": depth}
+        if self._dataparser_outputs.metadata["depth_filenames"] is not None:
+            depth = self.get_depth_image(image_idx)
+            data = {"image_idx": image_idx, "image": image, "depth": depth}
+        else:
+            data = {"image_idx": image_idx, "image": image}
         if self._dataparser_outputs.mask_filenames is not None:
             mask_filepath = self._dataparser_outputs.mask_filenames[image_idx]
             data["mask"] = get_image_mask_tensor_from_path(
