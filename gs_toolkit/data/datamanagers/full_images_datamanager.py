@@ -345,19 +345,27 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
                 cache["image"] = cache["image"].to(self.device)
                 if "mask" in cache:
                     cache["mask"] = cache["mask"].to(self.device)
+                if "depth" in cache:
+                    cache["depth"] = cache["depth"].to(self.device)
             for cache in cached_eval:
                 cache["image"] = cache["image"].to(self.device)
                 if "mask" in cache:
                     cache["mask"] = cache["mask"].to(self.device)
+                if "depth" in cache:
+                    cache["depth"] = cache["depth"].to(self.device)
         else:
             for cache in cached_train:
                 cache["image"] = cache["image"].pin_memory()
                 if "mask" in cache:
                     cache["mask"] = cache["mask"].pin_memory()
+                if "depth" in cache:
+                    cache["depth"] = cache["depth"].pin_memory()
             for cache in cached_eval:
                 cache["image"] = cache["image"].pin_memory()
                 if "mask" in cache:
                     cache["mask"] = cache["mask"].pin_memory()
+                if "depth" in cache:
+                    cache["depth"] = cache["depth"].pin_memory()
 
         return cached_train, cached_eval
 
@@ -452,6 +460,8 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
 
         data = deepcopy(self.cached_train[image_idx])
         data["image"] = data["image"].to(self.device)
+        if "depth" in data:
+            data["depth"] = data["depth"].to(self.device)
 
         assert (
             len(self.train_dataset.cameras.shape) == 1

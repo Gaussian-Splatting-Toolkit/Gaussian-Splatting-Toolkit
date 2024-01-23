@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+import os
+from PIL import Image
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -148,6 +150,10 @@ class GaussianSplattingModelConfig(ModelConfig):
     """threshold of ratio of gaussian max to min scale before applying regularization
     loss from the PhysGaussian paper
     """
+    debug: bool = True
+    """If enabled, the model will print out debug information."""
+    debug_folder: str = "debug"
+    """If debug is enabled, the model will save debug images to this folder."""
 
 
 class GaussianSplattingModel(Model):
@@ -838,22 +844,23 @@ class GaussianSplattingModel(Model):
             background,
         )  # type: ignore
         rgb = torch.clamp(rgb, max=1.0)  # type: ignore
-        depth_im = None
-        if not self.training:
-            depth_im = rasterize_gaussians(  # type: ignore
-                self.xys,
-                depths,
-                self.radii,
-                conics,
-                num_tiles_hit,
-                depths[:, None].repeat(1, 3),
-                torch.sigmoid(opacities_crop),
-                H,
-                W,
-                torch.ones(3, device=self.device) * 10,
-            )[
-                ..., 0:1
-            ]  # type: ignore
+        # if not self.training:
+        depth_im = rasterize_gaussians(  # type: ignore
+            self.xys,
+            depths,
+            self.radii,
+            conics,
+            num_tiles_hit,
+            depths[:, None].repeat(1, 3),
+            torch.sigmoid(opacities_crop),
+            H,
+            W,
+            torch.ones(3, device=self.device) * 10,
+        )[
+            ..., 0:1
+        ]  # type: ignore
+        # Make sure depth and rgb are in the same device
+        depth_im = depth_im.to(rgb.device)
 
         return {"rgb": rgb, "depth": depth_im}  # type: ignore
 
@@ -899,7 +906,8 @@ class GaussianSplattingModel(Model):
             ).permute(1, 2, 0)
         else:
             gt_img = batch["image"]
-            # gt_depth_img = batch["depth"]
+            gt_depth_img = batch["depth"]
+            gt_depth_img = gt_depth_img[:, :, None]
         Ll1 = torch.abs(gt_img - outputs["rgb"]).mean()
         simloss = 1 - self.ssim(
             gt_img.permute(2, 0, 1)[None, ...],
@@ -909,6 +917,19 @@ class GaussianSplattingModel(Model):
         # depth_l1 = torch.abs(
         #     gt_depth_img[valid_depth_idx] - outputs["depth"][valid_depth_idx]
         # ).mean()
+        # Visualize and save the depth loss in debug folder
+        # if self.config.debug:
+        #     depth_diff = torch.abs(gt_depth_img - outputs["depth"])
+        #     depth_diff = depth_diff.detach().cpu().numpy()
+        #     # depth_diff = np.clip(depth_diff, 0, 1)
+        #     # depth_diff = (depth_diff * 255).astype(np.uint8)
+        #     depth_diff = Image.fromarray(depth_diff)
+        #     depth_diff.save(
+        #         os.path.join(
+        #             self.config.debug_folder,
+        #             f"depth_loss_{self.step}.png",
+        #         )
+        #     )
         if self.config.use_scale_regularization and self.step % 10 == 0:
             scale_exp = torch.exp(self.scales)
             scale_reg = (

@@ -4,7 +4,6 @@ Abstracts for the Pipeline class.
 from __future__ import annotations
 
 import typing
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import time
@@ -125,92 +124,6 @@ class Pipeline(nn.Module):
                 raise
 
         super().load_state_dict(pipeline_state, strict=False)
-
-    @profiler.time_function
-    def get_train_loss_dict(self, step: int):
-        """This function gets your training loss dict. This will be responsible for
-        getting the next batch of data from the DataManager and interfacing with the
-        Model class, feeding the data to the model's forward function.
-
-        Args:
-            step: current iteration step to update sampler if using DDP (distributed)
-        """
-        if self.world_size > 1 and step:
-            assert self.datamanager.train_sampler is not None
-            self.datamanager.train_sampler.set_epoch(step)
-        cameras, batch = self.datamanager.next_train(step)
-        model_outputs = self.model(cameras, batch)
-        metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
-        loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
-
-        return model_outputs, loss_dict, metrics_dict
-
-    @profiler.time_function
-    def get_eval_loss_dict(self, step: int):
-        """This function gets your evaluation loss dict. It needs to get the data
-        from the DataManager and feed it to the model's forward function
-
-        Args:
-            step: current iteration step
-        """
-        self.eval()
-        if self.world_size > 1:
-            assert self.datamanager.eval_sampler is not None
-            self.datamanager.eval_sampler.set_epoch(step)
-        cameras, batch = self.datamanager.next_eval(step)
-        model_outputs = self.model(cameras, batch)
-        metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
-        loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
-        self.train()
-        return model_outputs, loss_dict, metrics_dict
-
-    @abstractmethod
-    @profiler.time_function
-    def get_eval_image_metrics_and_images(self, step: int):
-        """This function gets your evaluation loss dict. It needs to get the data
-        from the DataManager and feed it to the model's forward function
-
-        Args:
-            step: current iteration step
-        """
-
-    @abstractmethod
-    @profiler.time_function
-    def get_average_eval_image_metrics(
-        self,
-        step: Optional[int] = None,
-        output_path: Optional[Path] = None,
-        get_std: bool = False,
-    ):
-        """Iterate over all the images in the eval dataset and get the average.
-
-        Args:
-            step: current training step
-            output_path: optional path to save rendered images to
-            get_std: Set True if you want to return std with the mean metric.
-        """
-
-    def load_pipeline(self, loaded_state: Dict[str, Any], step: int) -> None:
-        """Load the checkpoint from the given path
-
-        Args:
-            loaded_state: pre-trained model state dict
-            step: training step of the loaded checkpoint
-        """
-
-    @abstractmethod
-    def get_training_callbacks(
-        self, training_callback_attributes: TrainingCallbackAttributes
-    ) -> List[TrainingCallback]:
-        """Returns the training callbacks from both the Dataloader and the Model."""
-
-    @abstractmethod
-    def get_param_groups(self) -> Dict[str, List[Parameter]]:
-        """Get the param groups for the pipeline.
-
-        Returns:
-            A list of dictionaries containing the pipeline's param groups.
-        """
 
 
 @dataclass
