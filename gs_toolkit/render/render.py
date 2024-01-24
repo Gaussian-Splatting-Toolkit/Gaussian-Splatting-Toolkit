@@ -70,7 +70,9 @@ class Renderer:
     def show(self):
         if self.outputs is None:
             raise Exception("No outputs to show")
-        cv2.imshow("rgb", self.outputs["rgb"].cpu().numpy())
+        cv2.imshow(
+            "rgb", cv2.cvtColor(self.outputs["rgb"].cpu().numpy(), cv2.COLOR_RGB2BGR)
+        )
         cv2.imshow("depth", self.outputs["depth"].cpu().numpy())
         cv2.waitKey(0)
 
