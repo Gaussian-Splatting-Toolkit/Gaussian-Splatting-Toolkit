@@ -102,8 +102,6 @@ def run_colmap(
         colmap_cmd: Path to the COLMAP executable.
     """
 
-    colmap_version = get_colmap_version(colmap_cmd)
-
     colmap_database_path = colmap_dir / "database.db"
     colmap_database_path.unlink(missing_ok=True)
 
@@ -159,8 +157,6 @@ def run_colmap(
         f"--image_path {image_dir}",
         f"--output_path {sparse_dir}",
     ]
-    if colmap_version >= 3.7:
-        mapper_cmd.append("--Mapper.ba_global_function_tolerance=1e-6")
 
     mapper_cmd = " ".join(mapper_cmd)
 
@@ -171,6 +167,28 @@ def run_colmap(
     ):
         run_command(mapper_cmd, verbose=verbose)
     CONSOLE.log("[bold green]:tada: Done COLMAP bundle adjustment.")
+    
+    # If there are more than two folders in sparse_dir, raise an error
+    if len(list(sparse_dir.iterdir())) > 2:
+        raise RuntimeError(
+            f"More than two folders in {sparse_dir}. Are your dataset images representing the same scene?"
+        )
+    
+    # If there are two folders in sparse_dir, merge them together
+    if len(list(sparse_dir.iterdir())) == 2:
+        with status(
+            msg="[bold yellow]Merging two sparse folders...",
+            spinner="circle",
+            verbose=verbose,
+        ):
+            merge_cmd = [
+                f"{colmap_cmd} model_merger",
+                f"--input_path1 {sparse_dir}/0",
+                f"--input_path2 {sparse_dir}/1",
+                f"--output_path {sparse_dir}/0",
+            ]
+            run_command(" ".join(merge_cmd), verbose=verbose)
+        CONSOLE.log("[bold green]:tada: Done merging two sparse folders.")
 
     if refine_intrinsics:
         with status(
