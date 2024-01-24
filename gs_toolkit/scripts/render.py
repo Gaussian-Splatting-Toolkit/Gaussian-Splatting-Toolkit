@@ -56,7 +56,7 @@ class RenderFromTrajectory:
             depth_path = self.output_dir / "depth" / f"depth_{i+1:05d}.png"
             depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
             depth.save(str(depth_path))
-            pose[:3, 3] = pose[:3, 3] * 1000
+            # pose[:3, 3] = pose[:3, 3] * 1000
             poses.append(pose)
         # Save poses in json
         poses = np.array(poses)

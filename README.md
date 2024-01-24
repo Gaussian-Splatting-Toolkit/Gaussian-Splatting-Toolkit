@@ -82,7 +82,7 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [x] Surface distance module
 - [ ] Data preprocessing
   - [x] Colmap preprocessing
-  - [ ] RGB-D Data processing
+  - [x] RGB-D Data processing
   - [ ] Sensor interface
     - [ ] Azure Kinect
     - [ ] iPhone/ iPad
