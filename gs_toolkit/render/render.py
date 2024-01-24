@@ -1,5 +1,7 @@
+import json
 import cv2
 import torch
+import yaml
 import numpy as np
 from gs_toolkit.cameras.cameras import Cameras, CameraType
 from gs_toolkit.utils.eval_utils import eval_setup
@@ -26,12 +28,8 @@ class Renderer:
     camera_type = CameraType.PERSPECTIVE
     """camera type, currently only perspective is supported"""
 
-    def __init__(self, fx, fy, cx, cy, load_ckpt, camera_type=CameraType.PERSPECTIVE):
-        self.fx = fx
-        self.fy = fy
-        self.cx = cx
-        self.cy = cy
-        self.load_ckpt = load_ckpt
+    def __init__(self, load_ckpt, camera_type=CameraType.PERSPECTIVE):
+        self.load_ckpt: Path = load_ckpt
         if not self.load_ckpt.exists():
             raise Exception(f"Checkpoint {self.load_ckpt} does not exist")
         self.camera_type = camera_type
@@ -39,6 +37,15 @@ class Renderer:
             self.load_ckpt,
             test_mode="inference",
         )
+        ckpt_config = yaml.load(self.load_ckpt.read_text(), Loader=yaml.Loader)
+        data_config = ckpt_config.data / "transforms.json"
+        # From json read the fx, fy, cx, cy
+        with open(data_config, "r") as f:
+            meta = json.load(f)
+        self.fx = meta["fl_x"]
+        self.fy = meta["fl_y"]
+        self.cx = meta["cx"]
+        self.cy = meta["cy"]
 
     def get_output_from_pose(self, pose):
         poses = [pose]

@@ -167,13 +167,13 @@ def run_colmap(
     ):
         run_command(mapper_cmd, verbose=verbose)
     CONSOLE.log("[bold green]:tada: Done COLMAP bundle adjustment.")
-    
+
     # If there are more than two folders in sparse_dir, raise an error
     if len(list(sparse_dir.iterdir())) > 2:
         raise RuntimeError(
             f"More than two folders in {sparse_dir}. Are your dataset images representing the same scene?"
         )
-    
+
     # If there are two folders in sparse_dir, merge them together
     if len(list(sparse_dir.iterdir())) == 2:
         with status(
