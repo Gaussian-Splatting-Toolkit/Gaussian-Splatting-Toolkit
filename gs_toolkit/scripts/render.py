@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import cv2
+from PIL import Image
 
 import numpy as np
 from gs_toolkit.render.render import Renderer
@@ -39,6 +40,7 @@ class RenderFromTrajectory:
         CONSOLE.print(f"Total number of frames: {num}")
         interval = num // self.num_frames_target
         assert interval > 0
+        poses = []
         # Render
         for i in track(range(0, num, interval), description="Rendering"):
             pose = tranjectory[i]["camera_to_world"]
@@ -49,10 +51,20 @@ class RenderFromTrajectory:
             rgb = self.renderer.rgb
             rgb_path = self.output_dir / "rgb" / f"frame_{i+1:05d}.png"
             cv2.imwrite(str(rgb_path), cv2.cvtColor(255 * rgb, cv2.COLOR_RGB2BGR))
-            # Save depth image
+            # Save depth image, convert depth unit from m to mm
             depth = self.renderer.depth
             depth_path = self.output_dir / "depth" / f"depth_{i+1:05d}.png"
-            cv2.imwrite(str(depth_path), 255 * depth)
+            depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
+            depth.save(str(depth_path))
+            pose[:3, 3] = pose[:3, 3] * 1000
+            poses.append(pose)
+        # Save poses in json
+        poses = np.array(poses)
+        poses = poses.tolist()
+        poses = {"camera_path": poses}
+        poses_path = self.output_dir / "poses.json"
+        with open(poses_path, "w") as f:
+            json.dump(poses, f)
 
 
 def entrypoint():

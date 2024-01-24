@@ -12,6 +12,7 @@ The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed fo
     - [Data processing](#data-processing)
     - [Train the Gaussian Splatting](#train-the-gaussian-splatting)
     - [Visualize the result](#visualize-the-result)
+    - [Render the rgb and depth from a trajectory](#render-the-rgb-and-depth-from-a-trajectory)
   - [Contribute](#contribute)
   - [TODO](#todo)
 
@@ -62,6 +63,11 @@ gs-train --data /data/gs-recon/robot_studio
 ### Visualize the result
 ```bash
 gs-viewer --load-config outputs/path/to/config.yml
+```
+
+### Render the rgb and depth from a trajectory
+```bash
+gs-render --trajectory-path /path/to/trajectory.json --config-file /path/to/ckpt/config.yml
 ```
 
 ## Contribute
