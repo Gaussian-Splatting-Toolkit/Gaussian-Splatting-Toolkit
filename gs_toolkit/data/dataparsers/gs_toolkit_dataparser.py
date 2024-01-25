@@ -33,7 +33,7 @@ MAX_AUTO_RESOLUTION = 1600
 
 @dataclass
 class GSToolkitDataParserConfig(DataParserConfig):
-    """Nerfstudio dataset config"""
+    """GSTK dataset config"""
 
     _target: Type = field(default_factory=lambda: GSToolkit)
     """target class to instantiate"""
@@ -69,7 +69,7 @@ class GSToolkitDataParserConfig(DataParserConfig):
 
 @dataclass
 class GSToolkit(DataParser):
-    """Nerfstudio DatasetParser"""
+    """GSTK DatasetParser"""
 
     config: GSToolkitDataParserConfig
     downscale_factor: Optional[int] = None

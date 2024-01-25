@@ -9,6 +9,7 @@ The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed fo
   - [Introduction](#introduction)
   - [Installation](#installation)
   - [Usage](#usage)
+    - [Download the opensource datasets](#download-the-opensource-datasets)
     - [Data processing](#data-processing)
     - [Train the Gaussian Splatting](#train-the-gaussian-splatting)
     - [Visualize the result](#visualize-the-result)
@@ -44,6 +45,12 @@ pip install -r requirement_dev.txt
 This repository also provides a devcontainer for your convenience.
 
 ## Usage
+
+### Download the opensource datasets
+
+```bash
+gs-download-data gstk --save-dir /path/to/save/dir --capture-name all
+```
 
 ### Data processing
 ```bash
