@@ -47,7 +47,9 @@ class Renderer:
         self.cx = meta["cx"]
         self.cy = meta["cy"]
 
-    def get_output_from_pose(self, pose):
+    def get_output_from_pose(
+        self, pose, width: int | None = None, height: int | None = None
+    ):
         poses = [pose]
         poses = np.array(poses).astype(np.float32)
         camera_to_world = torch.from_numpy(poses[:, :3])
@@ -58,6 +60,8 @@ class Renderer:
             fy=self.fy,
             cx=self.cx,
             cy=self.cy,
+            width=width,
+            height=height,
             camera_type=CameraType.PERSPECTIVE,
         )
 

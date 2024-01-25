@@ -32,13 +32,13 @@ pose = np.array(
 )
 
 load_config = Path(
-    "/workspace/outputs/student_lounge_object/gaussian-splatting/2024-01-24_104615/config.yml"
+    "/workspace/outputs/robot_studio/gaussian-splatting/2024-01-23_180716/config.yml"
 )
 
 
 def main():
     renderer = Renderer(load_config)
-    renderer.get_output_from_pose(pose)
+    renderer.get_output_from_pose(pose, width=640, height=480)
     renderer.show()
     # Get rgb image
     rgb = renderer.rgb
