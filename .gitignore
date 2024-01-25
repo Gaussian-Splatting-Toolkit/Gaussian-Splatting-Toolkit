@@ -167,3 +167,4 @@ gs_toolkit/evaluation/output
 outputs
 exports
 debug
+output.json

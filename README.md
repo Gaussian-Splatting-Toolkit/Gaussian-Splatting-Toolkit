@@ -93,7 +93,7 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
   - [ ] Sensor interface
     - [ ] Azure Kinect
     - [ ] iPhone/ iPad
-- [ ] Benchmarking
+- [x] Evaluation
 - [x] Gaussian Splatting module
 - [ ] Gaussian Refinement
 - [x] Depth Loss

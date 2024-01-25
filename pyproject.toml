@@ -53,6 +53,7 @@ wandb = "0.16.2"
 [tool.poetry.scripts]
 gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"
 gs-train = "gs_toolkit.scripts.train:entrypoint"
+gs-eval = "gs_toolkit.scripts.eval:entrypoint"
 gs-viewer = "gs_toolkit.scripts.viewer.run_viewer:entrypoint"
 gs-render = "gs_toolkit.scripts.render:entrypoint"
 gs-download-data = "gs_toolkit.scripts.downloads.download_data:entrypoint"

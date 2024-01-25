@@ -60,8 +60,12 @@ if TYPE_CHECKING:
     EyefulTowerCaptureName = str
     EyefulTowerResolution = str
 else:
-    EyefulTowerCaptureName = tyro.extras.literal_type_from_choices(eyefultower_downloads)
-    EyefulTowerResolution = tyro.extras.literal_type_from_choices(eyefultower_resolutions.keys())
+    EyefulTowerCaptureName = tyro.extras.literal_type_from_choices(
+        eyefultower_downloads
+    )
+    EyefulTowerResolution = tyro.extras.literal_type_from_choices(
+        eyefultower_resolutions.keys()
+    )
 
 
 @dataclass
@@ -76,7 +80,9 @@ class EyefulTowerDownload(DatasetDownload):
     resolution_name: Tuple[EyefulTowerResolution, ...] = ()
 
     @staticmethod
-    def scale_metashape_transform(xml_tree: ET.ElementTree, target_width: int, target_height: int) -> ET.ElementTree:
+    def scale_metashape_transform(
+        xml_tree: ET.ElementTree, target_width: int, target_height: int
+    ) -> ET.ElementTree:
         """Rescales parameters in metashape's cameras.xml format to match target width/height.
 
         The EyefulTower dataset provides images which have already been rescaled to smaller sizes from the original ~8K
@@ -103,14 +109,20 @@ class EyefulTowerDownload(DatasetDownload):
 
         for sensor in sensors:
             resolution = sensor.find("resolution")
-            assert resolution is not None, "Resolution not found in EyefulTower camera.xml"
+            assert (
+                resolution is not None
+            ), "Resolution not found in EyefulTower camera.xml"
             original_width = int(resolution.get("width"))  # type: ignore
             original_height = int(resolution.get("height"))  # type: ignore
 
             if original_width > original_height:
-                target_width, target_height = max(target_width, target_height), min(target_width, target_height)
+                target_width, target_height = max(target_width, target_height), min(
+                    target_width, target_height
+                )
             else:
-                target_height, target_width = max(target_width, target_height), min(target_width, target_height)
+                target_height, target_width = max(target_width, target_height), min(
+                    target_width, target_height
+                )
 
             resolution.set("width", str(target_width))
             resolution.set("height", str(target_height))
@@ -146,7 +158,12 @@ class EyefulTowerDownload(DatasetDownload):
 
     @staticmethod
     def convert_cameras_to_gstk_transforms(
-        capture_name: str, cameras: dict, splits: dict, target_width: int, target_height: int, extension: str
+        capture_name: str,
+        cameras: dict,
+        splits: dict,
+        target_width: int,
+        target_height: int,
+        extension: str,
     ) -> dict:
         """Converts EyefulTower cameras.json format to Nerfstudio's transforms.json format
 
@@ -184,7 +201,9 @@ class EyefulTowerDownload(DatasetDownload):
             output["camera_model"] = "OPENCV_FISHEYE"
             output["fisheye_crop_radius"] = eyefultower_fisheye_radii[capture_name]
         else:
-            raise NotImplementedError(f"Camera model {distortion_model} not implemented")
+            raise NotImplementedError(
+                f"Camera model {distortion_model} not implemented"
+            )
 
         split_sets = {k: set(v) for k, v in splits.items()}
 
@@ -201,9 +220,13 @@ class EyefulTowerDownload(DatasetDownload):
             original_width = camera["width"]
             original_height = camera["height"]
             if original_width > original_height:
-                target_width, target_height = max(target_width, target_height), min(target_width, target_height)
+                target_width, target_height = max(target_width, target_height), min(
+                    target_width, target_height
+                )
             else:
-                target_height, target_width = max(target_width, target_height), min(target_width, target_height)
+                target_height, target_width = max(target_width, target_height), min(
+                    target_width, target_height
+                )
             x_scale = target_width / original_width
             y_scale = target_height / original_height
 
@@ -260,7 +283,9 @@ class EyefulTowerDownload(DatasetDownload):
             New transforms.json dict with n frames. All other parameters are copied.
         """
         target = min(len(transforms["frames"]), n)
-        indices = np.round(np.linspace(0, len(transforms["frames"]) - 1, target)).astype(int)
+        indices = np.round(
+            np.linspace(0, len(transforms["frames"]) - 1, target)
+        ).astype(int)
 
         frames = []
         for i in indices:
@@ -311,17 +336,23 @@ class EyefulTowerDownload(DatasetDownload):
                 captures.add(capture)
         captures = sorted(captures)
         if len(captures) == 0:
-            CONSOLE.print("[bold yellow]WARNING: No EyefulTower captures specified. Nothing will be downloaded.")
+            CONSOLE.print(
+                "[bold yellow]WARNING: No EyefulTower captures specified. Nothing will be downloaded."
+            )
 
         resolutions = set()
         for resolution in self.resolution_name:
             if resolution == "all":
-                resolutions.update([r for r in eyefultower_resolutions.keys() if r != "all"])
+                resolutions.update(
+                    [r for r in eyefultower_resolutions.keys() if r != "all"]
+                )
             else:
                 resolutions.add(resolution)
         resolutions = sorted(resolutions)
         if len(resolutions) == 0:
-            CONSOLE.print("[bold yellow]WARNING: No EyefulTower resolutions specified. Nothing will be downloaded.")
+            CONSOLE.print(
+                "[bold yellow]WARNING: No EyefulTower resolutions specified. Nothing will be downloaded."
+            )
 
         driver = awscli.clidriver.create_clidriver()
 
@@ -330,13 +361,27 @@ class EyefulTowerDownload(DatasetDownload):
             output_path = save_dir / "eyefultower" / capture
             includes = []
             for resolution in resolutions:
-                includes.extend(["--include", f"{eyefultower_resolutions[resolution].folder_name}/*"])
+                includes.extend(
+                    [
+                        "--include",
+                        f"{eyefultower_resolutions[resolution].folder_name}/*",
+                    ]
+                )
             command = (
-                ["s3", "sync", "--no-sign-request", "--only-show-errors", "--exclude", "images*/*"]
+                [
+                    "s3",
+                    "sync",
+                    "--no-sign-request",
+                    "--only-show-errors",
+                    "--exclude",
+                    "images*/*",
+                ]
                 + includes
                 + [base_url, str(output_path)]
             )
-            CONSOLE.print(f"[EyefulTower Capture {i+1: >2d}/{len(captures)}]: '{capture}'")
+            CONSOLE.print(
+                f"[EyefulTower Capture {i+1: >2d}/{len(captures)}]: '{capture}'"
+            )
             print(
                 f"\tDownloading resolutions {resolutions}",
                 f"to '{output_path.resolve()}' with command `aws {' '.join(command)}` ...",
@@ -364,16 +409,22 @@ class EyefulTowerDownload(DatasetDownload):
                         end=" ",
                         flush=True,
                     )
-                    scaled_tree = self.scale_metashape_transform(tree, metadata.width, metadata.height)
+                    scaled_tree = self.scale_metashape_transform(
+                        tree, metadata.width, metadata.height
+                    )
                     scaled_tree.write(xml_output_path)
                     print("done!")
 
             json_input_path = output_path / "cameras.json"
             splits_input_path = output_path / "splits.json"
             if not json_input_path.exists:
-                CONSOLE.print("\t[bold yellow]WARNING: cameras.json not found. transforms.json will not be generated.")
+                CONSOLE.print(
+                    "\t[bold yellow]WARNING: cameras.json not found. transforms.json will not be generated."
+                )
             elif not splits_input_path.exists:
-                CONSOLE.print("\t[bold yellow]WARNING: splits.json not found. transforms.json will not be generated.")
+                CONSOLE.print(
+                    "\t[bold yellow]WARNING: splits.json not found. transforms.json will not be generated."
+                )
             else:
                 with open(json_input_path, "r") as f:
                     cameras = json.load(f)
@@ -383,14 +434,21 @@ class EyefulTowerDownload(DatasetDownload):
 
                 for resolution in resolutions:
                     metadata = eyefultower_resolutions[resolution]
-                    json_output_path = output_path / metadata.folder_name / "transforms.json"
+                    json_output_path = (
+                        output_path / metadata.folder_name / "transforms.json"
+                    )
                     print(
                         f"\tGenerating transforms.json for '{resolution}' to '{json_output_path.resolve()}' ... ",
                         end=" ",
                         flush=True,
                     )
                     transforms = self.convert_cameras_to_gstk_transforms(
-                        capture, cameras, splits, metadata.width, metadata.height, metadata.extension
+                        capture,
+                        cameras,
+                        splits,
+                        metadata.width,
+                        metadata.height,
+                        metadata.extension,
                     )
 
                     with open(json_output_path, "w", encoding="utf8") as f:
@@ -401,7 +459,9 @@ class EyefulTowerDownload(DatasetDownload):
                         (int(len(cameras["KRT"]) // 2), "transforms_half.json"),
                     ]:
                         subsampled = self.subsample_gstk_transforms(transforms, count)
-                        with open(json_output_path.with_name(name), "w", encoding="utf8") as f:
+                        with open(
+                            json_output_path.with_name(name), "w", encoding="utf8"
+                        ) as f:
                             json.dump(subsampled, f, indent=4)
 
                     print("done!")

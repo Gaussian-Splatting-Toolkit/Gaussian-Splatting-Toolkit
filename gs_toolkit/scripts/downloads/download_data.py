@@ -90,24 +90,54 @@ gstk_dataset = [
     "Giannini-Hall",
 ]
 gstk_file_ids = {
-    "bww_entrance": grab_file_id("https://drive.google.com/file/d/1ylkRHtfB3n3IRLf2wplpfxzPTq7nES9I/view?usp=sharing"),
-    "campanile": grab_file_id("https://drive.google.com/file/d/13aOfGJRRH05pOOk9ikYGTwqFc2L1xskU/view?usp=sharing"),
-    "desolation": grab_file_id("https://drive.google.com/file/d/14IzOOQm9KBJ3kPbunQbUTHPnXnmZus-f/view?usp=sharing"),
-    "library": grab_file_id("https://drive.google.com/file/d/1Hjbh_-BuaWETQExn2x2qGD74UwrFugHx/view?usp=sharing"),
-    "poster": grab_file_id("https://drive.google.com/file/d/1dmjWGXlJnUxwosN6MVooCDQe970PkD-1/view?usp=sharing"),
-    "redwoods2": grab_file_id("https://drive.google.com/file/d/1rg-4NoXT8p6vkmbWxMOY6PSG4j3rfcJ8/view?usp=sharing"),
-    "storefront": grab_file_id("https://drive.google.com/file/d/16b792AguPZWDA_YC4igKCwXJqW0Tb21o/view?usp=sharing"),
-    "vegetation": grab_file_id("https://drive.google.com/file/d/1wBhLQ2odycrtU39y2akVurXEAt9SsVI3/view?usp=sharing"),
-    "Egypt": grab_file_id("https://drive.google.com/file/d/1YktD85afw7uitC3nPamusk0vcBdAfjlF/view?view?usp=sharing"),
-    "person": grab_file_id("https://drive.google.com/file/d/1HsGMwkPu-R7oU7ySMdoo6Eppq8pKhHF3/view?view?usp=sharing"),
-    "kitchen": grab_file_id("https://drive.google.com/file/d/1IRmNyNZSNFidyj93Tt5DtaEU9h6eJdi1/view?view?usp=sharing"),
-    "plane": grab_file_id("https://drive.google.com/file/d/1tnv2NC2Iwz4XRYNtziUWvLJjObkZNo2D/view?view?usp=sharing"),
-    "dozer": grab_file_id("https://drive.google.com/file/d/1jQJPz5PhzTH--LOcCxvfzV_SDLEp1de3/view?view?usp=sharing"),
+    "bww_entrance": grab_file_id(
+        "https://drive.google.com/file/d/1ylkRHtfB3n3IRLf2wplpfxzPTq7nES9I/view?usp=sharing"
+    ),
+    "campanile": grab_file_id(
+        "https://drive.google.com/file/d/13aOfGJRRH05pOOk9ikYGTwqFc2L1xskU/view?usp=sharing"
+    ),
+    "desolation": grab_file_id(
+        "https://drive.google.com/file/d/14IzOOQm9KBJ3kPbunQbUTHPnXnmZus-f/view?usp=sharing"
+    ),
+    "library": grab_file_id(
+        "https://drive.google.com/file/d/1Hjbh_-BuaWETQExn2x2qGD74UwrFugHx/view?usp=sharing"
+    ),
+    "poster": grab_file_id(
+        "https://drive.google.com/file/d/1dmjWGXlJnUxwosN6MVooCDQe970PkD-1/view?usp=sharing"
+    ),
+    "redwoods2": grab_file_id(
+        "https://drive.google.com/file/d/1rg-4NoXT8p6vkmbWxMOY6PSG4j3rfcJ8/view?usp=sharing"
+    ),
+    "storefront": grab_file_id(
+        "https://drive.google.com/file/d/16b792AguPZWDA_YC4igKCwXJqW0Tb21o/view?usp=sharing"
+    ),
+    "vegetation": grab_file_id(
+        "https://drive.google.com/file/d/1wBhLQ2odycrtU39y2akVurXEAt9SsVI3/view?usp=sharing"
+    ),
+    "Egypt": grab_file_id(
+        "https://drive.google.com/file/d/1YktD85afw7uitC3nPamusk0vcBdAfjlF/view?view?usp=sharing"
+    ),
+    "person": grab_file_id(
+        "https://drive.google.com/file/d/1HsGMwkPu-R7oU7ySMdoo6Eppq8pKhHF3/view?view?usp=sharing"
+    ),
+    "kitchen": grab_file_id(
+        "https://drive.google.com/file/d/1IRmNyNZSNFidyj93Tt5DtaEU9h6eJdi1/view?view?usp=sharing"
+    ),
+    "plane": grab_file_id(
+        "https://drive.google.com/file/d/1tnv2NC2Iwz4XRYNtziUWvLJjObkZNo2D/view?view?usp=sharing"
+    ),
+    "dozer": grab_file_id(
+        "https://drive.google.com/file/d/1jQJPz5PhzTH--LOcCxvfzV_SDLEp1de3/view?view?usp=sharing"
+    ),
     "floating-tree": grab_file_id(
         "https://drive.google.com/file/d/1mVEHcO2ep13WPx92IPDvdQg66vLQwFSy/view?view?usp=sharing"
     ),
-    "aspen": grab_file_id("https://drive.google.com/file/d/1X1PQcji_QpxGfMxbETKMeK8aOnWCkuSB/view?view?usp=sharing"),
-    "stump": grab_file_id("https://drive.google.com/file/d/1yZFAAEvtw2hs4MXrrkvhVAzEliLLXPB7/view?view?usp=sharing"),
+    "aspen": grab_file_id(
+        "https://drive.google.com/file/d/1X1PQcji_QpxGfMxbETKMeK8aOnWCkuSB/view?view?usp=sharing"
+    ),
+    "stump": grab_file_id(
+        "https://drive.google.com/file/d/1yZFAAEvtw2hs4MXrrkvhVAzEliLLXPB7/view?view?usp=sharing"
+    ),
     "sculpture": grab_file_id(
         "https://drive.google.com/file/d/1CUU_k0Et2gysuBn_R5qenDMfYXEhNsd1/view?view?usp=sharing"
     ),
@@ -124,7 +154,9 @@ else:
     GSTKCaptureName = tyro.extras.literal_type_from_choices(gstk_file_ids.keys())
 
 
-def download_capture_name(save_dir: Path, dataset_name: str, capture_name: str, capture_name_to_file_id: dict):
+def download_capture_name(
+    save_dir: Path, dataset_name: str, capture_name: str, capture_name_to_file_id: dict
+):
     """Download specific captures a given dataset and capture name."""
 
     file_id_or_zip_url = capture_name_to_file_id[capture_name]
@@ -157,7 +189,9 @@ def download_capture_name(save_dir: Path, dataset_name: str, capture_name: str, 
     with zipfile.ZipFile(download_path, "r") as zip_ref:
         zip_ref.extractall(tmp_path)
     inner_folders = os.listdir(tmp_path)
-    assert len(inner_folders) == 1, f"There is more than one folder inside this zip file: {inner_folders}"
+    assert (
+        len(inner_folders) == 1
+    ), f"There is more than one folder inside this zip file: {inner_folders}"
     folder = os.path.join(tmp_path, inner_folders[0])
     shutil.rmtree(target_path)
     shutil.move(folder, target_path)
@@ -190,17 +224,23 @@ class GSTKDownload(DatasetDownload):
                     download_capture_name(save_dir, "gstk", capture_name, gstk_file_ids)
             return
 
-        download_capture_name(save_dir, "gstk", self.capture_name, capture_name_to_file_id=gstk_file_ids)
+        download_capture_name(
+            save_dir, "gstk", self.capture_name, capture_name_to_file_id=gstk_file_ids
+        )
 
 
 record3d_file_ids = {
-    "bear": grab_file_id("https://drive.google.com/file/d/1WRZohWMRj0nNlYFIEBwkddDoGPvLTzkR/view?usp=sharing")
+    "bear": grab_file_id(
+        "https://drive.google.com/file/d/1WRZohWMRj0nNlYFIEBwkddDoGPvLTzkR/view?usp=sharing"
+    )
 }
 
 if TYPE_CHECKING:
     Record3dCaptureName = str
 else:
-    Record3dCaptureName = tyro.extras.literal_type_from_choices(record3d_file_ids.keys())
+    Record3dCaptureName = tyro.extras.literal_type_from_choices(
+        record3d_file_ids.keys()
+    )
 
 
 @dataclass
@@ -210,7 +250,12 @@ class Record3dDownload(DatasetDownload):
     capture_name: Record3dCaptureName = "bear"
 
     def download(self, save_dir: Path):
-        download_capture_name(save_dir, "record3d", self.capture_name, capture_name_to_file_id=record3d_file_ids)
+        download_capture_name(
+            save_dir,
+            "record3d",
+            self.capture_name,
+            capture_name_to_file_id=record3d_file_ids,
+        )
 
 
 @dataclass
@@ -227,7 +272,14 @@ class DNerfDownload(DatasetDownload):
             shutil.rmtree(str(final_path))
         download_path = save_dir / "dnerf_data.zip"
         subprocess.run(
-            ["curl", "-L", "https://www.dropbox.com/s/raw/0bf6fl0ye2vz3vr/data.zip", "-o", download_path], check=True
+            [
+                "curl",
+                "-L",
+                "https://www.dropbox.com/s/raw/0bf6fl0ye2vz3vr/data.zip",
+                "-o",
+                download_path,
+            ],
+            check=True,
         )
         with zipfile.ZipFile(download_path, "r") as zip_ref:
             zip_ref.extractall(str(save_dir))
@@ -255,7 +307,9 @@ phototourism_downloads = {
 if TYPE_CHECKING:
     PhototourismCaptureName = str
 else:
-    PhototourismCaptureName = tyro.extras.literal_type_from_choices(phototourism_downloads.keys())
+    PhototourismCaptureName = tyro.extras.literal_type_from_choices(
+        phototourism_downloads.keys()
+    )
 
 
 @dataclass
@@ -291,7 +345,9 @@ class PhototourismDownload(DatasetDownload):
             tar_ref.extractall(str(tmp_path))
 
         inner_folders = os.listdir(tmp_path)
-        assert len(inner_folders) == 1, f"There is more than one folder inside this zip file: {inner_folders}"
+        assert (
+            len(inner_folders) == 1
+        ), f"There is more than one folder inside this zip file: {inner_folders}"
         folder = os.path.join(tmp_path, inner_folders[0])
         shutil.rmtree(target_path)
         shutil.move(folder, target_path)
@@ -316,7 +372,9 @@ sdfstudio_downloads = {
 if TYPE_CHECKING:
     SDFstudioCaptureName = str
 else:
-    SDFstudioCaptureName = tyro.extras.literal_type_from_choices(sdfstudio_downloads.keys())
+    SDFstudioCaptureName = tyro.extras.literal_type_from_choices(
+        sdfstudio_downloads.keys()
+    )
 
 
 @dataclass
@@ -363,7 +421,9 @@ class SDFstudioDemoDownload(DatasetDownload):
             raise NotImplementedError
 
         inner_folders = os.listdir(tmp_path)
-        assert len(inner_folders) == 1, f"There is more than one folder inside this zip file: {inner_folders}"
+        assert (
+            len(inner_folders) == 1
+        ), f"There is more than one folder inside this zip file: {inner_folders}"
         folder = os.path.join(tmp_path, inner_folders[0])
         shutil.rmtree(target_path)
         shutil.move(folder, target_path)
@@ -424,7 +484,9 @@ class NeRFOSRDownload(DatasetDownload):
             zip_ref.extractall(tmp_path)
 
         inner_folders = os.listdir(tmp_path)
-        assert len(inner_folders) == 1, f"There is more than one folder inside this zip file: {inner_folders}"
+        assert (
+            len(inner_folders) == 1
+        ), f"There is more than one folder inside this zip file: {inner_folders}"
         folder = os.path.join(tmp_path, inner_folders[0])
         shutil.rmtree(target_path)
         shutil.move(folder, target_path)
@@ -477,7 +539,9 @@ class Mill19Download(DatasetDownload):
             tar_ref.extractall(tmp_path)
 
         inner_folders = list(tmp_path.iterdir())
-        assert len(inner_folders) == 1, f"There is more than one folder inside this zip file: {inner_folders}"
+        assert (
+            len(inner_folders) == 1
+        ), f"There is more than one folder inside this zip file: {inner_folders}"
         folder = inner_folders[0]
         shutil.rmtree(target_path)
         folder.rename(target_path)
@@ -498,7 +562,9 @@ class Mill19Download(DatasetDownload):
 
             split_filepaths = []
             for image_path, new_image_path in copied_images.items():
-                metadata_path = image_path.parent.parent / "metadata" / f"{image_path.stem}.pt"
+                metadata_path = (
+                    image_path.parent.parent / "metadata" / f"{image_path.stem}.pt"
+                )
                 metadata = torch.load(metadata_path, map_location="cpu")
                 c2w = torch.eye(4)
                 c2w[:3] = metadata["c2w"]
