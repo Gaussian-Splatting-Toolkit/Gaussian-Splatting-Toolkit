@@ -30,6 +30,14 @@ To install the Gaussian Splatting Toolkit, follow these steps:
 3. Install the third party dictionaries
 4. Install dependencies: `pip install -e .`
 
+Using conda:
+```bash
+conda create -n gstk python=3.10.13 -y
+conda activate gstk
+pip install torch torchvision
+pip install -e .
+```
+
 If you are a developer, and want to install the dev dependencies, please run
 
 ```bash

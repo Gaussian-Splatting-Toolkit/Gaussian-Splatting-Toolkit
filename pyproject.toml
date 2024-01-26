@@ -16,7 +16,7 @@ packages = [
 
 # Dependencies
 [tool.poetry.dependencies]
-python = "3.10.12"
+python = "3.10.13"
 comet_ml = "3.35.5"
 jaxtyping = "0.2.25"
 mediapy = "1.2.0"
