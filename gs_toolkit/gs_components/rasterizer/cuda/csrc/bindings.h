@@ -90,8 +90,8 @@ nd_rasterize_backward_tensor(
     const torch::Tensor &colors, const torch::Tensor &opacities,
     const torch::Tensor &background, const torch::Tensor &final_Ts,
     const torch::Tensor &final_idx,
-    const torch::Tensor &v_output // dL_dout_color
-);
+    const torch::Tensor &v_output, // dL_dout_color
+    const torch::Tensor &v_output_alpha);
 
 std::tuple<torch::Tensor, // dL_dxy
            torch::Tensor, // dL_dconic
@@ -107,5 +107,5 @@ rasterize_backward_tensor(const unsigned img_height, const unsigned img_width,
                           const torch::Tensor &background,
                           const torch::Tensor &final_Ts,
                           const torch::Tensor &final_idx,
-                          const torch::Tensor &v_output // dL_dout_color
-);
+                          const torch::Tensor &v_output, // dL_dout_color
+                          const torch::Tensor &v_output_alpha);

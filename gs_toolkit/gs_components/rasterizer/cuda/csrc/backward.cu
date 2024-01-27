@@ -11,7 +11,8 @@ __global__ void nd_rasterize_backward_kernel(
     const float3 *__restrict__ conics, const float *__restrict__ rgbs,
     const float *__restrict__ opacities, const float *__restrict__ background,
     const float *__restrict__ final_Ts, const int *__restrict__ final_index,
-    const float *__restrict__ v_output, float2 *__restrict__ v_xy,
+    const float *__restrict__ v_output,
+    const float *__restrict__ v_output_alpha, float2 *__restrict__ v_xy,
     float3 *__restrict__ v_conic, float *__restrict__ v_rgb,
     float *__restrict__ v_opacity, float *__restrict__ workspace) {
   if (channels > MAX_REGISTER_CHANNELS && workspace == nullptr) {
@@ -35,6 +36,7 @@ __global__ void nd_rasterize_backward_kernel(
   int2 range = tile_bins[tile_id];
   // df/d_out for this pixel
   const float *v_out = &(v_output[channels * pix_id]);
+  const float v_out_alpha = v_output_alpha[pix_id];
   // this is the T AFTER the last gaussian in this pixel
   float T_final = final_Ts[pix_id];
   float T = T_final;
@@ -87,7 +89,7 @@ __global__ void nd_rasterize_backward_kernel(
       // update the running sum
       S[c] += rgbs[channels * g + c] * fac;
     }
-
+    v_alpha += T_final * ra * v_out_alpha;
     // update v_opacity for this gaussian
     atomicAdd(&(v_opacity[g]), vis * v_alpha);
 
@@ -126,7 +128,8 @@ __global__ void rasterize_backward_kernel(
     const float3 *__restrict__ conics, const float3 *__restrict__ rgbs,
     const float *__restrict__ opacities, const float3 &__restrict__ background,
     const float *__restrict__ final_Ts, const int *__restrict__ final_index,
-    const float3 *__restrict__ v_output, float2 *__restrict__ v_xy,
+    const float3 *__restrict__ v_output,
+    const float *__restrict__ v_output_alpha, float2 *__restrict__ v_xy,
     float3 *__restrict__ v_conic, float3 *__restrict__ v_rgb,
     float *__restrict__ v_opacity) {
   auto block = cg::this_thread_block();
@@ -166,6 +169,7 @@ __global__ void rasterize_backward_kernel(
 
   // df/d_out for this pixel
   const float3 v_out = v_output[pix_id];
+  const float v_out_alpha = v_output_alpha[pix_id];
 
   // collect and process batches of gaussians
   // each thread loads one gaussian at a time before rasterizing
@@ -243,6 +247,8 @@ __global__ void rasterize_backward_kernel(
         v_alpha += (rgb.x * T - buffer.x * ra) * v_out.x;
         v_alpha += (rgb.y * T - buffer.y * ra) * v_out.y;
         v_alpha += (rgb.z * T - buffer.z * ra) * v_out.z;
+
+        v_alpha += T_final * ra * v_out_alpha;
         // contribution from background pixel
         v_alpha += -T_final * ra * background.x * v_out.x;
         v_alpha += -T_final * ra * background.y * v_out.y;

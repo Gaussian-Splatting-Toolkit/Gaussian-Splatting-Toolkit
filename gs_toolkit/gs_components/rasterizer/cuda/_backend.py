@@ -64,7 +64,9 @@ except ImportError:
         except OSError:
             pass
 
-        if os.path.exists(os.path.join(build_dir, "rasterizer_cuda.so")):
+        if os.path.exists(os.path.join(build_dir, "gsplat_cuda.so")) or os.path.exists(
+            os.path.join(build_dir, "gsplat_cuda.lib")
+        ):
             # If the build exists, we assume the extension has been built
             # and we can load it.
 
@@ -80,7 +82,7 @@ except ImportError:
             # if the build directory exists with a lock file in it.
             shutil.rmtree(build_dir)
             with Console().status(
-                "[bold yellow]rasterizer: Setting up CUDA (This may take a few minutes the first time)",
+                "[bold yellow]gsplat: Setting up CUDA (This may take a few minutes the first time)",
                 spinner="bouncingBall",
             ):
                 _C = load(
@@ -92,7 +94,7 @@ except ImportError:
                 )
     else:
         Console().print(
-            "[yellow]rasterizer: No CUDA toolkit found. rasterizer will be disabled.[/yellow]"
+            "[yellow]gsplat: No CUDA toolkit found. gsplat will be disabled.[/yellow]"
         )
 
 

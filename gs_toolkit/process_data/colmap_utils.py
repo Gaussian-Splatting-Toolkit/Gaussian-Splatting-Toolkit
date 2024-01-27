@@ -695,6 +695,7 @@ def align_depth(
         iter_images = iter(im_id_to_image.items())
 
     total_scale = []
+    total_variances = []
     image_id_to_depth_path = {}
     # cov = []
     for im_id, im_data in iter_images:
@@ -735,11 +736,17 @@ def align_depth(
         uu, vv = uv[:, 0].astype(int), uv[:, 1].astype(int)
         depth_measure = depth_img[vv, uu]
         # Choose the idx that depth measure is not 0
-        idx = np.where(depth_measure != 0)
+        idx = np.where((depth_measure > 30) & (depth_measure < 3_000))
         z = z[idx]
         depth_measure = depth_measure[idx] / 1000
-        total_scale.append(np.mean(depth_measure / z))
+        if len(z) != 0:
+            total_scale.append(np.mean(depth_measure / z))
+            total_variances.append(np.var(depth_measure / z))
         # cov.append(np.cov(z, depth_measure)[0, 1])
+        if np.mean(total_variances) / np.mean(total_scale) > 0.1:
+            CONSOLE.log(
+                "[bold yellow]Warning: The variance of depth measurements is high, scaling may not be accurate."
+            )
     return image_id_to_depth_path, np.mean(total_scale)
 
 
