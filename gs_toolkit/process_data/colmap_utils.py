@@ -156,6 +156,7 @@ def run_colmap(
         f"--database_path {colmap_dir / 'database.db'}",
         f"--image_path {image_dir}",
         f"--output_path {sparse_dir}",
+        "--Mapper.ba_global_max_num_iterations 10",
     ]
 
     mapper_cmd = " ".join(mapper_cmd)
@@ -745,7 +746,7 @@ def align_depth(
         # cov.append(np.cov(z, depth_measure)[0, 1])
         if np.mean(total_variances) / np.mean(total_scale) > 0.1:
             CONSOLE.log(
-                "[bold yellow]Warning: The variance of depth measurements is high, scaling may not be accurate."
+                f"[bold yellow]Warning: The variance ({np.mean(total_variances)}) over mean ({np.mean(total_scale)}) of scale is high, scaling may not be accurate."
             )
     return image_id_to_depth_path, np.mean(total_scale)
 
