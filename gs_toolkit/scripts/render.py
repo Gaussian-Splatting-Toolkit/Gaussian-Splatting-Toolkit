@@ -15,7 +15,7 @@ from rich.progress import track
 class RenderFromTrajectory:
     trajectory_path: Path
     config_file: Path
-    num_frames_target: int = 200
+    num_frames_target: int = 100
 
     def __post_init__(self):
         self._validate()
@@ -42,6 +42,7 @@ class RenderFromTrajectory:
         assert interval > 0
         poses = []
         # Render
+        idx = 0
         for i in track(range(0, num, interval), description="Rendering"):
             pose = tranjectory[i]["camera_to_world"]
             # Reshape pose from (16) to (4, 4)
@@ -49,15 +50,16 @@ class RenderFromTrajectory:
             self.renderer.get_output_from_pose(pose)
             # Save rgb image
             rgb = self.renderer.rgb
-            rgb_path = self.output_dir / "rgb" / f"frame_{i+1:05d}.png"
+            rgb_path = self.output_dir / "rgb" / f"frame_{idx+1:05d}.png"
             cv2.imwrite(str(rgb_path), cv2.cvtColor(255 * rgb, cv2.COLOR_RGB2BGR))
             # Save depth image, convert depth unit from m to mm
             depth = self.renderer.depth
-            depth_path = self.output_dir / "depth" / f"depth_{i+1:05d}.png"
+            depth_path = self.output_dir / "depth" / f"depth_{idx+1:05d}.png"
             depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
             depth.save(str(depth_path))
             # pose[:3, 3] = pose[:3, 3] * 1000
             poses.append(pose)
+            idx += 1
         # Save poses in json
         poses = np.array(poses)
         poses = poses.tolist()

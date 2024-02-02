@@ -2,7 +2,10 @@ from typing import Any, Dict, List, Tuple, Optional
 from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datasets.base_dataset import InputDataset
 
-def collect_camera_poses_for_dataset(dataset: Optional[InputDataset]) -> List[Dict[str, Any]]:
+
+def collect_camera_poses_for_dataset(
+    dataset: Optional[InputDataset],
+) -> List[Dict[str, Any]]:
     """Collects rescaled, translated and optimised camera poses for a dataset.
 
     Args:
@@ -33,7 +36,10 @@ def collect_camera_poses_for_dataset(dataset: Optional[InputDataset]) -> List[Di
 
     return frames
 
-def collect_camera_poses(pipeline: VanillaPipeline) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+
+def collect_camera_poses(
+    pipeline: VanillaPipeline,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Collects camera poses for train and eval datasets.
 
     Args:

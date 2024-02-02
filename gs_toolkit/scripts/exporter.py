@@ -7,10 +7,9 @@ from __future__ import annotations
 
 import json
 import os
-import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, cast
+from typing import Union
 
 import numpy as np
 import open3d as o3d
@@ -50,9 +49,14 @@ class ExportCameraPoses(Exporter):
         assert isinstance(pipeline, VanillaPipeline)
         train_frames, eval_frames = collect_camera_poses(pipeline)
 
-        for file_name, frames in [("transforms_train.json", train_frames), ("transforms_eval.json", eval_frames)]:
+        for file_name, frames in [
+            ("transforms_train.json", train_frames),
+            ("transforms_eval.json", eval_frames),
+        ]:
             if len(frames) == 0:
-                CONSOLE.print(f"[bold yellow]No frames found for {file_name}. Skipping.")
+                CONSOLE.print(
+                    f"[bold yellow]No frames found for {file_name}. Skipping."
+                )
                 continue
 
             output_file_path = os.path.join(self.output_dir, file_name)
@@ -60,7 +64,9 @@ class ExportCameraPoses(Exporter):
             with open(output_file_path, "w", encoding="UTF-8") as f:
                 json.dump(frames, f, indent=4)
 
-            CONSOLE.print(f"[bold green]:white_check_mark: Saved poses to {output_file_path}")
+            CONSOLE.print(
+                f"[bold green]:white_check_mark: Saved poses to {output_file_path}"
+            )
 
 
 @dataclass
@@ -124,7 +130,9 @@ class ExportGaussianSplat(Exporter):
                 CONSOLE.print(f"{n_before - n_after} NaN/Inf elements in {k}")
 
         if np.sum(select) < n:
-            CONSOLE.print(f"values have NaN/Inf in map_to_tensors, only export {np.sum(select)}/{n}")
+            CONSOLE.print(
+                f"values have NaN/Inf in map_to_tensors, only export {np.sum(select)}/{n}"
+            )
             for k, t in map_to_tensors.items():
                 map_to_tensors[k] = map_to_tensors[k][select, :]
 
@@ -136,7 +144,7 @@ class ExportGaussianSplat(Exporter):
 Commands = tyro.conf.FlagConversionOff[
     Union[
         Annotated[ExportGaussianSplat, tyro.conf.subcommand(name="gaussian-splat")],
-        None  # Add a second type argument to the Union annotation
+        Annotated[ExportCameraPoses, tyro.conf.subcommand(name="camera-poses")],
     ]
 ]
 

@@ -171,25 +171,22 @@ def run_colmap(
 
     # If there are more than two folders in sparse_dir, raise an error
     if len(list(sparse_dir.iterdir())) > 2:
-        raise RuntimeError(
-            f"More than two folders in {sparse_dir}. Are your dataset images representing the same scene?"
-        )
+        CONSOLE.log("[bold yellow]Warning: More than two sparse folders found.")
 
-    # If there are two folders in sparse_dir, merge them together
-    if len(list(sparse_dir.iterdir())) == 2:
-        with status(
-            msg="[bold yellow]Merging two sparse folders...",
-            spinner="circle",
-            verbose=verbose,
-        ):
-            merge_cmd = [
-                f"{colmap_cmd} model_merger",
-                f"--input_path1 {sparse_dir}/0",
-                f"--input_path2 {sparse_dir}/1",
-                f"--output_path {sparse_dir}/0",
-            ]
-            run_command(" ".join(merge_cmd), verbose=verbose)
-        CONSOLE.log("[bold green]:tada: Done merging two sparse folders.")
+    # Merge the first two models
+    with status(
+        msg="[bold yellow]Merging two sparse folders...",
+        spinner="circle",
+        verbose=verbose,
+    ):
+        merge_cmd = [
+            f"{colmap_cmd} model_merger",
+            f"--input_path1 {sparse_dir}/0",
+            f"--input_path2 {sparse_dir}/1",
+            f"--output_path {sparse_dir}/0",
+        ]
+        run_command(" ".join(merge_cmd), verbose=verbose)
+    CONSOLE.log("[bold green]:tada: Done merging two sparse folders.")
 
     if refine_intrinsics:
         with status(
@@ -203,6 +200,22 @@ def run_colmap(
             ]
             run_command(" ".join(bundle_adjuster_cmd), verbose=verbose)
         CONSOLE.log("[bold green]:tada: Done refining intrinsics.")
+
+    # Stereo reconstruction
+    with status(
+        msg="[bold yellow]Running COLMAP stereo reconstruction...",
+        spinner="circle",
+        verbose=verbose,
+    ):
+        stereo_cmd = [
+            f"{colmap_cmd} image_undistorter",
+            f"--image_path {image_dir}",
+            f"--input_path {sparse_dir}/0",
+            f"--output_path {colmap_dir}/undistorted",
+            "--output_type COLMAP",
+            "--max_image_size 2000",
+        ]
+        run_command(" ".join(stereo_cmd), verbose=verbose)
 
     with status(
         msg="[bold yellow]Extracting point cloud...", spinner="pipe", verbose=verbose
@@ -744,10 +757,10 @@ def align_depth(
             total_scale.append(np.mean(depth_measure / z))
             total_variances.append(np.var(depth_measure / z))
         # cov.append(np.cov(z, depth_measure)[0, 1])
-        if np.mean(total_variances) / np.mean(total_scale) > 0.1:
-            CONSOLE.log(
-                f"[bold yellow]Warning: The variance ({np.mean(total_variances)}) over mean ({np.mean(total_scale)}) of scale is high, scaling may not be accurate."
-            )
+    if np.mean(total_variances) / np.mean(total_scale) > 0.1:
+        CONSOLE.log(
+            f"[bold yellow]Warning: The variance ({np.mean(total_variances)}) over mean ({np.mean(total_scale)}) of scale is high, scaling may not be accurate."
+        )
     return image_id_to_depth_path, np.mean(total_scale)
 
 

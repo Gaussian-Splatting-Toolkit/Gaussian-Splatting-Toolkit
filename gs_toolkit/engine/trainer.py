@@ -9,9 +9,11 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from plyfile import PlyData, PlyElement
 from threading import Lock
 from typing import Dict, List, Literal, Optional, Tuple, Type, cast, DefaultDict
 from collections import defaultdict
+import numpy as np
 import torch
 from torch.nn import Parameter
 from gs_toolkit.configs.experiment_config import ExperimentConfig
@@ -475,6 +477,45 @@ class Trainer:
             for f in self.checkpoint_dir.glob("*"):
                 if f != ckpt_path:
                     f.unlink()
+
+    @check_main_thread
+    def save_ply(self, step: int) -> None:
+        """Save the model and optimizers
+        Args:
+            step: number of steps in training for given checkpoint
+        """
+
+        path: Path = self.checkpoint_dir / f"step-{step:09d}.ply"
+
+        param_group = self.pipeline.model.get_gaussian_param_groups()
+        xyz = param_group["xyz"][0].detach().cpu().numpy()
+        normals = np.zeros_like(xyz)
+        f_dc = param_group["features_dc"][0].detach().cpu().numpy()
+        f_rest = (
+            param_group["features_rest"][0]
+            .detach()
+            .transpose(1, 2)
+            .flatten(start_dim=1)
+            .contiguous()
+            .cpu()
+            .numpy()
+        )
+        opacities = param_group["opacity"][0].detach().cpu().numpy()
+        scale = param_group["scaling"][0].detach().cpu().numpy()
+        rotation = param_group["rotation"][0].detach().cpu().numpy()
+
+        dtype_full = [
+            (attribute, "f4")
+            for attribute in self.construct_list_of_attributes(param_group)
+        ]
+
+        elements = np.empty(xyz.shape[0], dtype=dtype_full)
+        attributes = np.concatenate(
+            (xyz, normals, f_dc, f_rest, opacities, scale, rotation), axis=1
+        )
+        elements[:] = list(map(tuple, attributes))
+        el = PlyElement.describe(elements, "vertex")
+        PlyData([el]).write(path)
 
     def construct_list_of_attributes(self, param: dict[str, List[Parameter]]):
         l = ["x", "y", "z", "nx", "ny", "nz"]  # noqa: E741

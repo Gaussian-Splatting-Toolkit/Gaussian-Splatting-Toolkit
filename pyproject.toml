@@ -56,6 +56,7 @@ gs-train = "gs_toolkit.scripts.train:entrypoint"
 gs-eval = "gs_toolkit.scripts.eval:entrypoint"
 gs-viewer = "gs_toolkit.scripts.viewer.run_viewer:entrypoint"
 gs-render = "gs_toolkit.scripts.render:entrypoint"
+gs-export = "gs_toolkit.scripts.exporter:entrypoint"
 gs-download-data = "gs_toolkit.scripts.downloads.download_data:entrypoint"
 
 [tool.ruff]
