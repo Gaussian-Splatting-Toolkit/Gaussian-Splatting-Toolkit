@@ -292,11 +292,13 @@ class Trainer:
 
                 if step_check(step, self.config.steps_per_save):
                     self.save_checkpoint(step)
+                    self.save_ply(step)
 
                 writer.write_out_storage()
 
         # save checkpoint at the end of training
         self.save_checkpoint(step)
+        self.save_ply(step)
 
         # write out any remaining events (e.g., total train time)
         writer.write_out_storage()

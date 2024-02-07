@@ -52,8 +52,10 @@ std::tuple<torch::Tensor, torch::Tensor> map_gaussian_to_intersects_tensor(
     const torch::Tensor &cum_tiles_hit,
     const std::tuple<int, int, int> tile_bounds);
 
-torch::Tensor get_tile_bin_edges_tensor(int num_intersects,
-                                        const torch::Tensor &isect_ids_sorted);
+torch::Tensor
+get_tile_bin_edges_tensor(int num_intersects,
+                          const torch::Tensor &isect_ids_sorted,
+                          const std::tuple<int, int, int> tile_bounds);
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor>
 rasterize_forward_tensor(const std::tuple<int, int, int> tile_bounds,

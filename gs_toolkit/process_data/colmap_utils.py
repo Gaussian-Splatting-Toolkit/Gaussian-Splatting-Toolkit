@@ -173,20 +173,21 @@ def run_colmap(
     if len(list(sparse_dir.iterdir())) > 2:
         CONSOLE.log("[bold yellow]Warning: More than two sparse folders found.")
 
-    # Merge the first two models
-    with status(
-        msg="[bold yellow]Merging two sparse folders...",
-        spinner="circle",
-        verbose=verbose,
-    ):
-        merge_cmd = [
-            f"{colmap_cmd} model_merger",
-            f"--input_path1 {sparse_dir}/0",
-            f"--input_path2 {sparse_dir}/1",
-            f"--output_path {sparse_dir}/0",
-        ]
-        run_command(" ".join(merge_cmd), verbose=verbose)
-    CONSOLE.log("[bold green]:tada: Done merging two sparse folders.")
+    if len(list(sparse_dir.iterdir())) >= 2:
+        # Merge the first two models
+        with status(
+            msg="[bold yellow]Merging two sparse folders...",
+            spinner="circle",
+            verbose=verbose,
+        ):
+            merge_cmd = [
+                f"{colmap_cmd} model_merger",
+                f"--input_path1 {sparse_dir}/0",
+                f"--input_path2 {sparse_dir}/1",
+                f"--output_path {sparse_dir}/0",
+            ]
+            run_command(" ".join(merge_cmd), verbose=verbose)
+        CONSOLE.log("[bold green]:tada: Done merging two sparse folders.")
 
     if refine_intrinsics:
         with status(
