@@ -27,12 +27,12 @@ xmake # Build the project
 
 Generate the charuco board
 ```bash
-./3d_aruco_eval -c=1 -d=10 /mnt/f/dataset/robot-studio/evaluation/output
+./3d_aruco_eval -c=1 -d=10 /path/to/output
 ```
 
 Generate the charuco marker images
 ```bash
-./3d_aruco_eval -c=2 -d=10 /mnt/f/dataset/robot-studio/evaluation/output
+./3d_aruco_eval -c=2 -d=10 /path/to/output
 ```
 
 Opencv **does not make any assumption on physical size or pattern size of your board**, so it doesn't matter how large you print it.
@@ -40,7 +40,7 @@ Opencv **does not make any assumption on physical size or pattern size of your b
 ### Calibration
 
 ```bash
-./3d_aruco_eval -c=3 -d=10 -v=/mnt/f/dataset/robot-studio/evaluation/input/calibration.mp4 /mnt/f/recon_workspace/gaussian-splatting-toolkit/gs_toolkit/configs/camera_calibrated.yaml
+./3d_aruco_eval -c=3 -d=10 -v=/mnt/f/dataset/robot-studio/evaluation/input/calibration.mp4 /path/to/gs_toolkit/configs/camera_calibrated.yaml
 ```
 
 ### Detection
@@ -48,13 +48,13 @@ Opencv **does not make any assumption on physical size or pattern size of your b
 To detect the board:
 
 ```bash
-./3d_aruco_eval -c=4 -v=/mnt/f/dataset/robot-studio/evaluation/input/calibration.mp4 /mnt/f/recon_workspace/gaussian-splatting-toolkit/gs_toolkit/configs/camera_calibrated.yaml
+./3d_aruco_eval -c=4 -v=/mnt/f/dataset/robot-studio/evaluation/input/calibration.mp4 /path/to/gs_toolkit/configs/camera_calibrated.yaml
 ```
 
 To detect the markers:
 
 ```bash
-./3d_aruco_eval -c=5 -v=/mnt/f/dataset/robot-studio/evaluation/input/marker.mp4 /mnt/f/recon_workspace/gaussian-splatting-toolkit/gs_toolkit/configs/camera_calibrated.yaml
+./3d_aruco_eval -c=5 -v=/mnt/f/dataset/robot-studio/evaluation/input/marker.mp4 /path/to/gs_toolkit/configs/camera_calibrated.yaml
 ```
 
 ### Evaluation

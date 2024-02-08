@@ -402,6 +402,7 @@ def copy_and_upscale_polycam_depth_maps_list(
             image_paths=polycam_depth_image_filenames,
             image_dir=depth_dir,
             num_downscales=num_downscales,
+            image_prefix="depth_",
             crop_border_pixels=crop_border_pixels,
             verbose=verbose,
             upscale_factor=upscale_factor,

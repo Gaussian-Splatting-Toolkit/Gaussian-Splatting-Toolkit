@@ -25,7 +25,7 @@ The submodule calculates the error between these files to quantify the accuracy 
 mkdir build && cd build
 cmake ..
 make
-./surface_distance /data/parts/evaluation/ground_truth.stl /data/parts/evaluation/generated_mesh.ply
+./surface_distance /path/to/ground_truth.stl /path/to/generated_mesh.ply
 ```
 
 ## Dependencies 📦

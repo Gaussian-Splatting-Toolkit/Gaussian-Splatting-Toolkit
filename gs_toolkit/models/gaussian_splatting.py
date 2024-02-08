@@ -1,5 +1,5 @@
 """
-NeRF implementation that combines many recent advancements.
+Gaussian Splatting implementation that combines many recent advancements.
 """
 
 from __future__ import annotations
@@ -338,7 +338,8 @@ class GaussianSplattingModel(Model):
         with torch.no_grad():
             # keep track of a moving average of grad norms
             visible_mask = (self.radii > 0).flatten()
-            grads = self.xys.grad.detach().norm(dim=-1)  # TODO fill in
+            assert self.xys.grad is not None
+            grads = self.xys.grad.detach().norm(dim=-1)
             # print(f"grad norm min {grads.min().item()} max {grads.max().item()} mean {grads.mean().item()} size {grads.shape}")
             if self.xys_grad_norm is None:
                 self.xys_grad_norm = grads
@@ -346,9 +347,7 @@ class GaussianSplattingModel(Model):
             else:
                 assert self.vis_counts is not None
                 self.vis_counts[visible_mask] = self.vis_counts[visible_mask] + 1
-                self.xys_grad_norm[visible_mask] = (
-                    grads[visible_mask] + self.xys_grad_norm[visible_mask]
-                )
+                self.xys_grad_norm[visible_mask] = grads[visible_mask] + self.xys_grad_norm[visible_mask]
 
             # update the max screen size, as a ratio of number of pixels
             if self.max_2Dsize is None:
@@ -358,7 +357,7 @@ class GaussianSplattingModel(Model):
                 self.max_2Dsize[visible_mask],
                 newradii / float(max(self.last_size[0], self.last_size[1])),
             )
-
+            
     def set_crop(self, crop_box: Optional[OrientedBox]):
         self.crop_box = crop_box
 

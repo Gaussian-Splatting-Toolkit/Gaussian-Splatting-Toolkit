@@ -36,13 +36,20 @@ def polycam_to_json(
     data = {}
     data["camera_model"] = CAMERA_MODELS["perspective"].value
     # Needs to be a string for camera_utils.auto_orient_and_center_poses
-    data["orientation_override"] = "none"
+    # data["orientation_override"] = "none"
 
     frames = []
     skipped_frames = 0
     for i, image_filename in enumerate(image_filenames):
         json_filename = cameras_dir / f"{image_filename.stem}.json"
         frame_json = io.load_from_json(json_filename)
+        if i == 0:
+            data["w"] = frame_json["width"] - crop_border_pixels * 2
+            data["h"] = frame_json["height"] - crop_border_pixels * 2
+            data["fl_x"] = frame_json["fx"]
+            data["fl_y"] = frame_json["fy"]
+            data["cx"] = frame_json["cx"] - crop_border_pixels
+            data["cy"] = frame_json["cy"] - crop_border_pixels
         if "blur_score" in frame_json and frame_json["blur_score"] < min_blur_score:
             skipped_frames += 1
             continue

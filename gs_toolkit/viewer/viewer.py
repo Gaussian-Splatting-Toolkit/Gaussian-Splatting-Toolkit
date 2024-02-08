@@ -247,7 +247,7 @@ class Viewer:
                 from gs_toolkit.utils.rich_utils import CONSOLE
 
                 CONSOLE.print(
-                    "Legacy ViewerElements detected in model, please import nerfstudio.viewer.viewer_elements instead",
+                    "Legacy ViewerElements detected in model, please import gs_toolkit.viewer.viewer_elements instead",
                     style="bold yellow",
                 )
             self.viewer_elements = []
