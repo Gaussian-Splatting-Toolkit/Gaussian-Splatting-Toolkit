@@ -347,7 +347,9 @@ class GaussianSplattingModel(Model):
             else:
                 assert self.vis_counts is not None
                 self.vis_counts[visible_mask] = self.vis_counts[visible_mask] + 1
-                self.xys_grad_norm[visible_mask] = grads[visible_mask] + self.xys_grad_norm[visible_mask]
+                self.xys_grad_norm[visible_mask] = (
+                    grads[visible_mask] + self.xys_grad_norm[visible_mask]
+                )
 
             # update the max screen size, as a ratio of number of pixels
             if self.max_2Dsize is None:
@@ -357,7 +359,7 @@ class GaussianSplattingModel(Model):
                 self.max_2Dsize[visible_mask],
                 newradii / float(max(self.last_size[0], self.last_size[1])),
             )
-            
+
     def set_crop(self, crop_box: Optional[OrientedBox]):
         self.crop_box = crop_box
 
