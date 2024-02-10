@@ -728,7 +728,14 @@ class GaussianSplattingModel(Model):
                 return {
                     "rgb": background.repeat(
                         int(camera.height.item()), int(camera.width.item()), 1
-                    )
+                    ),
+                    "depth": torch.zeros(
+                        int(camera.height.item()),
+                        int(camera.width.item()),
+                        1,
+                        device=self.device,
+                        dtype=torch.float32,
+                    ),
                 }
         else:
             crop_ids = None
@@ -808,7 +815,10 @@ class GaussianSplattingModel(Model):
             return {
                 "rgb": background.repeat(
                     int(camera.height.item()), int(camera.width.item()), 1
-                )
+                ),
+                "depth": background.repeat(
+                    int(camera.height.item()), int(camera.width.item()), 1
+                ),
             }
 
         # Important to allow xys grads to populate properly

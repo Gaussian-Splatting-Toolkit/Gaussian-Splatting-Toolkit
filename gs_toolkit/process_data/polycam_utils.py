@@ -50,19 +50,24 @@ def polycam_to_json(
             data["fl_y"] = frame_json["fy"]
             data["cx"] = frame_json["cx"] - crop_border_pixels
             data["cy"] = frame_json["cy"] - crop_border_pixels
+            data["k1"] = 0
+            data["k2"] = 0
+            data["p1"] = 0
+            data["p2"] = 0
+            data["applied_scale"] = 1.0
         if "blur_score" in frame_json and frame_json["blur_score"] < min_blur_score:
             skipped_frames += 1
             continue
         frame = {}
-        frame["fl_x"] = frame_json["fx"]
-        frame["fl_y"] = frame_json["fy"]
-        frame["cx"] = frame_json["cx"] - crop_border_pixels
-        frame["cy"] = frame_json["cy"] - crop_border_pixels
-        frame["w"] = frame_json["width"] - crop_border_pixels * 2
-        frame["h"] = frame_json["height"] - crop_border_pixels * 2
-        frame["file_path"] = f"./images/frame_{i+1:05d}{image_filename.suffix}"
+        # frame["fl_x"] = frame_json["fx"]
+        # frame["fl_y"] = frame_json["fy"]
+        # frame["cx"] = frame_json["cx"] - crop_border_pixels
+        # frame["cy"] = frame_json["cy"] - crop_border_pixels
+        # frame["w"] = frame_json["width"] - crop_border_pixels * 2
+        # frame["h"] = frame_json["height"] - crop_border_pixels * 2
+        frame["file_path"] = f"images/frame_{i+1:05d}{image_filename.suffix}"
         if use_depth:
-            frame["depth_path"] = f"./depth/depth_{i+1:05d}{depth_filenames[i].suffix}"
+            frame["depth_path"] = f"depth/depth_{i+1:05d}{depth_filenames[i].suffix}"
         # Transform matrix to gs_toolkit format. Please refer to the documentation for coordinate system conventions.
         frame["transform_matrix"] = [
             [
