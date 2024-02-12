@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-import open3d as o3d
+from plyfile import PlyData, PlyElement
 import torch
+from torch.nn import Parameter
 import tyro
 from typing_extensions import Annotated
 
@@ -87,58 +88,52 @@ class ExportGaussianSplat(Exporter):
 
         filename = self.output_dir / "point_cloud.ply"
 
-        map_to_tensors = {}
-
         with torch.no_grad():
-            positions = model.means.cpu().numpy()
-            n = positions.shape[0]
-            map_to_tensors["positions"] = positions
-            map_to_tensors["normals"] = np.zeros_like(positions, dtype=np.float32)
-
-            if model.config.sh_degree > 0:
-                shs_0 = model.shs_0.contiguous().cpu().numpy()
-                for i in range(shs_0.shape[1]):
-                    map_to_tensors[f"f_dc_{i}"] = shs_0[:, i, None]
-
-                # transpose(1, 2) was needed to match the sh order in Inria version
-                shs_rest = model.shs_rest.transpose(1, 2).contiguous().cpu().numpy()
-                shs_rest = shs_rest.reshape((n, -1))
-                for i in range(shs_rest.shape[-1]):
-                    map_to_tensors[f"f_rest_{i}"] = shs_rest[:, i, None]
-            else:
-                colors = torch.clamp(model.colors.clone(), 0.0, 1.0).data.cpu().numpy()
-                map_to_tensors["colors"] = (colors * 255).astype(np.uint8)
-
-            map_to_tensors["opacity"] = model.opacities.data.cpu().numpy()
-
-            scales = model.scales.data.cpu().numpy()
-            for i in range(3):
-                map_to_tensors[f"scale_{i}"] = scales[:, i, None]
-
-            quats = model.quats.data.cpu().numpy()
-            for i in range(4):
-                map_to_tensors[f"rot_{i}"] = quats[:, i, None]
-
-        # post optimization, it is possible have NaN/Inf values in some attributes
-        # to ensure the exported ply file has finite values, we enforce finite filters.
-        select = np.ones(n, dtype=bool)
-        for k, t in map_to_tensors.items():
-            n_before = np.sum(select)
-            select = np.logical_and(select, np.isfinite(t).all(axis=1))
-            n_after = np.sum(select)
-            if n_after < n_before:
-                CONSOLE.print(f"{n_before - n_after} NaN/Inf elements in {k}")
-
-        if np.sum(select) < n:
-            CONSOLE.print(
-                f"values have NaN/Inf in map_to_tensors, only export {np.sum(select)}/{n}"
+            param_group = model.get_gaussian_param_groups()
+            xyz = param_group["xyz"][0].detach().cpu().numpy()
+            normals = np.zeros_like(xyz)
+            f_dc = param_group["features_dc"][0].detach().cpu().numpy()
+            f_rest = (
+                param_group["features_rest"][0]
+                .detach()
+                .transpose(1, 2)
+                .flatten(start_dim=1)
+                .contiguous()
+                .cpu()
+                .numpy()
             )
-            for k, t in map_to_tensors.items():
-                map_to_tensors[k] = map_to_tensors[k][select, :]
+            opacities = param_group["opacity"][0].detach().cpu().numpy()
+            scale = param_group["scaling"][0].detach().cpu().numpy()
+            rotation = param_group["rotation"][0].detach().cpu().numpy()
 
-        pcd = o3d.t.geometry.PointCloud(map_to_tensors)
+            dtype_full = [
+                (attribute, "f4")
+                for attribute in self.construct_list_of_attributes(param_group)
+            ]
 
-        o3d.t.io.write_point_cloud(str(filename), pcd)
+            elements = np.empty(xyz.shape[0], dtype=dtype_full)
+            attributes = np.concatenate(
+                (xyz, normals, f_dc, f_rest, opacities, scale, rotation), axis=1
+            )
+            elements[:] = list(map(tuple, attributes))
+            el = PlyElement.describe(elements, "vertex")
+            PlyData([el]).write(filename)
+
+    def construct_list_of_attributes(self, param: dict[str, list[Parameter]]):
+        l = ["x", "y", "z", "nx", "ny", "nz"]  # noqa: E741
+        # All channels except the 3 DC
+        for i in range(param["features_dc"][0].shape[1]):
+            l.append("f_dc_{}".format(i))
+        for i in range(
+            param["features_rest"][0].shape[1] * param["features_rest"][0].shape[2]
+        ):
+            l.append("f_rest_{}".format(i))
+        l.append("opacity")
+        for i in range(param["scaling"][0].shape[1]):
+            l.append("scale_{}".format(i))
+        for i in range(param["rotation"][0].shape[1]):
+            l.append("rot_{}".format(i))
+        return l
 
 
 Commands = tyro.conf.FlagConversionOff[
