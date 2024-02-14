@@ -27,7 +27,7 @@ class CameraOptimizerConfig(InstantiateConfig):
 
     _target: Type = field(default_factory=lambda: CameraOptimizer)
 
-    mode: Literal["off", "SO3xR3", "SE3"] = "off"
+    mode: Literal["off", "SO3xR3", "SE3"] = "SO3xR3"
     """Pose optimization strategy to use. If enabled, we recommend SO3xR3."""
 
     trans_l2_penalty: float = 1e-2

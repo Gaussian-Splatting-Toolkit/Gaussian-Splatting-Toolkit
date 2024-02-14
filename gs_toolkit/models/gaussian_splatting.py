@@ -7,7 +7,6 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Type, Union
-import cv2
 
 import numpy as np
 import torch
@@ -151,8 +150,6 @@ class GaussianSplattingModelConfig(ModelConfig):
     """threshold of ratio of gaussian max to min scale before applying regularization
     loss from the PhysGaussian paper
     """
-    debug: bool = False
-    """If enabled, the model will print out debug information."""
     debug_folder: str = "debug"
     """If debug is enabled, the model will save debug images to this folder."""
 
@@ -914,6 +911,7 @@ class GaussianSplattingModel(Model):
             batch: ground truth batch corresponding to outputs
             metrics_dict: dictionary of metrics, some of which we can use for loss
         """
+        loss_dict = {}
         d = self._get_downscale_factor()
         if d > 1:
             newsize = [batch["image"].shape[0] // d, batch["image"].shape[1] // d]
@@ -939,13 +937,7 @@ class GaussianSplattingModel(Model):
             Ll1_depth = torch.abs(
                 gt_depth_img[depth_nonzero] - outputs["depth"][depth_nonzero]
             ).mean()
-        if self.config.debug:
-            if self.step == 14_000:
-                cv2.imshow("rgb", outputs["rgb"].detach().cpu().numpy())
-                cv2.imshow("depth", outputs["depth"].detach().cpu().numpy())
-                cv2.imshow("gt_rgb", gt_img.detach().cpu().numpy())
-                cv2.imshow("gt_depth", gt_depth_img.detach().cpu().numpy())
-                cv2.waitKey(0)
+            loss_dict["depth_loss"] = Ll1_depth
         if self.config.use_scale_regularization and self.step % 10 == 0:
             scale_exp = torch.exp(self.scales)
             scale_reg = (
@@ -959,19 +951,12 @@ class GaussianSplattingModel(Model):
         else:
             scale_reg = torch.tensor(0.0).to(self.device)
 
-        if "depth" in batch:
-            return {
-                "main_loss": (1 - self.config.ssim_lambda) * Ll1
-                + self.config.ssim_lambda * simloss,
-                "depth_loss": Ll1_depth,
-                "scale_reg": scale_reg,
-            }
-        else:
-            return {
-                "main_loss": (1 - self.config.ssim_lambda) * Ll1
-                + self.config.ssim_lambda * simloss,
-                "scale_reg": scale_reg,
-            }
+        loss_dict["main_loss"] = (
+            1 - self.config.ssim_lambda
+        ) * Ll1 + self.config.ssim_lambda * simloss
+        loss_dict["scale_reg"] = scale_reg
+        # self.camera_optimizer.get_loss_dict(loss_dict)
+        return loss_dict
 
     @torch.no_grad()
     def get_outputs_for_camera(

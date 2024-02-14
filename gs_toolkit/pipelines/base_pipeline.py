@@ -226,6 +226,7 @@ class VanillaPipeline(Pipeline):
         )  # train distributed data parallel model if world_size > 1
         metrics_dict = self.model.get_metrics_dict(model_outputs, batch)
         loss_dict = self.model.get_loss_dict(model_outputs, batch, metrics_dict)
+        # self.model.camera_optimizer.get_loss_dict(loss_dict)
 
         return model_outputs, loss_dict, metrics_dict
 
