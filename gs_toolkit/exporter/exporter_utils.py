@@ -1,6 +1,21 @@
+import sys
 from typing import Any, Dict, List, Tuple, Optional
+import numpy as np
+
+from sklearn.pipeline import Pipeline
 from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datasets.base_dataset import InputDataset
+import torch
+import open3d as o3d
+
+from gs_toolkit.utils.rich_utils import (
+    CONSOLE,
+    BarColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 
 
 def collect_camera_poses_for_dataset(
@@ -59,3 +74,89 @@ def collect_camera_poses(
     eval_frames = collect_camera_poses_for_dataset(eval_dataset)
 
     return train_frames, eval_frames
+
+
+def generate_point_cloud(
+    pipeline: Pipeline,
+    num_points: int = 1000000,
+    voxel_length: float = 2.0 / 512.0,
+    sdf_trunc: float = 0.04,
+    color_type: o3d.pipelines.integration.TSDFVolumeColorType = o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
+    rgb_output_name: str = "rgb",
+    depth_output_name: str = "depth",
+) -> o3d.geometry.PointCloud:
+    """Generate a point cloud from a nerf.
+
+    Args:
+        pipeline: Pipeline to evaluate with.
+        num_points: Number of points to generate. May result in less if outlier removal is used.
+        voxel_length: Voxel length for the volume.
+        sdf_trunc: SDF truncation for the volume.
+        color_type: Color type for the volume.
+        rgb_output_name: Name of the RGB output.
+        depth_output_name: Name of the depth output.
+
+    Returns:
+        Point cloud.
+    """
+    volume = o3d.pipelines.integration.ScalableTSDFVolume(
+        voxel_length=voxel_length,
+        sdf_trunc=sdf_trunc,
+        color_type=color_type,
+    )
+    progress = Progress(
+        TextColumn(":cloud: Computing Point Cloud :cloud:"),
+        BarColumn(),
+        TaskProgressColumn(show_speed=True),
+        TimeRemainingColumn(elapsed_when_finished=True, compact=True),
+        console=CONSOLE,
+    )
+    with progress as progress_bar:
+        task = progress_bar.add_task("Generating Point Cloud", total=num_points)
+        while not progress_bar.finished:
+            with torch.no_grad():
+                cameras, _ = pipeline.datamanager.next_train(0)
+                outputs = pipeline.model.get_outputs_for_camera(cameras)
+            if rgb_output_name not in outputs:
+                CONSOLE.rule("Error", style="red")
+                CONSOLE.print(
+                    f"Could not find {rgb_output_name} in the model outputs",
+                    justify="center",
+                )
+                CONSOLE.print(
+                    f"Please set --rgb_output_name to one of: {outputs.keys()}",
+                    justify="center",
+                )
+                sys.exit(1)
+            if depth_output_name not in outputs:
+                CONSOLE.rule("Error", style="red")
+                CONSOLE.print(
+                    f"Could not find {depth_output_name} in the model outputs",
+                    justify="center",
+                )
+                CONSOLE.print(
+                    f"Please set --depth_output_name to one of: {outputs.keys()}",
+                    justify="center",
+                )
+                sys.exit(1)
+            rgb = o3d.geometry.Image((outputs[rgb_output_name]).cpu().numpy().astype(np.uint16))
+            depth = o3d.geometry.Image((outputs[depth_output_name]).cpu().numpy().astype(np.uint16))
+            pose = cameras.camera_to_worlds[0].cpu().numpy()
+            pose = np.vstack([pose, np.array([0, 0, 0, 1])]).T
+            rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
+                rgb, depth, depth_trunc=4.0, convert_rgb_to_intensity=False
+            )
+            intrinsic = o3d.camera.PinholeCameraIntrinsic(
+                width=cameras.width,
+                height=cameras.height,
+                fx=cameras.fx,
+                fy=cameras.fy,
+                cx=cameras.cx,
+                cy=cameras.cy,
+            )
+            # Visualize the RGBD image
+            o3d.visualization.draw_geometries([rgbd])
+            volume.integrate(rgbd, intrinsic, np.linalg.inv(pose))
+            progress.advance(task, 1)
+
+    return volume.extract_point_cloud()

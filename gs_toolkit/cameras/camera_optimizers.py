@@ -16,8 +16,6 @@ from typing_extensions import assert_never
 from gs_toolkit.cameras.lie_groups import exp_map_SE3, exp_map_SO3xR3
 from gs_toolkit.configs.base_config import InstantiateConfig
 from gs_toolkit.utils import poses as pose_utils
-from gs_toolkit.engine.optimizers import OptimizerConfig
-from gs_toolkit.engine.schedulers import SchedulerConfig
 from gs_toolkit.cameras.cameras import Cameras
 
 
@@ -35,33 +33,6 @@ class CameraOptimizerConfig(InstantiateConfig):
 
     rot_l2_penalty: float = 1e-3
     """L2 penalty on rotation parameters."""
-
-    optimizer: Optional[OptimizerConfig] = field(default=None)
-    """Deprecated, now specified inside the optimizers dict"""
-
-    scheduler: Optional[SchedulerConfig] = field(default=None)
-    """Deprecated, now specified inside the optimizers dict"""
-
-    def __post_init__(self):
-        if self.optimizer is not None:
-            import warnings
-            from gs_toolkit.utils.rich_utils import CONSOLE
-
-            CONSOLE.print(
-                "\noptimizer is no longer specified in the CameraOptimizerConfig, it is now defined with the rest of the param groups inside the config file under the name 'camera_opt'\n",
-                style="bold yellow",
-            )
-            warnings.warn("above message coming from", FutureWarning, stacklevel=3)
-
-        if self.scheduler is not None:
-            import warnings
-            from gs_toolkit.utils.rich_utils import CONSOLE
-
-            CONSOLE.print(
-                "\nscheduler is no longer specified in the CameraOptimizerConfig, it is now defined with the rest of the param groups inside the config file under the name 'camera_opt'\n",
-                style="bold yellow",
-            )
-            warnings.warn("above message coming from", FutureWarning, stacklevel=3)
 
 
 class CameraOptimizer(nn.Module):
