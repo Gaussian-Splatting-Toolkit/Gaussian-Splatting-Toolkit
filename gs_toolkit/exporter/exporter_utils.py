@@ -1,5 +1,8 @@
+from pathlib import Path
 import sys
+from PIL import Image
 from typing import Any, Dict, List, Tuple, Optional
+import cv2
 import numpy as np
 
 from sklearn.pipeline import Pipeline
@@ -78,7 +81,7 @@ def collect_camera_poses(
 
 def generate_point_cloud(
     pipeline: Pipeline,
-    num_points: int = 1000000,
+    output_dir: Path,
     voxel_length: float = 2.0 / 512.0,
     sdf_trunc: float = 0.04,
     color_type: o3d.pipelines.integration.TSDFVolumeColorType = o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
@@ -111,8 +114,11 @@ def generate_point_cloud(
         TimeRemainingColumn(elapsed_when_finished=True, compact=True),
         console=CONSOLE,
     )
+    idx = 0
     with progress as progress_bar:
-        task = progress_bar.add_task("Generating Point Cloud", total=num_points)
+        task = progress_bar.add_task(
+            "Generating Point Cloud", total=len(pipeline.datamanager.train_dataset)
+        )
         while not progress_bar.finished:
             with torch.no_grad():
                 cameras, _ = pipeline.datamanager.next_train(0)
@@ -139,8 +145,18 @@ def generate_point_cloud(
                     justify="center",
                 )
                 sys.exit(1)
-            rgb = o3d.geometry.Image((outputs[rgb_output_name]).cpu().numpy().astype(np.uint16))
-            depth = o3d.geometry.Image((outputs[depth_output_name]).cpu().numpy().astype(np.uint16))
+            # Save rgb image
+            rgb = outputs[rgb_output_name].cpu().numpy()
+            rgb_path = output_dir / "rgb" / f"frame_{idx+1:05d}.png"
+            cv2.imwrite(str(rgb_path), cv2.cvtColor(255 * rgb, cv2.COLOR_RGB2BGR))
+            # Save depth image, convert depth unit from m to mm
+            depth = outputs[depth_output_name].cpu().numpy()
+            depth_path = output_dir / "depth" / f"depth_{idx+1:05d}.png"
+            depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
+            depth.save(str(depth_path))
+
+            rgb = o3d.io.read_image(str(rgb_path))
+            depth = o3d.io.read_image(str(depth_path))
             pose = cameras.camera_to_worlds[0].cpu().numpy()
             pose = np.vstack([pose, np.array([0, 0, 0, 1])]).T
             rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
@@ -154,9 +170,8 @@ def generate_point_cloud(
                 cx=cameras.cx,
                 cy=cameras.cy,
             )
-            # Visualize the RGBD image
-            o3d.visualization.draw_geometries([rgbd])
             volume.integrate(rgbd, intrinsic, np.linalg.inv(pose))
-            progress.advance(task, 1)
+            progress_bar.update(task, advance=1)
+            idx += 1
 
     return volume.extract_point_cloud()
