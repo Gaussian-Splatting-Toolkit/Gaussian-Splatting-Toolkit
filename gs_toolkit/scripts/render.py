@@ -56,11 +56,11 @@ class RenderFromTrajectory:
             self.renderer.get_output_from_pose(pose)
             # Save rgb image
             rgb = self.renderer.rgb
-            rgb_path = self.output_dir / "rgb" / f"frame_{idx+1:05d}.png"
+            rgb_path = self.output_dir / "rgb" / f"frame_{idx:05d}.png"
             cv2.imwrite(str(rgb_path), cv2.cvtColor(255 * rgb, cv2.COLOR_RGB2BGR))
             # Save depth image, convert depth unit from m to mm
             depth = self.renderer.depth
-            depth_path = self.output_dir / "depth" / f"depth_{idx+1:05d}.png"
+            depth_path = self.output_dir / "depth" / f"depth_{idx:05d}.png"
             depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
             depth.save(str(depth_path))
             # pose[:3, 3] = pose[:3, 3] * 1000
@@ -104,13 +104,13 @@ class RenderFromCameraPoses:
         poses = []
         _, pipeline, _, _ = eval_setup(self.config_file)
         cameras = pipeline.datamanager.train_dataset.cameras
-        image_filenames = pipeline.datamanager.train_dataset.image_filenames
+        # image_filenames = pipeline.datamanager.train_dataset.image_filenames
 
         for i in track(range(len(cameras)), description="Rendering training set"):
             # camera = camera.squeeze(0)
             camera = cameras[i]
             # Image file name is the last part of the path
-            image_filename = str(image_filenames[i]).split("/")[-1].split(".")[0]
+            # image_filename = str(image_filenames[i]).split("/")[-1].split(".")[0]
             pose = camera.camera_to_worlds.cpu().numpy()
             pose = np.vstack([pose, np.array([0, 0, 0, 1])])
             self.renderer.get_output_from_pose(
@@ -118,37 +118,11 @@ class RenderFromCameraPoses:
             )
             # Save rgb image
             rgb = self.renderer.rgb
-            rgb_path = self.output_dir / "rgb" / f"{image_filename}.png"
+            rgb_path = self.output_dir / "rgb" / f"frame_{i:05}.png"
             cv2.imwrite(str(rgb_path), cv2.cvtColor(255 * rgb, cv2.COLOR_RGB2BGR))
             # Save depth image, convert depth unit from m to mm
             depth = self.renderer.depth
-            depth_path = self.output_dir / "depth" / f"{image_filename}.png"
-            depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
-            depth.save(str(depth_path))
-            pose = camera.camera_to_worlds.cpu().numpy()
-            pose = np.vstack([pose, np.array([0, 0, 0, 1])])
-            poses.append(pose)
-
-        cameras = pipeline.datamanager.eval_dataset.cameras
-        image_filenames = pipeline.datamanager.eval_dataset.image_filenames
-
-        for i in track(range(len(cameras)), description="Rendering eval set"):
-            # camera = camera.squeeze(0)
-            camera = cameras[i]
-            # Image file name is the last part of the path
-            image_filename = str(image_filenames[i]).split("/")[-1].split(".")[0]
-            pose = camera.camera_to_worlds.cpu().numpy()
-            pose = np.vstack([pose, np.array([0, 0, 0, 1])])
-            self.renderer.get_output_from_pose(
-                pose, width=self.width, height=self.height
-            )
-            # Save rgb image
-            rgb = self.renderer.rgb
-            rgb_path = self.output_dir / "rgb" / f"{image_filename}.png"
-            cv2.imwrite(str(rgb_path), cv2.cvtColor(255 * rgb, cv2.COLOR_RGB2BGR))
-            # Save depth image, convert depth unit from m to mm
-            depth = self.renderer.depth
-            depth_path = self.output_dir / "depth" / f"{image_filename}.png"
+            depth_path = self.output_dir / "depth" / f"depth_{i:05}.png"
             depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
             depth.save(str(depth_path))
             pose = camera.camera_to_worlds.cpu().numpy()
