@@ -983,7 +983,7 @@ def populate_render_tab(
         "Generate Command",
         color="green",
         icon=viser.Icon.FILE_EXPORT,
-        hint="Generate the ns-render command for rendering the camera path.",
+        hint="Generate the gs-render command for rendering the camera path.",
     )
 
     reset_up_button = server.add_gui_button(
@@ -1091,13 +1091,12 @@ def populate_render_tab(
             json.dump(json_data, outfile)
         # now show the command
         with event.client.add_gui_modal("Render Command") as modal:
-            dataname = datapath.name
+            # dataname = datapath.name
             command = " ".join(
                 [
-                    "ns-render camera-path",
-                    f"--load-config {config_path}",
-                    f"--camera-path-filename {json_outfile.absolute()}",
-                    f"--output-path renders/{dataname}/{render_name_text.value}.mp4",
+                    "gs-render trajectory",
+                    f"--config-file {config_path}",
+                    f"--trajectory-path {json_outfile.absolute()}",
                 ]
             )
             event.client.add_gui_markdown(

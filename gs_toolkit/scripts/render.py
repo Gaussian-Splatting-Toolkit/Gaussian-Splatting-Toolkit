@@ -8,7 +8,6 @@ import numpy as np
 import torch
 from gs_toolkit.render.render import Renderer
 from gs_toolkit.utils.eval_utils import eval_setup
-from gs_toolkit.utils.rich_utils import CONSOLE
 import json
 import tyro
 from pathlib import Path
@@ -134,7 +133,7 @@ class RenderFromCameraPoses:
                 depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
                 depth.save(str(depth_path))
                 pose = cameras.camera_to_worlds[0].cpu().numpy()
-                pose = np.vstack([pose, np.array([0, 0, 0, 1])]).T
+                pose = np.vstack([pose, np.array([0, 0, 0, 1])])
                 poses.append(pose)
 
                 progress_bar.update(task, advance=1)
