@@ -96,6 +96,14 @@ class RenderFromCameraPoses:
         if not depth_path.exists():
             (self.output_dir / "depth").mkdir()
 
+        gt_rgb_path = self.output_dir / "gt" / "rgb"
+        if not gt_rgb_path.exists():
+            (self.output_dir / "gt" / "rgb").mkdir(parents=True)
+
+        gt_depth_path = self.output_dir / "gt" / "depth"
+        if not gt_depth_path.exists():
+            (self.output_dir / "gt" / "depth").mkdir(parents=True)
+
     def _validate(self):
         assert self.config_file is not None
 
@@ -104,7 +112,7 @@ class RenderFromCameraPoses:
         poses = []
         _, pipeline, _, _ = eval_setup(self.config_file)
         cameras = pipeline.datamanager.train_dataset.cameras
-        # image_filenames = pipeline.datamanager.train_dataset.image_filenames
+        image_filenames = pipeline.datamanager.train_dataset.image_filenames
 
         for i in track(range(len(cameras)), description="Rendering training set"):
             # camera = camera.squeeze(0)
@@ -128,6 +136,23 @@ class RenderFromCameraPoses:
             pose = camera.camera_to_worlds.cpu().numpy()
             pose = np.vstack([pose, np.array([0, 0, 0, 1])])
             poses.append(pose)
+
+            # Copy the ground truth rgb and depth images to the output directory
+            rgb_gt_path = image_filenames[i]
+            depth_name = (
+                str(image_filenames[i])
+                .split("/")[-1]
+                .replace("frame", "depth")
+                .replace("jpg", "png")
+            )
+            depth_gt_path = image_filenames[i].parent.parent / "depth" / depth_name
+            rgb_gt_save_path = self.output_dir / "gt" / "rgb" / f"frame_{i:05}.png"
+            depth_gt_save_path = self.output_dir / "gt" / "depth" / f"depth_{i:05}.png"
+            rgb_gt = cv2.imread(str(rgb_gt_path))
+            depth_gt = cv2.imread(str(depth_gt_path))
+            depth_gt = cv2.cvtColor(depth_gt, cv2.COLOR_BGR2GRAY)
+            cv2.imwrite(str(rgb_gt_save_path), rgb_gt)
+            cv2.imwrite(str(depth_gt_save_path), depth_gt)
 
         # Write the poses to a file
         poses = np.array(poses)
