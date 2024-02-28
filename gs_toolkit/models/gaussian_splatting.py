@@ -150,8 +150,6 @@ class GaussianSplattingModelConfig(ModelConfig):
     """threshold of ratio of gaussian max to min scale before applying regularization
     loss from the PhysGaussian paper
     """
-    debug_folder: str = "debug"
-    """If debug is enabled, the model will save debug images to this folder."""
 
 
 class GaussianSplattingModel(Model):

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import shutil
 from typing import Union
 from typing_extensions import Annotated
 import cv2
@@ -96,12 +97,12 @@ class RenderFromCameraPoses:
         if not depth_path.exists():
             (self.output_dir / "depth").mkdir()
 
-        gt_rgb_path = self.output_dir / "gt" / "rgb"
-        if not gt_rgb_path.exists():
+        self.gt_rgb_path = self.output_dir / "gt" / "rgb"
+        if not self.gt_rgb_path.exists():
             (self.output_dir / "gt" / "rgb").mkdir(parents=True)
 
-        gt_depth_path = self.output_dir / "gt" / "depth"
-        if not gt_depth_path.exists():
+        self.gt_depth_path = self.output_dir / "gt" / "depth"
+        if not self.gt_depth_path.exists():
             (self.output_dir / "gt" / "depth").mkdir(parents=True)
 
     def _validate(self):
@@ -146,13 +147,18 @@ class RenderFromCameraPoses:
                 .replace("jpg", "png")
             )
             depth_gt_path = image_filenames[i].parent.parent / "depth" / depth_name
-            rgb_gt_save_path = self.output_dir / "gt" / "rgb" / f"frame_{i:05}.png"
-            depth_gt_save_path = self.output_dir / "gt" / "depth" / f"depth_{i:05}.png"
-            rgb_gt = cv2.imread(str(rgb_gt_path))
-            depth_gt = cv2.imread(str(depth_gt_path))
-            depth_gt = cv2.cvtColor(depth_gt, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite(str(rgb_gt_save_path), rgb_gt)
-            cv2.imwrite(str(depth_gt_save_path), depth_gt)
+            if depth_gt_path.exists():
+                # Copy the file
+                shutil.copy(str(depth_gt_path), str(self.gt_depth_path))
+                # Change the name into depth_{i:05}.png in the output directory
+                new_name = self.gt_depth_path / f"depth_{i:05}.png"
+                shutil.move(str(self.gt_depth_path / depth_name), str(new_name))
+
+            # Copy the file
+            shutil.copy(str(rgb_gt_path), str(self.gt_rgb_path))
+            # Change the name into frame_{i:05}.png in the output directory
+            new_name = self.gt_rgb_path / f"frame_{i:05}.jpg"
+            shutil.move(str(self.gt_rgb_path / rgb_gt_path.name), str(new_name))
 
         # Write the poses to a file
         poses = np.array(poses)
