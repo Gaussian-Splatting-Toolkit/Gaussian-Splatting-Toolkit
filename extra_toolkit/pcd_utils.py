@@ -25,8 +25,11 @@ def extract_pcd_from_rgbd(
         rgbd,
         intrinsic,
     )
-    pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+    pcd.estimate_normals(
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
+    )
     return pcd
+
 
 if __name__ == "__main__":
     rgb_file = "/mnt/d/Projects/reconstruction/data/small_obj/rope_N/rgb/00000.jpg"

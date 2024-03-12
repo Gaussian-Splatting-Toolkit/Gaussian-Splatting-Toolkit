@@ -141,10 +141,7 @@ class RenderFromCameraPoses:
             # Copy the ground truth rgb and depth images to the output directory
             rgb_gt_path = image_filenames[i]
             depth_name = (
-                str(image_filenames[i])
-                .split("/")[-1]
-                .replace("frame", "depth")
-                .replace("jpg", "png")
+                image_filenames[i].name.replace("frame", "depth").replace("jpg", "png")
             )
             depth_gt_path = image_filenames[i].parent.parent / "depth" / depth_name
             if depth_gt_path.exists():
@@ -153,6 +150,8 @@ class RenderFromCameraPoses:
                 # Change the name into depth_{i:05}.png in the output directory
                 new_name = self.gt_depth_path / f"depth_{i:05}.png"
                 shutil.move(str(self.gt_depth_path / depth_name), str(new_name))
+            else:
+                CONSOLE.print(f"Depth file {depth_gt_path} not found")
 
             # Copy the file
             shutil.copy(str(rgb_gt_path), str(self.gt_rgb_path))

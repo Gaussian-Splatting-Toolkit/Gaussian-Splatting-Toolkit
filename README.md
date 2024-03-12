@@ -32,6 +32,7 @@ To install the Gaussian Splatting Toolkit, follow these steps:
 4. Install dependencies: `pip install -e .`
 
 Using conda:
+
 ```bash
 conda create -n gstk python=3.10.13 -y
 conda activate gstk
@@ -62,6 +63,7 @@ gs-download-data gstk --save-dir /path/to/save/dir --capture-name all
 ```
 
 ### Data processing
+
 ```bash
 # Extract from video
 gs-process-data video --data /path/to/video --output-dir /path/to/output-dir --num-frames-target 1000
@@ -72,11 +74,13 @@ gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/fo
 ```
 
 ### Train the Gaussian Splatting
+
 ```bash
 gs-train --data /path/to/processed/data
 ```
 
 ### Visualize the result
+
 ```bash
 gs-viewer --load-config outputs/path/to/config.yml
 ```
@@ -96,12 +100,15 @@ gs-render pose --config-file /path/to/config.yml --output-dir /path/to/output/fo
 ```
 
 ### Export
+
 Export the gaussians as ply
+
 ```bash
 gs-export gaussian-splat --load-config /path/to/config.yml --output-dir exports/pcd/
 ```
 
 Export camera poses
+
 ```bash
 gs-export camera-poses --load-config /path/to/config.yml --output-dir exports/cameras/
 ```
@@ -109,11 +116,13 @@ gs-export camera-poses --load-config /path/to/config.yml --output-dir exports/ca
 ## Contribute
 
 To add a new submodule, run
+
 ```bash
 git subtree add --prefix {local directory being pulled into} {remote repo URL} {remote branch} --squash
 ```
 
 ## TODO
+
 - [x] OpenCV marker ground truth measurement.
 - [x] Surface distance module
 - [ ] Data preprocessing

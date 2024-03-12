@@ -64,7 +64,9 @@ class RGBDFusion:
                 mat[2, :] *= -1
                 mat = mat[np.array([1, 0, 2, 3]), :]
                 mat[0:3, 1:3] *= -1
-            transform = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+            transform = np.array(
+                [[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+            )
             mat = transform @ mat
             traj.append(CameraPose(metadata, mat))
         return traj
@@ -81,16 +83,10 @@ class RGBDFusion:
             desc="Integrating",
             total=len(self.camera_poses),
         ):
-            color = o3d.io.read_image(
-                self.data_path + f"/rgb/frame_{i:05}.png"
-            )
-            depth = o3d.io.read_image(
-                self.data_path + f"/depth/depth_{i:05}.png"
-            )
+            color = o3d.io.read_image(self.data_path + f"/rgb/frame_{i:05}.png")
+            depth = o3d.io.read_image(self.data_path + f"/depth/depth_{i:05}.png")
             if self.mask:
-                mask = o3d.io.read_image(
-                    self.data_path + f"/mask/frame_{i:05}.png"
-                )
+                mask = o3d.io.read_image(self.data_path + f"/mask/frame_{i:05}.png")
                 # Set depth to 0 where mask is 0
                 mask_np = np.asarray(mask)
                 if self.bounding_box:
@@ -184,9 +180,7 @@ class RGBDFusion:
             )
 
             # Load the corresponding mask
-            mask = o3d.io.read_image(
-                self.data_path + f"/mask/rgb_{i}.png"
-            )
+            mask = o3d.io.read_image(self.data_path + f"/mask/rgb_{i}.png")
             mask_np = np.asarray(mask)
             mask_np[mask_np > 0] = 1
 
@@ -206,7 +200,7 @@ class RGBDFusion:
         filtered_point_cloud.colors = o3d.utility.Vector3dVector(filtered_colors)
         filtered_point_cloud.normals = o3d.utility.Vector3dVector(filtered_normals)
         return filtered_point_cloud
-    
+
     def create_bounding_box_mask(self, original_mask, margin):
         """
         Create a new mask that is a bounding box covering the original mask with a specified margin.
@@ -233,7 +227,7 @@ class RGBDFusion:
 
         # Create a new mask with the bounding box
         new_mask = np.zeros_like(original_mask)
-        new_mask[y_min:y_max+1, x_min:x_max+1] = 1
+        new_mask[y_min : y_max + 1, x_min : x_max + 1] = 1
 
         return new_mask
 
@@ -261,7 +255,9 @@ class RGBDFusion:
 def main():
     # Argument parser
     arg = argparse.ArgumentParser()
-    arg.add_argument("--data_path", type=str, default="data/test_apple", help="path to data")
+    arg.add_argument(
+        "--data_path", type=str, default="data/test_apple", help="path to data"
+    )
     arg.add_argument(
         "--method",
         type=str,
