@@ -88,7 +88,7 @@ def generate_point_cloud(
     rgb_output_name: str = "rgb",
     depth_output_name: str = "depth",
 ) -> o3d.geometry.PointCloud:
-    """Generate a point cloud from a nerf.
+    """Generate a point cloud from a gaussian splatting.
 
     Args:
         pipeline: Pipeline to evaluate with.
