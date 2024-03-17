@@ -229,6 +229,8 @@ class ExportTSDF:
     """Voxel length for the volume."""
     sdf_trunc: float = 0.04
     """SDF truncation for the volume."""
+    using_gt: bool = False
+    """Whether to use ground truth for meshing."""
 
     def main(self) -> None:
         """Export point cloud."""
@@ -249,6 +251,7 @@ class ExportTSDF:
             mask=False,
             filter_pcd=False,
             bounding_box=False,
+            using_gt=self.using_gt,
         )
         mesh, pcd = fusion.run()
 

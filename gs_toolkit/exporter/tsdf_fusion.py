@@ -33,6 +33,7 @@ class TSDFFusion:
         mask: bool = False,
         filter_pcd: bool = False,
         bounding_box: bool = False,
+        using_gt: bool = False,
     ) -> None:
         self.data_path = data_path
         self.use_OpenGL_world_coord = using_OpenGL_world_coord
@@ -44,6 +45,7 @@ class TSDFFusion:
         self.bounding_box = bounding_box
         self.voxel_length = voxel_length
         self.sdf_trunc = sdf_trunc
+        self.using_gt = using_gt
 
     def read_trajectory(self) -> list[CameraPose]:
         traj = []
@@ -84,10 +86,27 @@ class TSDFFusion:
             description="Integrating",
             total=len(self.camera_poses),
         ):
-            color = o3d.io.read_image(str(self.data_path / "rgb" / f"frame_{i:05}.png"))
-            depth = o3d.io.read_image(
-                str(self.data_path / "depth" / f"depth_{i:05}.png")
-            )
+            if self.using_gt:
+                color_path = self.data_path / "gt" / "rgb" / f"frame_{i:05}.jpg"
+                color = o3d.io.read_image(str(color_path))
+                depth_path = self.data_path / "gt" / "depth" / f"depth_{i:05}.png"
+                depth = o3d.io.read_image(str(depth_path))
+                # Modify the intrinsic width and height based on the color image
+                camera_pose.intrinsic.set_intrinsics(
+                    width=np.array(color).shape[1],
+                    height=np.array(color).shape[0],
+                    fx=camera_pose.intrinsic.intrinsic_matrix[0, 0],
+                    fy=camera_pose.intrinsic.intrinsic_matrix[1, 1],
+                    cx=camera_pose.intrinsic.intrinsic_matrix[0, 2],
+                    cy=camera_pose.intrinsic.intrinsic_matrix[1, 2],
+                )
+            else:
+                color = o3d.io.read_image(
+                    str(self.data_path / "rgb" / f"frame_{i:05}.png")
+                )
+                depth = o3d.io.read_image(
+                    str(self.data_path / "depth" / f"depth_{i:05}.png")
+                )
             if self.mask:
                 mask = o3d.io.read_image(
                     str(self.data_path / "mask" / f"frame_{i:05}.png")
