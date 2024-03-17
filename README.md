@@ -40,18 +40,6 @@ pip install torch torchvision
 pip install -e .
 ```
 
-If you are a developer, and want to install the dev dependencies, please run
-
-```bash
-poetry install
-```
-
-or
-
-```bash
-pip install -r requirement_dev.txt
-```
-
 This repository also provides a devcontainer for your convenience.
 
 ## Usage
