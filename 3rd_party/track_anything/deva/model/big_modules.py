@@ -2,7 +2,7 @@
 big_modules.py - This file stores higher-level network blocks.
 
 x - usually means features that only depends on the image
-g - usually means features that also depends on the mask. 
+g - usually means features that also depends on the mask.
     They might have an extra "group" or "num_objects" dimension, hence
     batch_size * num_objects * num_channels * H * W
 
@@ -12,12 +12,19 @@ The trailing number of a variable usually denote the stride
 
 from typing import Iterable, Tuple, Union
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
-from deva.model.group_modules import *
+from deva.model.group_modules import MainToGroupDistributor, GroupFeatureFusionBlock
 from deva.model import resnet
-from deva.model.modules import *
+from deva.model.modules import (
+    SensoryDeepUpdater,
+    SensoryUpdater,
+    GConv2D,
+    DecoderFeatureProcessor,
+    MaskUpsampleBlock,
+    LinearPredictor,
+)
 
 
 class PixelEncoder(nn.Module):
@@ -39,7 +46,9 @@ class PixelEncoder(nn.Module):
         self.proj1 = nn.Conv2d(1024, pix_feat_dim, kernel_size=1)
         self.proj2 = nn.Conv2d(1024, pix_feat_dim, kernel_size=1)
 
-    def forward(self, x) -> (Tuple[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor):
+    def forward(
+        self, x
+    ) -> Union[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor]:
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)  # 1/2, 64
@@ -70,14 +79,16 @@ class MaskEncoder(nn.Module):
 
         self.sensory_update = SensoryDeepUpdater(value_dim, value_dim)
 
-    def forward(self,
-                image: torch.Tensor,
-                ms_features: Iterable[torch.Tensor],
-                sensory: torch.Tensor,
-                masks: torch.Tensor,
-                *,
-                is_deep_update: bool = True,
-                chunk_size: int = -1) -> (torch.Tensor, torch.Tensor):
+    def forward(
+        self,
+        image: torch.Tensor,
+        ms_features: Iterable[torch.Tensor],
+        sensory: torch.Tensor,
+        masks: torch.Tensor,
+        *,
+        is_deep_update: bool = True,
+        chunk_size: int = -1
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         # ms_features are from the key encoder
         # we only use the first one (lowest resolution), following XMem
         g = masks.unsqueeze(2)
@@ -100,7 +111,7 @@ class MaskEncoder(nn.Module):
             if fast_path:
                 g_chunk = g
             else:
-                g_chunk = g[:, i:i + chunk_size]
+                g_chunk = g[:, i : i + chunk_size]
             actual_chunk_size = g_chunk.shape[1]
             g_chunk = g_chunk.flatten(start_dim=0, end_dim=1)
 
@@ -120,8 +131,9 @@ class MaskEncoder(nn.Module):
                 if fast_path:
                     new_sensory = self.sensory_update(g_chunk, sensory)
                 else:
-                    new_sensory[:, i:i + chunk_size] = self.sensory_update(
-                        g_chunk, sensory[:, i:i + chunk_size])
+                    new_sensory[:, i : i + chunk_size] = self.sensory_update(
+                        g_chunk, sensory[:, i : i + chunk_size]
+                    )
         g = torch.cat(all_g, dim=1)
 
         return g, new_sensory
@@ -154,12 +166,17 @@ class MaskDecoder(nn.Module):
         need_aux: bool = False,
         chunk_size: int = -1,
         update_sensory: bool = True
-    ) -> Union[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> Union[
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        Tuple[torch.Tensor, torch.Tensor],
+    ]:
         f16, f8, f4 = multi_scale_features
         batch_size, num_objects = memory_readout.shape[:2]
 
         if need_aux:
-            aux_logits = self.sensory_linear_pred(f16, sensory).flatten(start_dim=0, end_dim=1)
+            aux_logits = self.sensory_linear_pred(f16, sensory).flatten(
+                start_dim=0, end_dim=1
+            )
 
         decoder_features = self.decoder_feat_proc([f8, f4])
         if chunk_size < 1 or chunk_size >= num_objects:
@@ -177,10 +194,19 @@ class MaskDecoder(nn.Module):
         all_logits = []
         for i in range(0, num_objects, chunk_size):
             if fast_path:
-                p16 = memory_readout + self.sensory_compress(torch.cat([sensory, last_mask], 2))
+                p16 = memory_readout + self.sensory_compress(
+                    torch.cat([sensory, last_mask], 2)
+                )
             else:
-                p16 = memory_readout[:, i:i + chunk_size] + self.sensory_compress(
-                    torch.cat([sensory[:, i:i + chunk_size], last_mask[:, i:i + chunk_size]], 2))
+                p16 = memory_readout[:, i : i + chunk_size] + self.sensory_compress(
+                    torch.cat(
+                        [
+                            sensory[:, i : i + chunk_size],
+                            last_mask[:, i : i + chunk_size],
+                        ],
+                        2,
+                    )
+                )
             actual_chunk_size = p16.shape[1]
             p16 = self.fuser(f16, p16)
 
@@ -191,21 +217,29 @@ class MaskDecoder(nn.Module):
 
             if update_sensory:
                 p4 = torch.cat(
-                    [p4, logits.view(batch_size, actual_chunk_size, 1, *logits.shape[-2:])], 2)
+                    [
+                        p4,
+                        logits.view(
+                            batch_size, actual_chunk_size, 1, *logits.shape[-2:]
+                        ),
+                    ],
+                    2,
+                )
                 if fast_path:
                     new_sensory = self.sensory_update([p16, p8, p4], sensory)
                 else:
-                    new_sensory[:,
-                                i:i + chunk_size] = self.sensory_update([p16, p8, p4],
-                                                                        sensory[:,
-                                                                                i:i + chunk_size])
+                    new_sensory[:, i : i + chunk_size] = self.sensory_update(
+                        [p16, p8, p4], sensory[:, i : i + chunk_size]
+                    )
             all_logits.append(logits)
 
         logits = torch.cat(all_logits, dim=0)
         logits = logits.view(batch_size, num_objects, *logits.shape[-2:])
 
         if need_aux:
-            aux_logits = aux_logits.view(batch_size, num_objects, *aux_logits.shape[-3:])
+            aux_logits = aux_logits.view(
+                batch_size, num_objects, *aux_logits.shape[-3:]
+            )
 
             return new_sensory, logits, aux_logits
 

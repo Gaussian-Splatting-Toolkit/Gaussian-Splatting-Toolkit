@@ -2,7 +2,7 @@
 modules.py - This file stores low-level network blocks.
 
 x - usually means features that only depends on the image
-g - usually means features that also depends on the mask. 
+g - usually means features that also depends on the mask.
     They might have an extra "group" or "num_objects" dimension, hence
     batch_size * num_objects * num_channels * H * W
 
@@ -10,12 +10,18 @@ The trailing number of a variable usually denote the stride
 
 """
 
-from typing import List, Iterable
+from typing import List, Iterable, Tuple
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
-from deva.model.group_modules import *
+from deva.model.group_modules import (
+    MainToGroupDistributor,
+    GroupResBlock,
+    GConv2D,
+    upsample_groups,
+    downsample_groups,
+)
 from deva.model.cbam import CBAM
 
 
@@ -70,9 +76,10 @@ class KeyProjection(nn.Module):
         nn.init.orthogonal_(self.key_proj.weight.data)
         nn.init.zeros_(self.key_proj.bias.data)
 
-    def forward(self, x: torch.Tensor, *, need_s: bool,
-                need_e: bool) -> (torch.Tensor, torch.Tensor, torch.Tensor):
-        shrinkage = self.d_proj(x)**2 + 1 if (need_s) else None
+    def forward(
+        self, x: torch.Tensor, *, need_s: bool, need_e: bool
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        shrinkage = self.d_proj(x) ** 2 + 1 if (need_s) else None
         selection = torch.sigmoid(self.e_proj(x)) if (need_e) else None
 
         return self.key_proj(x), shrinkage, selection
@@ -81,7 +88,7 @@ class KeyProjection(nn.Module):
 class MaskUpsampleBlock(nn.Module):
     def __init__(self, up_dim: int, out_dim: int, scale_factor: int = 2):
         super().__init__()
-        self.distributor = MainToGroupDistributor(method='add')
+        self.distributor = MainToGroupDistributor(method="add")
         self.out_conv = GroupResBlock(up_dim, out_dim)
         self.scale_factor = scale_factor
 
@@ -95,11 +102,16 @@ class MaskUpsampleBlock(nn.Module):
 class DecoderFeatureProcessor(nn.Module):
     def __init__(self, decoder_dims: List[int], out_dims: List[int]):
         super().__init__()
-        self.transforms = nn.ModuleList([
-            nn.Conv2d(d_dim, p_dim, kernel_size=1) for d_dim, p_dim in zip(decoder_dims, out_dims)
-        ])
+        self.transforms = nn.ModuleList(
+            [
+                nn.Conv2d(d_dim, p_dim, kernel_size=1)
+                for d_dim, p_dim in zip(decoder_dims, out_dims)
+            ]
+        )
 
-    def forward(self, multi_scale_features: Iterable[torch.Tensor]) -> List[torch.Tensor]:
+    def forward(
+        self, multi_scale_features: Iterable[torch.Tensor]
+    ) -> List[torch.Tensor]:
         outputs = [func(x) for x, func in zip(multi_scale_features, self.transforms)]
         return outputs
 
@@ -114,7 +126,9 @@ class LinearPredictor(nn.Module):
         parameters = self.projection(pred_feat)
 
         im_feat = im_feat.unsqueeze(1).expand(-1, num_objects, -1, -1, -1)
-        x = (im_feat * parameters[:, :, :-1]).sum(dim=2, keepdim=True) + parameters[:, :, -1:]
+        x = (im_feat * parameters[:, :, :-1]).sum(dim=2, keepdim=True) + parameters[
+            :, :, -1:
+        ]
         return x
 
 
@@ -128,13 +142,18 @@ class SensoryUpdater(nn.Module):
         self.g8_conv = GConv2D(g_dims[1], mid_dim, kernel_size=1)
         self.g4_conv = GConv2D(g_dims[2], mid_dim, kernel_size=1)
 
-        self.transform = GConv2D(mid_dim + sensory_dim, sensory_dim * 3, kernel_size=3, padding=1)
+        self.transform = GConv2D(
+            mid_dim + sensory_dim, sensory_dim * 3, kernel_size=3, padding=1
+        )
 
         nn.init.xavier_normal_(self.transform.weight)
 
     def forward(self, g: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
-        g = self.g16_conv(g[0]) + self.g8_conv(downsample_groups(g[1], ratio=1/2)) + \
-            self.g4_conv(downsample_groups(g[2], ratio=1/4))
+        g = (
+            self.g16_conv(g[0])
+            + self.g8_conv(downsample_groups(g[1], ratio=1 / 2))
+            + self.g4_conv(downsample_groups(g[2], ratio=1 / 4))
+        )
 
         g = torch.cat([g, h], 2)
 
@@ -143,9 +162,11 @@ class SensoryUpdater(nn.Module):
         # might provide better gradient but frankly it was initially just an
         # implementation error that I never bothered fixing
         values = self.transform(g)
-        forget_gate = torch.sigmoid(values[:, :, :self.sensory_dim])
-        update_gate = torch.sigmoid(values[:, :, self.sensory_dim:self.sensory_dim * 2])
-        new_value = torch.tanh(values[:, :, self.sensory_dim * 2:])
+        forget_gate = torch.sigmoid(values[:, :, : self.sensory_dim])
+        update_gate = torch.sigmoid(
+            values[:, :, self.sensory_dim : self.sensory_dim * 2]
+        )
+        new_value = torch.tanh(values[:, :, self.sensory_dim * 2 :])
         new_h = forget_gate * h * (1 - update_gate) + update_gate * new_value
 
         return new_h
@@ -155,15 +176,19 @@ class SensoryDeepUpdater(nn.Module):
     def __init__(self, f_dim: int, sensory_dim: int):
         super().__init__()
         self.sensory_dim = sensory_dim
-        self.transform = GConv2D(f_dim + sensory_dim, sensory_dim * 3, kernel_size=3, padding=1)
+        self.transform = GConv2D(
+            f_dim + sensory_dim, sensory_dim * 3, kernel_size=3, padding=1
+        )
 
         nn.init.xavier_normal_(self.transform.weight)
 
     def forward(self, f: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         values = self.transform(torch.cat([f, h], dim=2))
-        forget_gate = torch.sigmoid(values[:, :, :self.sensory_dim])
-        update_gate = torch.sigmoid(values[:, :, self.sensory_dim:self.sensory_dim * 2])
-        new_value = torch.tanh(values[:, :, self.sensory_dim * 2:])
+        forget_gate = torch.sigmoid(values[:, :, : self.sensory_dim])
+        update_gate = torch.sigmoid(
+            values[:, :, self.sensory_dim : self.sensory_dim * 2]
+        )
+        new_value = torch.tanh(values[:, :, self.sensory_dim * 2 :])
         new_h = forget_gate * h * (1 - update_gate) + update_gate * new_value
 
         return new_h

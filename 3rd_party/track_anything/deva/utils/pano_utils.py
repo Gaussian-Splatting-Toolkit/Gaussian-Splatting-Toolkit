@@ -1,7 +1,7 @@
 import numpy as np
 from deva.utils.vipseg_categories import VIPSEG_CATEGORIES
 
-vipseg_cat_to_isthing = {d['id']: d['isthing'] == 1 for d in VIPSEG_CATEGORIES}
+vipseg_cat_to_isthing = {d["id"]: d["isthing"] == 1 for d in VIPSEG_CATEGORIES}
 
 
 def id_to_rgb(id: np.ndarray) -> np.ndarray:
@@ -21,7 +21,7 @@ class ID2RGBConverter:
         self.obj_to_id = {}
 
     def _id_to_rgb(self, id: int):
-        rgb = np.zeros((3, ), dtype=np.uint8)
+        rgb = np.zeros((3,), dtype=np.uint8)
         for i in range(3):
             rgb[i] = id % 256
             id = id // 256
@@ -48,7 +48,7 @@ class IDPostprocessor:
         self.stuff_to_id = {}
 
     def id_to_rgb(self, id):
-        rgb = np.zeros((3, ), dtype=np.uint8)
+        rgb = np.zeros((3,), dtype=np.uint8)
         for i in range(3):
             rgb[i] = id % 256
             id = id // 256

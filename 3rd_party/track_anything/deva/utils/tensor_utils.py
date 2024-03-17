@@ -1,4 +1,4 @@
-from typing import List, Iterable
+from typing import Iterable
 import torch
 import torch.nn.functional as F
 
@@ -25,24 +25,24 @@ def pad_divide_by(in_img: torch.Tensor, d: int) -> (torch.Tensor, Iterable[int])
 def unpad(img: torch.Tensor, pad: Iterable[int]) -> torch.Tensor:
     if len(img.shape) == 4:
         if pad[2] + pad[3] > 0:
-            img = img[:, :, pad[2]:-pad[3], :]
+            img = img[:, :, pad[2] : -pad[3], :]
         if pad[0] + pad[1] > 0:
-            img = img[:, :, :, pad[0]:-pad[1]]
+            img = img[:, :, :, pad[0] : -pad[1]]
     elif len(img.shape) == 3:
         if pad[2] + pad[3] > 0:
-            img = img[:, pad[2]:-pad[3], :]
+            img = img[:, pad[2] : -pad[3], :]
         if pad[0] + pad[1] > 0:
-            img = img[:, :, pad[0]:-pad[1]]
+            img = img[:, :, pad[0] : -pad[1]]
     elif len(img.shape) == 5:
         if pad[2] + pad[3] > 0:
-            img = img[:, :, :, pad[2]:-pad[3], :]
+            img = img[:, :, :, pad[2] : -pad[3], :]
         if pad[0] + pad[1] > 0:
-            img = img[:, :, :, :, pad[0]:-pad[1]]
+            img = img[:, :, :, :, pad[0] : -pad[1]]
     elif len(img.shape) == 2:
         if pad[2] + pad[3] > 0:
-            img = img[pad[2]:-pad[3], :]
+            img = img[pad[2] : -pad[3], :]
         if pad[0] + pad[1] > 0:
-            img = img[:, pad[0]:-pad[1]]
+            img = img[:, pad[0] : -pad[1]]
     else:
         raise NotImplementedError
     return img

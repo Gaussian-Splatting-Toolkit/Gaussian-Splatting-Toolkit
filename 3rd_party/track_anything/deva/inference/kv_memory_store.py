@@ -7,6 +7,7 @@ class KeyValueMemoryStore:
     Works for key/value pairs type storage
     e.g., working and long-term memory
     """
+
     def __init__(self, save_selection: bool = False, save_usage: bool = False):
         """
         We store keys and values of objects that first appear in the same frame in a bucket.
@@ -32,12 +33,14 @@ class KeyValueMemoryStore:
             self.use_cnt = {}  # indexed by bucket id
             self.life_cnt = {}  # indexed by bucket id
 
-    def add(self,
-            key: torch.Tensor,
-            values: Dict[int, torch.Tensor],
-            shrinkage: torch.Tensor,
-            selection: torch.Tensor,
-            supposed_bucket_id: int = -1) -> None:
+    def add(
+        self,
+        key: torch.Tensor,
+        values: Dict[int, torch.Tensor],
+        shrinkage: torch.Tensor,
+        selection: torch.Tensor,
+        supposed_bucket_id: int = -1,
+    ) -> None:
         """
         key: C*N
         values: dict of values (C*N), object ids are used as keys
@@ -72,10 +75,13 @@ class KeyValueMemoryStore:
                 if obj in self.v:
                     self.v[obj] = torch.cat([self.v[obj], value], -1)
                     bucket_used = [
-                        bucket_id for bucket_id, object_ids in self.buckets.items()
+                        bucket_id
+                        for bucket_id, object_ids in self.buckets.items()
                         if obj in object_ids
                     ]
-                    assert len(bucket_used) == 1  # each object should only be in one bucket
+                    assert (
+                        len(bucket_used) == 1
+                    )  # each object should only be in one bucket
                     enabled_buckets.add(bucket_used[0])
                 else:
                     self.v[obj] = value
@@ -90,8 +96,13 @@ class KeyValueMemoryStore:
 
         # create new counters for usage if necessary
         if self.save_usage:
-            new_count = torch.zeros((key.shape[1]), device=key.device, dtype=torch.float32)
-            new_life = torch.zeros((key.shape[1]), device=key.device, dtype=torch.float32) + 1e-7
+            new_count = torch.zeros(
+                (key.shape[1]), device=key.device, dtype=torch.float32
+            )
+            new_life = (
+                torch.zeros((key.shape[1]), device=key.device, dtype=torch.float32)
+                + 1e-7
+            )
 
         # add the key to every bucket
         for bucket_id in self.buckets:
@@ -104,8 +115,12 @@ class KeyValueMemoryStore:
                 if self.save_selection:
                     self.e[bucket_id] = torch.cat([self.e[bucket_id], selection], -1)
                 if self.save_usage:
-                    self.use_cnt[bucket_id] = torch.cat([self.use_cnt[bucket_id], new_count], -1)
-                    self.life_cnt[bucket_id] = torch.cat([self.life_cnt[bucket_id], new_life], -1)
+                    self.use_cnt[bucket_id] = torch.cat(
+                        [self.use_cnt[bucket_id], new_count], -1
+                    )
+                    self.life_cnt[bucket_id] = torch.cat(
+                        [self.life_cnt[bucket_id], new_life], -1
+                    )
             else:
                 self.k[bucket_id] = key
                 self.s[bucket_id] = shrinkage
@@ -124,7 +139,9 @@ class KeyValueMemoryStore:
         self.use_cnt[bucket_id] += usage.view_as(self.use_cnt[bucket_id])
         self.life_cnt[bucket_id] += 1
 
-    def sieve_by_range(self, bucket_id: int, start: int, end: int, min_size: int) -> None:
+    def sieve_by_range(
+        self, bucket_id: int, start: int, end: int, min_size: int
+    ) -> None:
         # keep only the elements *outside* of this range (with some boundary conditions)
         # i.e., concat (a[:start], a[end:])
         # bucket with size <= min_size are not modified
@@ -167,11 +184,10 @@ class KeyValueMemoryStore:
         # normalize with life duration
         usage = self.get_usage(bucket_id).flatten()
 
-        values, _ = torch.topk(usage,
-                               k=(self.size(bucket_id) - max_size),
-                               largest=False,
-                               sorted=True)
-        survived = (usage > values[-1])
+        values, _ = torch.topk(
+            usage, k=(self.size(bucket_id) - max_size), largest=False, sorted=True
+        )
+        survived = usage > values[-1]
 
         self.k[bucket_id] = self.k[bucket_id][:, survived]
         self.s[bucket_id] = self.s[bucket_id][:, survived]
@@ -187,14 +203,20 @@ class KeyValueMemoryStore:
     def get_usage(self, bucket_id: int) -> torch.Tensor:
         # return normalized usage
         if not self.save_usage:
-            raise RuntimeError('I did not count usage!')
+            raise RuntimeError("I did not count usage!")
         else:
             usage = self.use_cnt[bucket_id] / self.life_cnt[bucket_id]
             return usage
 
     def get_all_sliced(
         self, bucket_id: int, start: int, end: int
-    ) -> (torch.Tensor, torch.Tensor, torch.Tensor, Dict[int, torch.Tensor], torch.Tensor):
+    ) -> (
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        Dict[int, torch.Tensor],
+        torch.Tensor,
+    ):
         # return k, sk, ek, value, normalized usage in order, sliced by start and end
 
         if end == 0:
@@ -202,13 +224,18 @@ class KeyValueMemoryStore:
             k = self.k[bucket_id][:, start:]
             sk = self.s[bucket_id][:, start:]
             ek = self.e[bucket_id][:, start:] if self.save_selection else None
-            value = {obj_id: self.v[obj_id][:, start:] for obj_id in self.buckets[bucket_id]}
+            value = {
+                obj_id: self.v[obj_id][:, start:] for obj_id in self.buckets[bucket_id]
+            }
             usage = self.get_usage(bucket_id)[start:] if self.save_usage else None
         else:
             k = self.k[bucket_id][:, start:end]
             sk = self.s[bucket_id][:, start:end]
             ek = self.e[bucket_id][:, start:end] if self.save_selection else None
-            value = {obj_id: self.v[obj_id][:, start:end] for obj_id in self.buckets[bucket_id]}
+            value = {
+                obj_id: self.v[obj_id][:, start:end]
+                for obj_id in self.buckets[bucket_id]
+            }
             usage = self.get_usage(bucket_id)[start:end] if self.save_usage else None
 
         return k, sk, ek, value, usage
@@ -220,7 +247,9 @@ class KeyValueMemoryStore:
         # remove objects that are not in the keep list from the buckets
         buckets_to_remove = []
         for bucket_id, object_ids in self.buckets.items():
-            self.buckets[bucket_id] = [obj_id for obj_id in object_ids if obj_id in obj_keep_idx]
+            self.buckets[bucket_id] = [
+                obj_id for obj_id in object_ids if obj_id in obj_keep_idx
+            ]
             if len(self.buckets[bucket_id]) == 0:
                 buckets_to_remove.append(bucket_id)
 

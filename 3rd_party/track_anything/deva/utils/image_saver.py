@@ -7,12 +7,12 @@ from collections import defaultdict
 
 
 def tensor_to_numpy(image):
-    image_np = (image.numpy() * 255).astype('uint8')
+    image_np = (image.numpy() * 255).astype("uint8")
     return image_np
 
 
 def tensor_to_np_float(image):
-    image_np = image.numpy().astype('float32')
+    image_np = image.numpy().astype("float32")
     return image_np
 
 
@@ -41,8 +41,8 @@ def tensor_to_im(x):
 
 # Predefined key <-> caption dict
 key_captions = {
-    'im': 'Image',
-    'gt': 'GT',
+    "im": "Image",
+    "gt": "GT",
 }
 """
 Return an image array with captions
@@ -61,15 +61,22 @@ def get_image_array(images, grid_shape, captions={}):
     output_image = np.zeros([w * cate_counts, h * (rows_counts + 1), 3], dtype=np.uint8)
     col_cnt = 0
     for k, v in images.items():
-
         # Default as key value itself
         caption = captions.get(k, k)
 
         # Handles new line character
         dy = 40
-        for i, line in enumerate(caption.split('\n')):
-            cv2.putText(output_image, line, (10, col_cnt * w + 100 + i * dy), font, 0.8,
-                        (255, 255, 255), 2, cv2.LINE_AA)
+        for i, line in enumerate(caption.split("\n")):
+            cv2.putText(
+                output_image,
+                line,
+                (10, col_cnt * w + 100 + i * dy),
+                font,
+                0.8,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
 
         # Put images
         for row_cnt, img in enumerate(v):
@@ -77,10 +84,13 @@ def get_image_array(images, grid_shape, captions={}):
             if len(im_shape) == 2:
                 img = img[..., np.newaxis]
 
-            img = (img * 255).astype('uint8')
+            img = (img * 255).astype("uint8")
 
-            output_image[(col_cnt + 0) * w:(col_cnt + 1) * w,
-                         (row_cnt + 1) * h:(row_cnt + 2) * h, :] = img
+            output_image[
+                (col_cnt + 0) * w : (col_cnt + 1) * w,
+                (row_cnt + 1) * h : (row_cnt + 2) * h,
+                :,
+            ] = img
 
         col_cnt += 1
 
@@ -116,7 +126,7 @@ def logits_transform(mask, size):
 def pool_pairs(images, size, num_objects):
     req_images = defaultdict(list)
 
-    b, t = images['rgb'].shape[:2]
+    b, t = images["rgb"].shape[:2]
 
     # limit the number of images saved
     b = min(2, b)
@@ -124,25 +134,30 @@ def pool_pairs(images, size, num_objects):
     # find max num objects
     max_num_objects = max(num_objects[:b])
 
-    GT_suffix = ''
+    GT_suffix = ""
     for bi in range(b):
-        GT_suffix += ' \n%s' % images['info']['name'][bi][-25:-4]
+        GT_suffix += " \n%s" % images["info"]["name"][bi][-25:-4]
 
     for bi in range(b):
         for ti in range(t):
-            req_images['RGB'].append(im_transform(images['rgb'][bi, ti], size))
+            req_images["RGB"].append(im_transform(images["rgb"][bi, ti], size))
             for oi in range(max_num_objects):
                 if ti == 0 or oi >= num_objects[bi]:
-                    req_images[f'Mask_{oi}'].append(
-                        mask_transform(images['first_frame_gt'][bi][0, oi], size))
-                    req_images[f'Aux Mask_{oi}'].append(
-                        mask_transform(images['first_frame_gt'][bi][0, oi], size))
+                    req_images[f"Mask_{oi}"].append(
+                        mask_transform(images["first_frame_gt"][bi][0, oi], size)
+                    )
+                    req_images[f"Aux Mask_{oi}"].append(
+                        mask_transform(images["first_frame_gt"][bi][0, oi], size)
+                    )
                 else:
-                    req_images[f'Mask_{oi}'].append(
-                        mask_transform(images[f'masks_{ti}'][bi][oi], size))
-                    req_images[f'Aux Mask_{oi}'].append(
-                        mask_transform(images[f'aux_masks_{ti}'][bi][oi][0], size))
-                req_images[f'GT_{oi}_{GT_suffix}'].append(
-                    mask_transform(images['cls_gt'][bi, ti, 0] == (oi + 1), size))
+                    req_images[f"Mask_{oi}"].append(
+                        mask_transform(images[f"masks_{ti}"][bi][oi], size)
+                    )
+                    req_images[f"Aux Mask_{oi}"].append(
+                        mask_transform(images[f"aux_masks_{ti}"][bi][oi][0], size)
+                    )
+                req_images[f"GT_{oi}_{GT_suffix}"].append(
+                    mask_transform(images["cls_gt"][bi, ti, 0] == (oi + 1), size)
+                )
 
     return get_image_array(req_images, size, key_captions)

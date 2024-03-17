@@ -6,72 +6,82 @@ During evaluation, it is used by inference_core.py
 It further depends on modules.py which gives more detailed implementations of sub-modules
 """
 
-from typing import Dict, Iterable, Union, Tuple
+from typing import Dict, Iterable, Union, Tuple, List
 import torch
-import torch.nn as nn
+from torch import nn
 
-from deva.model.modules import *
-from deva.model.big_modules import *
-from deva.model.memory_utils import *
+from deva.model.modules import *  # noqa: F403
+from deva.model.big_modules import *  # noqa: F403
+from deva.model.memory_utils import *  # noqa: F403
 
 
 class DEVA(nn.Module):
     def __init__(self, config: Dict):
         super().__init__()
-        self.pix_feat_dim = config['pix_feat_dim']
-        self.key_dim = config['key_dim']
-        self.value_dim = config['value_dim']
+        self.pix_feat_dim = config["pix_feat_dim"]
+        self.key_dim = config["key_dim"]
+        self.value_dim = config["value_dim"]
 
-        self.pixel_encoder = PixelEncoder(self.pix_feat_dim)
-        self.mask_encoder = MaskEncoder(self.pix_feat_dim, self.value_dim)
+        self.pixel_encoder = PixelEncoder(self.pix_feat_dim)  # noqa: F405
+        self.mask_encoder = MaskEncoder(self.pix_feat_dim, self.value_dim)  # noqa: F405
 
         # Projection from f16 feature space to key/value space
-        self.key_proj = KeyProjection(self.pix_feat_dim, self.key_dim)
+        self.key_proj = KeyProjection(self.pix_feat_dim, self.key_dim)  # noqa: F405
 
-        self.mask_decoder = MaskDecoder(self.value_dim)
+        self.mask_decoder = MaskDecoder(self.value_dim)  # noqa: F405
 
     def aggregate(self, prob: torch.Tensor, dim: int) -> torch.Tensor:
         with torch.cuda.amp.autocast(enabled=False):
             prob = prob.float()
-            new_prob = torch.cat([torch.prod(1 - prob, dim=dim, keepdim=True), prob],
-                                 dim).clamp(1e-7, 1 - 1e-7)
+            new_prob = torch.cat(
+                [torch.prod(1 - prob, dim=dim, keepdim=True), prob], dim
+            ).clamp(1e-7, 1 - 1e-7)
             logits = torch.log((new_prob / (1 - new_prob)))
 
             return logits
 
-    def encode_image(self, image: torch.Tensor) -> (List[torch.Tensor], torch.Tensor):
+    def encode_image(
+        self, image: torch.Tensor
+    ) -> Union[List[torch.Tensor], torch.Tensor]:
         multi_scale_features, key_feat = self.pixel_encoder(image)
         return multi_scale_features, key_feat
 
-    def encode_mask(self,
-                    image: torch.Tensor,
-                    ms_features: Iterable[torch.Tensor],
-                    h: torch.Tensor,
-                    masks: torch.Tensor,
-                    *,
-                    is_deep_update: bool = True,
-                    chunk_size: int = -1) -> (torch.Tensor, torch.Tensor):
-        g16, h16 = self.mask_encoder(image,
-                                     ms_features,
-                                     h,
-                                     masks,
-                                     is_deep_update=is_deep_update,
-                                     chunk_size=chunk_size)
+    def encode_mask(
+        self,
+        image: torch.Tensor,
+        ms_features: Iterable[torch.Tensor],
+        h: torch.Tensor,
+        masks: torch.Tensor,
+        *,
+        is_deep_update: bool = True,
+        chunk_size: int = -1
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        g16, h16 = self.mask_encoder(
+            image,
+            ms_features,
+            h,
+            masks,
+            is_deep_update=is_deep_update,
+            chunk_size=chunk_size,
+        )
         return g16, h16
 
-    def transform_key(self,
-                      feat: torch.Tensor,
-                      *,
-                      need_sk: bool = True,
-                      need_ek: bool = True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def transform_key(
+        self, feat: torch.Tensor, *, need_sk: bool = True, need_ek: bool = True
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         key, shrinkage, selection = self.key_proj(feat, need_s=need_sk, need_e=need_ek)
         return key, shrinkage, selection
 
     # Used in training only.
     # This step is replaced by MemoryManager in test time
-    def read_memory(self, query_key: torch.Tensor, query_selection: torch.Tensor,
-                    memory_key: torch.Tensor, memory_shrinkage: torch.Tensor,
-                    memory_value: torch.Tensor) -> torch.Tensor:
+    def read_memory(
+        self,
+        query_key: torch.Tensor,
+        query_selection: torch.Tensor,
+        memory_key: torch.Tensor,
+        memory_shrinkage: torch.Tensor,
+        memory_value: torch.Tensor,
+    ) -> torch.Tensor:
         """
         query_key       : B * CK * H * W
         query_selection : B * CK * H * W
@@ -81,13 +91,17 @@ class DEVA(nn.Module):
         """
         # batch_size, num_objects = memory_id.shape[:2]
         batch_size, num_objects = memory_value.shape[:2]
-        affinity = get_affinity(memory_key, memory_shrinkage, query_key, query_selection)
+        affinity = get_affinity(  # noqa: F405
+            memory_key, memory_shrinkage, query_key, query_selection
+        )
 
         memory_value = memory_value.flatten(start_dim=1, end_dim=2)
 
         # B * (num_objects*CV) * H * W
-        memory = readout(affinity, memory_value)
-        memory = memory.view(batch_size, num_objects, self.value_dim, *memory.shape[-2:])
+        memory = readout(affinity, memory_value)  # noqa: F405
+        memory = memory.view(
+            batch_size, num_objects, self.value_dim, *memory.shape[-2:]
+        )
 
         return memory
 
@@ -103,8 +117,10 @@ class DEVA(nn.Module):
         chunk_size: int = -1,
         update_sensory: bool = True,
         independent_objects: bool = False
-    ) -> Union[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], Tuple[
-            torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
+    ) -> Union[
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+    ]:
         """
         multi_scale_features is from the key encoder for skip-connection
         memory_readout is from working/long-term memory
@@ -114,32 +130,38 @@ class DEVA(nn.Module):
             during training.
         need_aux is True during training only
         """
-        last_mask = F.interpolate(last_mask, size=memory_readout.shape[-2:], mode='area')
+        last_mask = F.interpolate(  # noqa: F405
+            last_mask, size=memory_readout.shape[-2:], mode="area"
+        )
         last_mask = last_mask.unsqueeze(2)
 
         if need_aux:
-            sensory, logits, aux_logits = self.mask_decoder(multi_scale_features,
-                                                            memory_readout,
-                                                            sensory,
-                                                            last_mask,
-                                                            need_aux=need_aux,
-                                                            update_sensory=update_sensory)
+            sensory, logits, aux_logits = self.mask_decoder(
+                multi_scale_features,
+                memory_readout,
+                sensory,
+                last_mask,
+                need_aux=need_aux,
+                update_sensory=update_sensory,
+            )
 
             aux_prob = torch.sigmoid(aux_logits)
             if selector is not None:
                 aux_prob = aux_prob * selector.unsqueeze(2)
 
             aux_logits = self.aggregate(aux_prob, dim=1)
-            aux_logits = upsample_groups(aux_logits, ratio=16)
-            aux_prob = F.softmax(aux_logits, dim=1)
+            aux_logits = upsample_groups(aux_logits, ratio=16)  # noqa: F405
+            aux_prob = F.softmax(aux_logits, dim=1)  # noqa: F405
         else:
-            sensory, logits = self.mask_decoder(multi_scale_features,
-                                                memory_readout,
-                                                sensory,
-                                                last_mask,
-                                                need_aux=need_aux,
-                                                chunk_size=chunk_size,
-                                                update_sensory=update_sensory)
+            sensory, logits = self.mask_decoder(
+                multi_scale_features,
+                memory_readout,
+                sensory,
+                last_mask,
+                need_aux=need_aux,
+                chunk_size=chunk_size,
+                update_sensory=update_sensory,
+            )
 
         prob = torch.sigmoid(logits)
         if selector is not None:
@@ -153,8 +175,10 @@ class DEVA(nn.Module):
             assert batch_size == 1
             prob = prob.view(num_objects, 1, h, w)
             logits = self.aggregate(prob, dim=1)
-            logits = F.interpolate(logits, scale_factor=4, mode='bilinear', align_corners=False)
-            prob = F.softmax(logits, dim=1)
+            logits = F.interpolate(  # noqa: F405
+                logits, scale_factor=4, mode="bilinear", align_corners=False
+            )
+            prob = F.softmax(logits, dim=1)  # noqa: F405
             # we need to recompute for a single channel of background
             # the actual value of this background does not matter, as long as it does not changes
             # the result of argmax
@@ -164,8 +188,10 @@ class DEVA(nn.Module):
         else:
             # Softmax over all objects
             logits = self.aggregate(prob, dim=1)
-            logits = F.interpolate(logits, scale_factor=4, mode='bilinear', align_corners=False)
-            prob = F.softmax(logits, dim=1)
+            logits = F.interpolate(  # noqa: F405
+                logits, scale_factor=4, mode="bilinear", align_corners=False
+            )
+            prob = F.softmax(logits, dim=1)  # noqa: F405
 
         if need_aux:
             return sensory, logits, prob, aux_logits, aux_prob
@@ -173,15 +199,15 @@ class DEVA(nn.Module):
             return sensory, logits, prob
 
     def forward(self, mode, *args, **kwargs):
-        if mode == 'encode_image':
+        if mode == "encode_image":
             return self.encode_image(*args, **kwargs)
-        elif mode == 'transform_key':
+        elif mode == "transform_key":
             return self.transform_key(*args, **kwargs)
-        elif mode == 'encode_mask':
+        elif mode == "encode_mask":
             return self.encode_mask(*args, **kwargs)
-        elif mode == 'read_memory':
+        elif mode == "read_memory":
             return self.read_memory(*args, **kwargs)
-        elif mode == 'segment':
+        elif mode == "segment":
             return self.segment(*args, **kwargs)
         else:
             raise NotImplementedError(mode)

@@ -92,9 +92,9 @@ Grounding DINO installation might fail silently.
 Try `python -c "from groundingdino.util.inference import Model as GroundingDINOModel"`.
 If you get a warning about running on CPU mode only, make sure you have `CUDA_HOME` set during Grounding DINO installation.
 
-**(Optional) For fast integer program solving in the semi-online setting:** 
+**(Optional) For fast integer program solving in the semi-online setting:**
 
-Get your [gurobi](https://www.gurobi.com/) licence which is free for academic use. 
+Get your [gurobi](https://www.gurobi.com/) licence which is free for academic use.
 If a license is not found, we fall back to using [PuLP](https://github.com/coin-or/pulp) which is slower and is not rigorously tested by us. All experiments are conducted with gurobi.
 
 
@@ -115,7 +115,7 @@ The following two scripts segment the example clip using either Grounded Segment
 **Script (text-prompted):**
 ```bash
 python demo/demo_with_text.py --chunk_size 4 \
---img_path ./example/vipseg/images/12_1mWNahzcsAc \ 
+--img_path ./example/vipseg/images/12_1mWNahzcsAc \
 --amp --temporal_setting semionline \
 --size 480 \
 --output ./example/output --prompt person.hat.horse
@@ -124,7 +124,7 @@ python demo/demo_with_text.py --chunk_size 4 \
 **Script (automatic):**
 ```bash
 python demo/demo_automatic.py --chunk_size 4 \
---img_path ./example/vipseg/images/12_1mWNahzcsAc \ 
+--img_path ./example/vipseg/images/12_1mWNahzcsAc \
 --amp --temporal_setting semionline \
 --size 480 \
 --output ./example/output

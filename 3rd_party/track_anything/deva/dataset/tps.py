@@ -5,10 +5,11 @@ import thinplate as tps
 
 cv2.setNumThreads(0)
 
+
 def pick_random_points(h, w, n_samples):
     y_idx = np.random.choice(np.arange(h), size=n_samples, replace=False)
     x_idx = np.random.choice(np.arange(w), size=n_samples, replace=False)
-    return y_idx/h, x_idx/w
+    return y_idx / h, x_idx / w
 
 
 def warp_dual_cv(img, mask, c_src, c_dst):
@@ -16,7 +17,9 @@ def warp_dual_cv(img, mask, c_src, c_dst):
     theta = tps.tps_theta_from_points(c_src, c_dst, reduced=True)
     grid = tps.tps_grid(theta, c_dst, dshape)
     mapx, mapy = tps.tps_grid_to_remap(grid, img.shape)
-    return cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR), cv2.remap(mask, mapx, mapy, cv2.INTER_NEAREST)
+    return cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR), cv2.remap(
+        mask, mapx, mapy, cv2.INTER_NEAREST
+    )
 
 
 def random_tps_warp(img, mask, scale, n_ctrl_pts=12):
@@ -34,4 +37,3 @@ def random_tps_warp(img, mask, scale, n_ctrl_pts=12):
     warp_im, warp_gt = warp_dual_cv(img, mask, c_src, c_dst)
 
     return Image.fromarray(warp_im), Image.fromarray(warp_gt)
-

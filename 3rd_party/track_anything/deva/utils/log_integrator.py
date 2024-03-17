@@ -23,13 +23,13 @@ class Integrator:
     def add_tensor(self, key: str, tensor: torch.Tensor):
         if key not in self.values:
             self.counts[key] = 1
-            if type(tensor) == float or type(tensor) == int:
+            if isinstance(tensor, (float, int)):
                 self.values[key] = tensor
             else:
                 self.values[key] = tensor.mean().item()
         else:
             self.counts[key] += 1
-            if type(tensor) == float or type(tensor) == int:
+            if isinstance(tensor, (float, int)):
                 self.values[key] += tensor
             else:
                 self.values[key] += tensor.mean().item()
@@ -44,7 +44,7 @@ class Integrator:
         The hook takes the dict as argument, and returns a (k, v) tuple
         e.g. for computing IoU
         """
-        if type(hook) == list:
+        if isinstance(hook, list):
             self.hooks.extend(hook)
         else:
             self.hooks.append(hook)
@@ -55,14 +55,12 @@ class Integrator:
 
     # Average and output the metrics
     def finalize(self, prefix: str, it: int, f=None) -> None:
-
         for hook in self.hooks:
             k, v = hook(self.values)
             self.add_tensor(k, v)
 
         for k, v in self.values.items():
-
-            if k[:4] == 'hide':
+            if k[:4] == "hide":
                 continue
 
             avg = v / self.counts[k]

@@ -8,11 +8,14 @@ class ObjectInfo:
     """
     Stores meta information for an object
     """
-    def __init__(self,
-                 id: int,
-                 category_id: Optional[int] = None,
-                 isthing: Optional[bool] = None,
-                 score: Optional[float] = None):
+
+    def __init__(
+        self,
+        id: int,
+        category_id: Optional[int] = None,
+        isthing: Optional[bool] = None,
+        score: Optional[float] = None,
+    ):
         self.id = id
         self.category_ids = [category_id]
         self.scores = [score]
@@ -59,4 +62,4 @@ class ObjectInfo:
         return self.id == other.id
 
     def __repr__(self):
-        return f'(ID: {self.id}, cat: {self.category_ids}, isthing: {self.isthing}, score: {self.scores})'
+        return f"(ID: {self.id}, cat: {self.category_ids}, isthing: {self.isthing}, score: {self.scores})"

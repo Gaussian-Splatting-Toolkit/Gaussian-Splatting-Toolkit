@@ -119,6 +119,10 @@ Export the point cloud
 gs-export point-cloud --load-config /path/to/config.yml --output-dir exports/pcd/
 ```
 
+```bash
+gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/
+```
+
 ## Contribute
 
 To add a new submodule, run
@@ -142,10 +146,11 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [ ] Gaussian Refinement
 - [x] Depth Loss
 - [x] Point cloud export
-- [ ] Mesh extraction
-  - [ ] Marching cube
-  - [ ] TSDF
-  - [ ] Piossion reconstruction
+- [x] Mesh extraction
+  - [x] Marching cube
+  - [x] TSDF
+  - [x] Piossion reconstruction
+- [ ] Mask
 - [ ] Model
   - [ ] SuGaR
   - [ ] SplaTAM

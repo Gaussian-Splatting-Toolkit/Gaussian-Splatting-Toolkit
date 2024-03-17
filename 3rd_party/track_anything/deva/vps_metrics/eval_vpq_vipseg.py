@@ -17,7 +17,6 @@ from tqdm import tqdm
 from functools import partial
 
 import argparse
-import sys
 import os
 import os.path
 import numpy as np
@@ -27,7 +26,6 @@ import time
 import json
 from collections import defaultdict
 import copy
-import pdb
 
 
 class PQStatCat:
@@ -62,7 +60,7 @@ class PQStat:
         per_class_results = {}
         for label, label_info in categories.items():
             if isthing is not None:
-                cat_isthing = label_info['isthing'] == 1
+                cat_isthing = label_info["isthing"] == 1
                 if isthing != cat_isthing:
                     continue
             iou = self.pq_per_cat[label].iou
@@ -71,13 +69,13 @@ class PQStat:
             fn = self.pq_per_cat[label].fn
             if tp + fp + fn == 0:
                 per_class_results[label] = {
-                    'pq': 0.0,
-                    'sq': 0.0,
-                    'rq': 0.0,
-                    'iou': 0.0,
-                    'tp': 0,
-                    'fp': 0,
-                    'fn': 0
+                    "pq": 0.0,
+                    "sq": 0.0,
+                    "rq": 0.0,
+                    "iou": 0.0,
+                    "tp": 0,
+                    "fp": 0,
+                    "fn": 0,
                 }
                 continue
             n += 1
@@ -85,18 +83,18 @@ class PQStat:
             sq_class = iou / tp if tp != 0 else 0
             rq_class = tp / (tp + 0.5 * fp + 0.5 * fn)
             per_class_results[label] = {
-                'pq': pq_class,
-                'sq': sq_class,
-                'rq': rq_class,
-                'iou': iou,
-                'tp': tp,
-                'fp': fp,
-                'fn': fn
+                "pq": pq_class,
+                "sq": sq_class,
+                "rq": rq_class,
+                "iou": iou,
+                "tp": tp,
+                "fp": fp,
+                "fn": fn,
             }
             pq += pq_class
             sq += sq_class
             rq += rq_class
-        return {'pq': pq / n, 'sq': sq / n, 'rq': rq / n, 'n': n}, per_class_results
+        return {"pq": pq / n, "sq": sq / n, "rq": rq / n, "n": n}, per_class_results
 
 
 def read_im(path):
@@ -121,46 +119,60 @@ def vpq_compute_single_core(categories, nframes, gt_pred_set):
 
         # Matching nframes-long tubes.
         # Collect tube IoU, TP, FP, FN
-        for i, (gt_json, pred_json, gt_name, pred_name,
-                gt_image_json) in enumerate(gt_pred_set[idx:idx + nframes]):
+        for i, (gt_json, pred_json, gt_name, pred_name, gt_image_json) in enumerate(
+            gt_pred_set[idx : idx + nframes]
+        ):
             #### Step1. Collect frame-level pan_gt, pan_pred, etc.
             gt_pan = all_gt_pan[gt_name]
             pred_pan = all_pred_pan[pred_name]
 
             gt_pan, pred_pan = np.uint32(gt_pan), np.uint32(pred_pan)
-            pan_gt = gt_pan[:, :, 0] + gt_pan[:, :, 1] * 256 + gt_pan[:, :, 2] * 256 * 256
-            pan_pred = pred_pan[:, :, 0] + pred_pan[:, :, 1] * 256 + pred_pan[:, :, 2] * 256 * 256
+            pan_gt = (
+                gt_pan[:, :, 0] + gt_pan[:, :, 1] * 256 + gt_pan[:, :, 2] * 256 * 256
+            )
+            pan_pred = (
+                pred_pan[:, :, 0]
+                + pred_pan[:, :, 1] * 256
+                + pred_pan[:, :, 2] * 256 * 256
+            )
             gt_segms = {}
-            for el in gt_json['segments_info']:
-                if el['id'] in gt_segms:
-                    gt_segms[el['id']]['area'] += el['area']
+            for el in gt_json["segments_info"]:
+                if el["id"] in gt_segms:
+                    gt_segms[el["id"]]["area"] += el["area"]
                 else:
-                    gt_segms[el['id']] = copy.deepcopy(el)
+                    gt_segms[el["id"]] = copy.deepcopy(el)
             pred_segms = {}
-            for el in pred_json['segments_info']:
-                if el['id'] in pred_segms:
-                    pred_segms[el['id']]['area'] += el['area']
+            for el in pred_json["segments_info"]:
+                if el["id"] in pred_segms:
+                    pred_segms[el["id"]]["area"] += el["area"]
                 else:
-                    pred_segms[el['id']] = copy.deepcopy(el)
+                    pred_segms[el["id"]] = copy.deepcopy(el)
             # predicted segments area calculation + prediction sanity checks
-            pred_labels_set = set(el['id'] for el in pred_json['segments_info'])
+            pred_labels_set = set(el["id"] for el in pred_json["segments_info"])
             labels, labels_cnt = np.unique(pan_pred, return_counts=True)
             for label, label_cnt in zip(labels, labels_cnt):
                 if label not in pred_segms:
                     if label == VOID:
                         continue
                     raise KeyError(
-                        'Segment with ID {} is presented in PNG and not presented in JSON.'.format(
-                            label))
-                pred_segms[label]['area'] = label_cnt
+                        "Segment with ID {} is presented in PNG and not presented in JSON.".format(
+                            label
+                        )
+                    )
+                pred_segms[label]["area"] = label_cnt
                 pred_labels_set.remove(label)
-                if pred_segms[label]['category_id'] not in categories:
-                    raise KeyError('Segment with ID {} has unknown category_id {}.'.format(
-                        label, pred_segms[label]['category_id']))
+                if pred_segms[label]["category_id"] not in categories:
+                    raise KeyError(
+                        "Segment with ID {} has unknown category_id {}.".format(
+                            label, pred_segms[label]["category_id"]
+                        )
+                    )
             if len(pred_labels_set) != 0:
                 raise KeyError(
-                    'The following segment IDs {} are presented in JSON and not presented in PNG.'.
-                    format(list(pred_labels_set)))
+                    "The following segment IDs {} are presented in JSON and not presented in PNG.".format(
+                        list(pred_labels_set)
+                    )
+                )
 
             vid_pan_gt.append(pan_gt)
             vid_pan_pred.append(pan_pred)
@@ -174,18 +186,20 @@ def vpq_compute_single_core(categories, nframes, gt_pred_set):
         for gt_segms, pred_segms in zip(gt_segms_list, pred_segms_list):
             # aggregate into tube 'area'
             for k in gt_segms.keys():
-                if not k in vid_gt_segms:
+                if k not in vid_gt_segms:
                     vid_gt_segms[k] = gt_segms[k]
                 else:
-                    vid_gt_segms[k]['area'] += gt_segms[k]['area']
+                    vid_gt_segms[k]["area"] += gt_segms[k]["area"]
             for k in pred_segms.keys():
-                if not k in vid_pred_segms:
+                if k not in vid_pred_segms:
                     vid_pred_segms[k] = pred_segms[k]
                 else:
-                    vid_pred_segms[k]['area'] += pred_segms[k]['area']
+                    vid_pred_segms[k]["area"] += pred_segms[k]["area"]
 
         #### Step3. Confusion matrix calculation
-        vid_pan_gt_pred = vid_pan_gt.astype(np.uint64) * OFFSET + vid_pan_pred.astype(np.uint64)
+        vid_pan_gt_pred = vid_pan_gt.astype(np.uint64) * OFFSET + vid_pan_pred.astype(
+            np.uint64
+        )
         gt_pred_map = {}
         labels, labels_cnt = np.unique(vid_pan_gt_pred, return_counts=True)
         for label, intersection in zip(labels, labels_cnt):
@@ -208,20 +222,26 @@ def vpq_compute_single_core(categories, nframes, gt_pred_set):
                 continue
             if pred_label not in vid_pred_segms:
                 continue
-            if vid_gt_segms[gt_label]['iscrowd'] == 1:
+            if vid_gt_segms[gt_label]["iscrowd"] == 1:
                 continue
-            if vid_gt_segms[gt_label]['category_id'] != \
-                    vid_pred_segms[pred_label]['category_id']:
+            if (
+                vid_gt_segms[gt_label]["category_id"]
+                != vid_pred_segms[pred_label]["category_id"]
+            ):
                 continue
 
-            union = vid_pred_segms[pred_label]['area'] + vid_gt_segms[gt_label][
-                'area'] - intersection - gt_pred_map.get((VOID, pred_label), 0)
+            union = (
+                vid_pred_segms[pred_label]["area"]
+                + vid_gt_segms[gt_label]["area"]
+                - intersection
+                - gt_pred_map.get((VOID, pred_label), 0)
+            )
             iou = intersection / union
-            assert iou <= 1.0, 'INVALID IOU VALUE : %d' % (gt_label)
+            assert iou <= 1.0, "INVALID IOU VALUE : %d" % (gt_label)
             # count true positives
             if iou > 0.5:
-                vpq_stat[vid_gt_segms[gt_label]['category_id']].tp += 1
-                vpq_stat[vid_gt_segms[gt_label]['category_id']].iou += iou
+                vpq_stat[vid_gt_segms[gt_label]["category_id"]].tp += 1
+                vpq_stat[vid_gt_segms[gt_label]["category_id"]].iou += iou
                 gt_matched.add(gt_label)
                 pred_matched.add(pred_label)
                 tp += 1
@@ -232,10 +252,10 @@ def vpq_compute_single_core(categories, nframes, gt_pred_set):
             if gt_label in gt_matched:
                 continue
             # crowd segments are ignored
-            if gt_info['iscrowd'] == 1:
-                crowd_labels_dict[gt_info['category_id']] = gt_label
+            if gt_info["iscrowd"] == 1:
+                crowd_labels_dict[gt_info["category_id"]] = gt_label
                 continue
-            vpq_stat[gt_info['category_id']].fn += 1
+            vpq_stat[gt_info["category_id"]].fn += 1
             fn += 1
 
         # count false positives
@@ -245,13 +265,14 @@ def vpq_compute_single_core(categories, nframes, gt_pred_set):
             # intersection of the segment with VOID
             intersection = gt_pred_map.get((VOID, pred_label), 0)
             # plus intersection with corresponding CROWD region if it exists
-            if pred_info['category_id'] in crowd_labels_dict:
+            if pred_info["category_id"] in crowd_labels_dict:
                 intersection += gt_pred_map.get(
-                    (crowd_labels_dict[pred_info['category_id']], pred_label), 0)
+                    (crowd_labels_dict[pred_info["category_id"]], pred_label), 0
+                )
             # predicted segment is ignored if more than half of the segment correspond to VOID and CROWD regions
-            if intersection / pred_info['area'] > 0.5:
+            if intersection / pred_info["area"] > 0.5:
                 continue
-            vpq_stat[pred_info['category_id']].fp += 1
+            vpq_stat[pred_info["category_id"]].fp += 1
             fp += 1
 
     return vpq_stat
@@ -262,41 +283,63 @@ def vpq_compute(gt_pred_split, categories, nframes, output_dir, num_processes):
     vpq_stat = PQStat()
 
     with mp.Pool(num_processes) as p:
-        for tmp in tqdm(p.imap(partial(vpq_compute_single_core, categories, nframes),
-                               gt_pred_split),
-                        total=len(gt_pred_split)):
+        for tmp in tqdm(
+            p.imap(
+                partial(vpq_compute_single_core, categories, nframes), gt_pred_split
+            ),
+            total=len(gt_pred_split),
+        ):
             vpq_stat += tmp
 
     # hyperparameter: window size k
     k = nframes
-    print('==> %d-frame vpq_stat:' % (k), time.time() - start_time, 'sec')
+    print("==> %d-frame vpq_stat:" % (k), time.time() - start_time, "sec")
     metrics = [("All", None), ("Things", True), ("Stuff", False)]
     results = {}
     for name, isthing in metrics:
-        results[name], per_class_results = vpq_stat.pq_average(categories, isthing=isthing)
-        if name == 'All':
-            results['per_class'] = per_class_results
+        results[name], per_class_results = vpq_stat.pq_average(
+            categories, isthing=isthing
+        )
+        if name == "All":
+            results["per_class"] = per_class_results
 
-    vpq_all = 100 * results['All']['pq']
-    vpq_thing = 100 * results['Things']['pq']
-    vpq_stuff = 100 * results['Stuff']['pq']
+    vpq_all = 100 * results["All"]["pq"]
+    vpq_thing = 100 * results["Things"]["pq"]
+    vpq_stuff = 100 * results["Stuff"]["pq"]
 
-    save_name = os.path.join(output_dir, 'vpq-%d.txt' % (k))
-    f = open(save_name, 'w') if save_name else None
+    save_name = os.path.join(output_dir, "vpq-%d.txt" % (k))
+    f = open(save_name, "w") if save_name else None
     f.write("================================================\n")
     f.write("{:10s}| {:>5s}  {:>5s}  {:>5s} {:>5s}".format("", "PQ", "SQ", "RQ", "N\n"))
-    f.write("-" * (10 + 7 * 4) + '\n')
+    f.write("-" * (10 + 7 * 4) + "\n")
     for name, _isthing in metrics:
-        f.write("{:10s}| {:5.1f}  {:5.1f}  {:5.1f} {:5d}\n".format(name, 100 * results[name]['pq'],
-                                                                   100 * results[name]['sq'],
-                                                                   100 * results[name]['rq'],
-                                                                   results[name]['n']))
-    f.write("{:4s}| {:>5s} {:>5s} {:>5s} {:>6s} {:>7s} {:>7s} {:>7s}\n".format(
-        "IDX", "PQ", "SQ", "RQ", "IoU", "TP", "FP", "FN"))
-    for idx, result in results['per_class'].items():
-        f.write("{:4d} | {:5.1f} {:5.1f} {:5.1f} {:6.1f} {:7d} {:7d} {:7d}\n".format(
-            idx, 100 * result['pq'], 100 * result['sq'], 100 * result['rq'], result['iou'],
-            result['tp'], result['fp'], result['fn']))
+        f.write(
+            "{:10s}| {:5.1f}  {:5.1f}  {:5.1f} {:5d}\n".format(
+                name,
+                100 * results[name]["pq"],
+                100 * results[name]["sq"],
+                100 * results[name]["rq"],
+                results[name]["n"],
+            )
+        )
+    f.write(
+        "{:4s}| {:>5s} {:>5s} {:>5s} {:>6s} {:>7s} {:>7s} {:>7s}\n".format(
+            "IDX", "PQ", "SQ", "RQ", "IoU", "TP", "FP", "FN"
+        )
+    )
+    for idx, result in results["per_class"].items():
+        f.write(
+            "{:4d} | {:5.1f} {:5.1f} {:5.1f} {:6.1f} {:7d} {:7d} {:7d}\n".format(
+                idx,
+                100 * result["pq"],
+                100 * result["sq"],
+                100 * result["rq"],
+                result["iou"],
+                result["tp"],
+                result["fp"],
+                result["fn"],
+            )
+        )
     if save_name:
         f.close()
 
@@ -304,23 +347,27 @@ def vpq_compute(gt_pred_split, categories, nframes, output_dir, num_processes):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='VPSNet eval')
-
-    parser.add_argument('--submit_dir', '-i', type=str, help='test output directory', required=True)
+    parser = argparse.ArgumentParser(description="VPSNet eval")
 
     parser.add_argument(
-        '--truth_dir',
-        type=str,
-        default='../VIPSeg/VIPSeg_720P/panomasksRGB',
-        help='ground truth directory. Point this to <BASE_DIR>/VIPSeg/VIPSeg_720P/panomasksRGB '
-        'after running the conversion script')
+        "--submit_dir", "-i", type=str, help="test output directory", required=True
+    )
 
     parser.add_argument(
-        '--pan_gt_json_file',
+        "--truth_dir",
         type=str,
-        default='../VIPSeg/VIPSeg_720P/panoptic_gt_VIPSeg_val.json',
-        help='ground truth JSON file. Point this to <BASE_DIR>/VIPSeg/VIPSeg_720P/panoptic_gt_'
-        'VIPSeg_val.json after running the conversion script')
+        default="../VIPSeg/VIPSeg_720P/panomasksRGB",
+        help="ground truth directory. Point this to <BASE_DIR>/VIPSeg/VIPSeg_720P/panomasksRGB "
+        "after running the conversion script",
+    )
+
+    parser.add_argument(
+        "--pan_gt_json_file",
+        type=str,
+        default="../VIPSeg/VIPSeg_720P/panoptic_gt_VIPSeg_val.json",
+        help="ground truth JSON file. Point this to <BASE_DIR>/VIPSeg/VIPSeg_720P/panoptic_gt_"
+        "VIPSeg_val.json after running the conversion script",
+    )
 
     parser.add_argument("--num_processes", type=int, default=16)
 
@@ -337,30 +384,30 @@ def eval_vpq(submit_dir, truth_dir, pan_gt_json_file, num_processes=None):
             os.makedirs(output_dir)
 
     start_all = time.time()
-    pan_pred_json_file = os.path.join(submit_dir, 'pred.json')
-    with open(pan_pred_json_file, 'r') as f:
+    pan_pred_json_file = os.path.join(submit_dir, "pred.json")
+    with open(pan_pred_json_file, "r") as f:
         pred_jsons = json.load(f)
-    with open(pan_gt_json_file, 'r') as f:
+    with open(pan_gt_json_file, "r") as f:
         gt_jsons = json.load(f)
 
-    categories = gt_jsons['categories']
-    categories = {el['id']: el for el in categories}
+    categories = gt_jsons["categories"]
+    categories = {el["id"]: el for el in categories}
     # ==> pred_json, gt_json, categories
 
-    pred_annos = pred_jsons['annotations']
+    pred_annos = pred_jsons["annotations"]
     pred_j = {}
     for p_a in pred_annos:
-        pred_j[p_a['video_id']] = p_a['annotations']
-    gt_annos = gt_jsons['annotations']
+        pred_j[p_a["video_id"]] = p_a["annotations"]
+    gt_annos = gt_jsons["annotations"]
     gt_j = {}
     for g_a in gt_annos:
-        gt_j[g_a['video_id']] = g_a['annotations']
+        gt_j[g_a["video_id"]] = g_a["annotations"]
 
     gt_pred_split = []
 
-    for video_images in gt_jsons['videos']:
-        video_id = video_images['video_id']
-        gt_image_jsons = video_images['images']
+    for video_images in gt_jsons["videos"]:
+        video_id = video_images["video_id"]
+        gt_image_jsons = video_images["images"]
         gt_js = gt_j[video_id]
         pred_js = pred_j[video_id]
 
@@ -369,18 +416,21 @@ def eval_vpq(submit_dir, truth_dir, pan_gt_json_file, num_processes=None):
         gt_names = []
         pred_names = []
         for imgname_j in gt_image_jsons:
-            imgname = imgname_j['file_name']
-            pred_names.append(os.path.join(submit_dir, 'pan_pred', video_id, imgname))
+            imgname = imgname_j["file_name"]
+            pred_names.append(os.path.join(submit_dir, "pan_pred", video_id, imgname))
             gt_names.append(os.path.join(truth_dir, video_id, imgname))
 
-        gt_pred_split.append(list(zip(gt_js, pred_js, gt_names, pred_names, gt_image_jsons)))
+        gt_pred_split.append(
+            list(zip(gt_js, pred_js, gt_names, pred_names, gt_image_jsons))
+        )
 
     vpq_all, vpq_thing, vpq_stuff = [], [], []
 
     for nframes in [1, 2, 4, 6, 8, 10, 999]:
         gt_pred_split_ = copy.deepcopy(gt_pred_split)
-        vpq_all_, vpq_thing_, vpq_stuff_ = vpq_compute(gt_pred_split_, categories, nframes,
-                                                       output_dir, num_processes)
+        vpq_all_, vpq_thing_, vpq_stuff_ = vpq_compute(
+            gt_pred_split_, categories, nframes, output_dir, num_processes
+        )
 
         del gt_pred_split_
         print(vpq_all_, vpq_thing_, vpq_stuff_)
@@ -388,11 +438,11 @@ def eval_vpq(submit_dir, truth_dir, pan_gt_json_file, num_processes=None):
         vpq_thing.append(vpq_thing_)
         vpq_stuff.append(vpq_stuff_)
 
-    print('==> All:', time.time() - start_all, 'sec')
-    output_filename = os.path.join(output_dir, 'vpq-simple.txt')
-    output_file = open(output_filename, 'w')
+    print("==> All:", time.time() - start_all, "sec")
+    output_filename = os.path.join(output_dir, "vpq-simple.txt")
+    output_file = open(output_filename, "w")
     for all, thing, stuff in zip(vpq_all, vpq_thing, vpq_stuff):
-        output_file.write(f'{all:.1f}/{thing:.1f}/{stuff:.1f},')
+        output_file.write(f"{all:.1f}/{thing:.1f}/{stuff:.1f},")
     output_file.close()
 
 

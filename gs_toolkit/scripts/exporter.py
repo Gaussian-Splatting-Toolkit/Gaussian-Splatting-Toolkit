@@ -1,5 +1,5 @@
 """
-Script for exporting NeRF into other formats.
+Script for exporting Gaussian Splatting into other formats.
 """
 
 
@@ -9,7 +9,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Optional, Tuple, Union
+from typing import Literal, Optional, Union
 import open3d as o3d
 
 import numpy as np
@@ -23,6 +23,7 @@ from gs_toolkit.exporter.exporter_utils import (
     collect_camera_poses,
     generate_point_cloud,
 )
+from gs_toolkit.exporter.tsdf_fusion import TSDFFusion
 from gs_toolkit.models.gaussian_splatting import GaussianSplattingModel
 from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
@@ -145,39 +146,14 @@ class ExportGaussianSplat(Exporter):
 class ExportPointCloud(Exporter):
     """Export Gaussian Splatting as a point cloud."""
 
-    """Number of points to generate. May result in less if outlier removal is used."""
-    remove_outliers: bool = True
-    """Remove outliers from the point cloud."""
-    reorient_normals: bool = True
-    """Reorient point cloud normals based on view direction."""
-    normal_method: Literal["open3d", "model_output"] = "open3d"
-    """Method to estimate normals with."""
-    normal_output_name: str = "normals"
-    """Name of the normal output."""
     depth_output_name: str = "depth"
     """Name of the depth output."""
     rgb_output_name: str = "rgb"
     """Name of the RGB output."""
-    use_bounding_box: bool = True
-    """Only query points within the bounding box"""
-    bounding_box_min: Optional[Tuple[float, float, float]] = (-1, -1, -1)
-    """Minimum of the bounding box, used if use_bounding_box is True."""
-    bounding_box_max: Optional[Tuple[float, float, float]] = (1, 1, 1)
-    """Maximum of the bounding box, used if use_bounding_box is True."""
 
-    obb_center: Optional[Tuple[float, float, float]] = None
-    """Center of the oriented bounding box."""
-    obb_rotation: Optional[Tuple[float, float, float]] = None
-    """Rotation of the oriented bounding box. Expressed as RPY Euler angles in radians"""
-    obb_scale: Optional[Tuple[float, float, float]] = None
-    """Scale of the oriented bounding box along each axis."""
-    num_rays_per_batch: int = 32768
-    """Number of rays to evaluate per batch. Decrease if you run out of memory."""
-    std_ratio: float = 10.0
-    """Threshold based on STD of the average distances across the point cloud to remove outliers."""
     save_world_frame: bool = False
     """If set, saves the point cloud in the same frame as the original dataset. Otherwise, uses the
-    scaled and reoriented coordinate space expected by the NeRF models."""
+    scaled and reoriented coordinate space expected by the Gaussian Splatting models."""
 
     def main(self) -> None:
         """Export point cloud."""
@@ -232,7 +208,7 @@ class ExportPointCloud(Exporter):
 
 
 @dataclass
-class ExportTSDF(Exporter):
+class ExportTSDF:
     """Export Gaussian Splatting as a point cloud and a mesh using tsdf fusion."""
 
     mesh_method: Literal["marching_cubes", "poisson"] = "marching_cubes"
@@ -247,6 +223,12 @@ class ExportTSDF(Exporter):
     """Whether to use ground truth for meshing."""
     render_path: Optional[Path] = None
     """Path to the rendered images."""
+    output_dir: Optional[Path] = None
+    """Path to the output directory."""
+    vox_length: float = 4.0 / 512
+    """Voxel length for the volume."""
+    sdf_trunc: float = 0.04
+    """SDF truncation for the volume."""
 
     def main(self) -> None:
         """Export point cloud."""
@@ -254,6 +236,21 @@ class ExportTSDF(Exporter):
         # If not rendered, render the model
         if self.render_path is None:
             raise ValueError("You need to render first for TSDF export")
+
+        if not self.output_dir.exists():
+            self.output_dir.mkdir(parents=True)
+
+        fusion = TSDFFusion(
+            data_path=self.render_path,
+            using_OpenGL_world_coord=True,
+            method="marching_cubes",
+            voxel_length=self.vox_length,
+            sdf_trunc=self.sdf_trunc,
+            mask=False,
+            filter_pcd=False,
+            bounding_box=False,
+        )
+        mesh, pcd = fusion.run()
 
         CONSOLE.print(f"[bold green]:white_check_mark: Generated {pcd}")
         CONSOLE.print("Saving Point Cloud...")
@@ -264,6 +261,12 @@ class ExportTSDF(Exporter):
         o3d.t.io.write_point_cloud(str(self.output_dir / "point_cloud.ply"), tpcd)
         print("\033[A\033[A")
         CONSOLE.print("[bold green]:white_check_mark: Saving Point Cloud")
+
+        CONSOLE.print(f"[bold green]:white_check_mark: Generated {mesh}")
+        CONSOLE.print("Saving Mesh...")
+        o3d.io.write_triangle_mesh(str(self.output_dir / "mesh.ply"), mesh)
+        print("\033[A\033[A")
+        CONSOLE.print("[bold green]:white_check_mark: Saving Mesh")
 
 
 Commands = tyro.conf.FlagConversionOff[

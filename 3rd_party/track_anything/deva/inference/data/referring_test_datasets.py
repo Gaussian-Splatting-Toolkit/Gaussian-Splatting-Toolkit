@@ -44,11 +44,11 @@ class ReferringDAVISTestDataset:
         )
 
     def get_scores(self, video):
-        with open(path.join(self.mask_dir, video, 'scores.csv')) as f:
+        with open(path.join(self.mask_dir, video, "scores.csv")) as f:
             lines = f.read().splitlines()
         scores = defaultdict(dict)
-        for l in lines:
-            frame, obj, score = l.split(',')
+        for l in lines:  # noqa: E741
+            frame, obj, score = l.split(",")
             scores[frame[:-4]][obj] = float(score)
 
         average_scores = {}
@@ -72,11 +72,11 @@ class ReferringYouTubeVOSTestDataset:
 
         with open(json_dir) as f:
             # read meta.json to know which frame is required for evaluation
-            meta = json.load(f)['videos']
+            meta = json.load(f)["videos"]
 
             for vid in self.vid_list:
                 req_frames = []
-                req_frames.extend(meta[vid]['frames'])
+                req_frames.extend(meta[vid]["frames"])
 
                 req_frames = list(set(req_frames))
                 self.req_frame_list[vid] = req_frames
@@ -86,7 +86,9 @@ class ReferringYouTubeVOSTestDataset:
 
     def get_objects(self, video):
         return [
-            obj for obj in sorted(os.listdir(path.join(self.mask_dir, video))) if '.csv' not in obj
+            obj
+            for obj in sorted(os.listdir(path.join(self.mask_dir, video)))
+            if ".csv" not in obj
         ]
 
     def _get_to_save_list(self, video, object_name):
@@ -122,12 +124,12 @@ class ReferringYouTubeVOSTestDataset:
         )
 
     def get_scores(self, video):
-        with open(path.join(self.mask_dir, video, 'scores.csv')) as f:
+        with open(path.join(self.mask_dir, video, "scores.csv")) as f:
             lines = f.read().splitlines()
         scores = defaultdict(dict)
         enabled_frame_list = self._get_enabled_frame_list(video, None)
-        for l in lines:
-            frame, obj, score = l.split(',')
+        for l in lines:  # noqa: E741
+            frame, obj, score = l.split(",")
             if enabled_frame_list is not None and frame[:-4] not in enabled_frame_list:
                 continue
             scores[obj][frame[:-4]] = float(score)

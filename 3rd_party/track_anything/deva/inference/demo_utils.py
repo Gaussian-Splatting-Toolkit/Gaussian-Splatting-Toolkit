@@ -15,7 +15,9 @@ def get_input_frame_for_deva(image_np: np.ndarray, min_side: int) -> torch.Tenso
         scale = min_side / min(h, w)
         new_h, new_w = int(h * scale), int(w * scale)
         image = image.unsqueeze(0)
-        image = F.interpolate(image, (new_h, new_w), mode='bilinear', align_corners=False)[0]
+        image = F.interpolate(
+            image, (new_h, new_w), mode="bilinear", align_corners=False
+        )[0]
     return image.cuda()
 
 
@@ -23,12 +25,12 @@ def get_input_frame_for_deva(image_np: np.ndarray, min_side: int) -> torch.Tenso
 def flush_buffer(deva: DEVAInferenceCore, result_saver: ResultSaver) -> None:
     # process all the remaining frames in the buffer
     cfg = deva.config
-    new_min_side = cfg['size']
+    new_min_side = cfg["size"]
     need_resize = new_min_side > 0
 
-    if 'prompt' in cfg:
-        raw_prompt = cfg['prompt']
-        prompts = raw_prompt.split('.')
+    if "prompt" in cfg:
+        raw_prompt = cfg["prompt"]
+        prompts = raw_prompt.split(".")
     else:
         prompts = None
 
@@ -38,9 +40,11 @@ def flush_buffer(deva: DEVAInferenceCore, result_saver: ResultSaver) -> None:
         this_image_np = frame_info.image_np
         h, w = this_image_np.shape[:2]
         prob = deva.step(this_image, None, None)
-        result_saver.save_mask(prob,
-                               this_frame_name,
-                               need_resize=need_resize,
-                               shape=(h, w),
-                               image_np=this_image_np,
-                               prompts=prompts)
+        result_saver.save_mask(
+            prob,
+            this_frame_name,
+            need_resize=need_resize,
+            shape=(h, w),
+            image_np=this_image_np,
+            prompts=prompts,
+        )

@@ -20,23 +20,22 @@ def search_options(options, name):
     for option in options:
         if path.exists(path.join(option, name)):
             return path.join(option, name)
-    else:
-        return None
+    return None
 
 
 def process_vid(vid):
     vid_path = search_options(all_options, vid)
     if vid_path is not None:
-        backward_mapping = hkl.load(path.join(vid_path, 'backward.hkl'))
+        backward_mapping = hkl.load(path.join(vid_path, "backward.hkl"))
     else:
         backward_mapping = None
 
     frames = os.listdir(path.join(all_options[0], vid))
-    frames = [f for f in frames if 'backward' not in f]
+    frames = [f for f in frames if "backward" not in f]
 
     print(vid)
-    if 'Y' in args.dataset:
-        this_out_path = path.join(out_path, 'Annotations', vid)
+    if "Y" in args.dataset:
+        this_out_path = path.join(out_path, "Annotations", vid)
     else:
         this_out_path = path.join(out_path, vid)
     os.makedirs(this_out_path, exist_ok=True)
@@ -60,7 +59,7 @@ def process_vid(vid):
         # Remap the indices to the original domain
         if backward_mapping is not None:
             idx_mask = np.zeros_like(result_sum, dtype=np.uint8)
-            for l, i in backward_mapping.items():
+            for l, i in backward_mapping.items():  # noqa: E741
                 idx_mask[result_sum == i] = l
         else:
             idx_mask = result_sum.astype(np.uint8)
@@ -68,21 +67,23 @@ def process_vid(vid):
         # Save the results
         img_E = Image.fromarray(idx_mask)
         img_E.putpalette(palette)
-        img_E.save(path.join(this_out_path, f[:-4] + '.png'))
+        img_E.save(path.join(this_out_path, f[:-4] + ".png"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     Arguments loading
     """
     parser = ArgumentParser()
-    parser.add_argument('--dataset', default='Y', help='D/Y, D for DAVIS; Y for YouTubeVOS')
-    parser.add_argument('--list', nargs="+")
-    parser.add_argument('--pattern',
-                        default=None,
-                        help='Glob pattern. Can be used in place of list.')
-    parser.add_argument('--output')
-    parser.add_argument('--num_proc', default=4, type=int)
+    parser.add_argument(
+        "--dataset", default="Y", help="D/Y, D for DAVIS; Y for YouTubeVOS"
+    )
+    parser.add_argument("--list", nargs="+")
+    parser.add_argument(
+        "--pattern", default=None, help="Glob pattern. Can be used in place of list."
+    )
+    parser.add_argument("--output")
+    parser.add_argument("--num_proc", default=4, type=int)
     args = parser.parse_args()
 
     out_path = args.output
@@ -91,19 +92,23 @@ if __name__ == '__main__':
     if args.pattern is None:
         all_options = args.list
     else:
-        assert args.list is None, 'cannot specify both list and pattern'
+        assert args.list is None, "cannot specify both list and pattern"
         all_options = glob.glob(args.pattern)
 
     # Get the correct palette
-    if 'D' in args.dataset:
-        palette = ImagePalette.ImagePalette(mode='P', palette=davis_palette)
-    elif 'Y' in args.dataset:
-        palette = ImagePalette.ImagePalette(mode='P', palette=youtube_palette)
+    if "D" in args.dataset:
+        palette = ImagePalette.ImagePalette(  # noqa: F811
+            mode="P", palette=davis_palette
+        )
+    elif "Y" in args.dataset:
+        palette = ImagePalette.ImagePalette(  # noqa: F811
+            mode="P", palette=youtube_palette
+        )
     else:
         raise NotImplementedError
 
     # Count of the number of videos in each candidate
-    all_options = [path.join(o, 'Scores') for o in all_options]
+    all_options = [path.join(o, "Scores") for o in all_options]
     vid_count = defaultdict(int)
     for option in all_options:
         vid_in_here = sorted(os.listdir(option))
@@ -117,23 +122,29 @@ if __name__ == '__main__':
         all_vid.append(k)
 
     for k, v in count_to_vid.items():
-        print('Videos with count %d: %d' % (k, v))
+        print("Videos with count %d: %d" % (k, v))
 
     all_vid = sorted(all_vid)
-    print('Total number of videos: ', len(all_vid))
+    print("Total number of videos: ", len(all_vid))
 
     pool = Pool(processes=args.num_proc)
-    for _ in progressbar(pool.imap_unordered(process_vid, all_vid), max_value=len(all_vid)):
+    for _ in progressbar(
+        pool.imap_unordered(process_vid, all_vid), max_value=len(all_vid)
+    ):
         pass
 
     pool.close()
     pool.join()
 
-    if 'D' in args.dataset:
-        print('Making zip for DAVIS test-dev...')
-        shutil.make_archive(args.output, 'zip', args.output)
+    if "D" in args.dataset:
+        print("Making zip for DAVIS test-dev...")
+        shutil.make_archive(args.output, "zip", args.output)
 
-    if 'Y' in args.dataset:
-        print('Making zip for YouTubeVOS...')
-        shutil.make_archive(path.join(args.output, path.basename(args.output)), 'zip', args.output,
-                            'Annotations')
+    if "Y" in args.dataset:
+        print("Making zip for YouTubeVOS...")
+        shutil.make_archive(
+            path.join(args.output, path.basename(args.output)),
+            "zip",
+            args.output,
+            "Annotations",
+        )

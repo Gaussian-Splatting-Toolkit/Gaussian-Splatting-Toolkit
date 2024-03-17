@@ -26,11 +26,15 @@ def limit_max_id(input_path, output_path, max_num_objects=20):
             labels = labels[labels != 0]
             labels_area = [np.sum(mask == label) for label in labels]
 
-            labels_sorted_by_area = [x for _, x in sorted(zip(labels_area, labels), reverse=True)]
+            labels_sorted_by_area = [
+                x for _, x in sorted(zip(labels_area, labels), reverse=True)
+            ]
             if len(labels_sorted_by_area) + len(existing_objects) <= max_num_objects:
                 existing_objects += labels_sorted_by_area
             else:
-                existing_objects += labels_sorted_by_area[:max_num_objects - len(existing_objects)]
+                existing_objects += labels_sorted_by_area[
+                    : max_num_objects - len(existing_objects)
+                ]
 
             if len(existing_objects) == max_num_objects:
                 break
@@ -56,7 +60,7 @@ def limit_max_id(input_path, output_path, max_num_objects=20):
             mask.save(path.join(output_path, video, frame))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     input_path = sys.argv[1]
     output_path = sys.argv[2]
     limit_max_id(input_path, output_path)

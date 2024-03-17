@@ -1,6 +1,6 @@
 # Details on the Demo
 
-## Pipeline 
+## Pipeline
 
 The high-level description below is for the online setting. In the semi-online setting, the detections are first merged across a small clip.
 The first frame is always initialized with detection without propagation.
@@ -53,7 +53,7 @@ General:
 - `amp`: enable mixed precision; is faster and has a lower memory usage
 - `chunk_size`: number of objects to be processed in parallel; a higher number means faster inference but higher memory usage
 - `size`: internal processing resolution for the propagation module; defaults to 480
-- `max_missed_detection_count`: maximum number of consecutive detections that can be missed before an object is deleted from memory. 
+- `max_missed_detection_count`: maximum number of consecutive detections that can be missed before an object is deleted from memory.
 - `max_num_objects`: maximum number of objects that can be tracked at the same time; new objects are ignored if this is exceeded
 
 Text-prompted mode only:

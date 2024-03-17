@@ -2,11 +2,10 @@
 This file contains the implementation of the consensus where the assoication needs to be inferred.
 """
 
-from typing import List, Literal, Dict
+from typing import List, Literal, Dict, Tuple
 from collections import defaultdict
 import torch
 
-from deva.model.memory_utils import *
 from deva.model.network import DEVA
 from deva.inference.image_feature_store import ImageFeatureStore
 from deva.inference.object_info import ObjectInfo
@@ -17,16 +16,19 @@ from deva.utils.tensor_utils import pad_divide_by, unpad
 import numpy as np
 
 import pulp
+
 try:
     from gurobipy import GRB
     import gurobipy as gp
+
     use_gurobi = True
 except ImportError:
     use_gurobi = False
 
 
-def solve_with_gurobi(pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarray,
-                      total_segments: int) -> List[bool]:
+def solve_with_gurobi(
+    pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarray, total_segments: int
+) -> List[bool]:
     # All experiments in the paper are conducted with gurobi.
     m = gp.Model("solver")
     m.Params.LogToConsole = 0
@@ -41,7 +43,8 @@ def solve_with_gurobi(pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarr
         # few segments -- the paper says *0.5 but it's later found
         # that the experiments were done with alpha=1 -- should not have a major impact
         - x.sum(),
-        GRB.MAXIMIZE)
+        GRB.MAXIMIZE,
+    )
 
     # no two selected segments should have >0.5 iou
     m.addConstr((pairwise_iou_indicator * (x @ x.transpose())).sum() == 0, "iou")
@@ -52,22 +55,30 @@ def solve_with_gurobi(pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarr
     return results
 
 
-def solve_with_pulp(pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarray,
-                    total_segments: int) -> List[bool]:
+def solve_with_pulp(
+    pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarray, total_segments: int
+) -> List[bool]:
     # pulp is a fallback solver; no guarantee that it works the same
-    m = pulp.LpProblem('prob', pulp.LpMaximize)
-    x = pulp.LpVariable.dicts('x', range(total_segments), cat=pulp.LpBinary)
+    m = pulp.LpProblem("prob", pulp.LpMaximize)
+    x = pulp.LpVariable.dicts("x", range(total_segments), cat=pulp.LpBinary)
 
-    support_objective = pulp.LpAffineExpression([(x[i], pairwise_iou[:, i].sum() * 2)
-                                                 for i in range(total_segments)])
-    penal_objective = pulp.LpAffineExpression([(x[i], -1) for i in range(total_segments)])
+    support_objective = pulp.LpAffineExpression(
+        [(x[i], pairwise_iou[:, i].sum() * 2) for i in range(total_segments)]
+    )
+    penal_objective = pulp.LpAffineExpression(
+        [(x[i], -1) for i in range(total_segments)]
+    )
     m += support_objective + penal_objective
 
     for i in range(total_segments):
         for j in range(i + 1, total_segments):
             if pairwise_iou_indicator[i, j] == 1:
-                constraint = pulp.LpConstraint(pulp.LpAffineExpression([(x[i], 1), (x[j], 1)]),
-                                               pulp.LpConstraintLE, f'{i}-{j}', 1)
+                constraint = pulp.LpConstraint(
+                    pulp.LpAffineExpression([(x[i], 1), (x[j], 1)]),
+                    pulp.LpConstraintLE,
+                    f"{i}-{j}",
+                    1,
+                )
                 m += constraint
 
     # you can change the solver if you have others installed
@@ -79,13 +90,14 @@ def solve_with_pulp(pairwise_iou: np.ndarray, pairwise_iou_indicator: np.ndarray
     return results
 
 
-def find_consensus_auto_association(frames: List[FrameInfo],
-                                    keyframe_selection: Literal['last', 'middle', 'score',
-                                                                'first'] = 'last',
-                                    *,
-                                    network: DEVA,
-                                    store: ImageFeatureStore,
-                                    config: Dict) -> (int, torch.Tensor, List[ObjectInfo]):
+def find_consensus_auto_association(
+    frames: List[FrameInfo],
+    keyframe_selection: Literal["last", "middle", "score", "first"] = "last",
+    *,
+    network: DEVA,
+    store: ImageFeatureStore,
+    config: Dict,
+) -> Tuple[int, torch.Tensor, List[ObjectInfo]]:
     global use_gurobi
 
     time_indices = [f.ti for f in frames]
@@ -131,13 +143,13 @@ def find_consensus_auto_association(frames: List[FrameInfo],
         channel_to_id_mappings.append(this_channel_mapping)
 
     # find a keyframe
-    if keyframe_selection == 'last':
+    if keyframe_selection == "last":
         keyframe_i = len(time_indices) - 1
-    elif keyframe_selection == 'first':
+    elif keyframe_selection == "first":
         keyframe_i = 0
-    elif keyframe_selection == 'middle':
+    elif keyframe_selection == "middle":
         keyframe_i = (len(time_indices) + 1) // 2
-    elif keyframe_selection == 'score':
+    elif keyframe_selection == "score":
         keyframe_i = None
         raise NotImplementedError
     else:
@@ -151,7 +163,9 @@ def find_consensus_auto_association(frames: List[FrameInfo],
     projected_masks = []
     segment_id_to_areas = {}
     segment_id_to_mask = {}
-    for ti, image, mask, mapping in zip(time_indices, images, masks, channel_to_id_mappings):
+    for ti, image, mask, mapping in zip(
+        time_indices, images, masks, channel_to_id_mappings
+    ):
         if mask is None:
             # no detection -> no projection
             projected_masks.append(None)
@@ -159,11 +173,13 @@ def find_consensus_auto_association(frames: List[FrameInfo],
 
         if ti == keyframe_ti:
             # no need to project the keyframe
-            projected_mask = torch.cat([torch.ones_like(keyframe_mask[0:1]) * 0.5, keyframe_mask],
-                                       dim=0)
+            projected_mask = torch.cat(
+                [torch.ones_like(keyframe_mask[0:1]) * 0.5, keyframe_mask], dim=0
+            )
         else:
-            projected_mask = spatial_alignment(ti, image, mask, keyframe_ti, keyframe_image,
-                                               network, store, config)[0]
+            projected_mask = spatial_alignment(
+                ti, image, mask, keyframe_ti, keyframe_image, network, store, config
+            )[0]
         projected_mask = unpad(projected_mask, pads)
         # maps the projected mask back into the class index format
         projected_mask = torch.argmax(projected_mask, dim=0)
@@ -216,15 +232,20 @@ def find_consensus_auto_association(frames: List[FrameInfo],
                     for obj2 in frame_index_to_seg_info[j]:
                         mask2_id = obj2.id
                         # skip if already matched, since we only care IoU>0.5 which is unique
-                        if (obj2.isthing != isthing_status) or (mask2_id in matched_mask2_id):
+                        if (obj2.isthing != isthing_status) or (
+                            mask2_id in matched_mask2_id
+                        ):
                             continue
 
                         target_label = mask1_id * SCALING + mask2_id
                         intersection = (combined == target_label).sum().item()
                         if intersection == 0:
                             continue
-                        union = segment_id_to_areas[mask1_id] + \
-                                segment_id_to_areas[mask2_id] - intersection
+                        union = (
+                            segment_id_to_areas[mask1_id]
+                            + segment_id_to_areas[mask2_id]
+                            - intersection
+                        )
                         iou = intersection / union
                         if iou > 0.5:
                             matching_table[mask1_id].append(mask2_id)
@@ -237,16 +258,18 @@ def find_consensus_auto_association(frames: List[FrameInfo],
     pairwise_iou = pairwise_iou + pairwise_iou.T
     # same as >0.5 as we excluded IoU<=0.5
     # 0.49 is used for numerical reasons (probably doesn't actually matter)
-    pairwise_iou_indicator = (pairwise_iou > 0.49)
+    pairwise_iou_indicator = pairwise_iou > 0.49
     # suppress low confidence estimation
     pairwise_iou = pairwise_iou * pairwise_iou_indicator
     segments_area /= image_area  # normalization
 
     if use_gurobi:
         try:
-            results = solve_with_gurobi(pairwise_iou, pairwise_iou_indicator, total_segments)
+            results = solve_with_gurobi(
+                pairwise_iou, pairwise_iou_indicator, total_segments
+            )
         except gp.GurobiError:
-            print('GurobiError, falling back to pulp')
+            print("GurobiError, falling back to pulp")
             use_gurobi = False
     if not use_gurobi:
         results = solve_with_pulp(pairwise_iou, pairwise_iou_indicator, total_segments)
@@ -265,7 +288,9 @@ def find_consensus_auto_association(frames: List[FrameInfo],
                 new_object_info.merge(all_new_segments_info[other_object_id])
             output_info.append(new_object_info)
 
-    sorted_by_area = sorted(matched_object_id_to_area.items(), key=lambda x: x[1], reverse=True)
+    sorted_by_area = sorted(
+        matched_object_id_to_area.items(), key=lambda x: x[1], reverse=True
+    )
     for object_id, _ in sorted_by_area:
         output_mask[segment_id_to_mask[object_id]] = object_id
 

@@ -1,6 +1,6 @@
 """
 Group-specific modules
-They handle features that also depends on the mask. 
+They handle features that also depends on the mask.
 Features are typically of shape
     batch_size * num_objects * num_channels * H * W
 
@@ -8,33 +8,41 @@ All of them are permutation equivariant w.r.t. to the num_objects dimension
 """
 from typing import Optional
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
 from deva.model.cbam import CBAM
 
 
-def interpolate_groups(g: torch.Tensor, ratio: float, mode: str, align_corners: bool) -> torch.Tensor:
+def interpolate_groups(
+    g: torch.Tensor, ratio: float, mode: str, align_corners: bool
+) -> torch.Tensor:
     batch_size, num_objects = g.shape[:2]
-    g = F.interpolate(g.flatten(start_dim=0, end_dim=1),
-                      scale_factor=ratio,
-                      mode=mode,
-                      align_corners=align_corners)
+    g = F.interpolate(
+        g.flatten(start_dim=0, end_dim=1),
+        scale_factor=ratio,
+        mode=mode,
+        align_corners=align_corners,
+    )
     g = g.view(batch_size, num_objects, *g.shape[1:])
     return g
 
 
-def upsample_groups(g: torch.Tensor,
-                    ratio: float = 2,
-                    mode: str = 'bilinear',
-                    align_corners: bool = False) -> torch.Tensor:
+def upsample_groups(
+    g: torch.Tensor,
+    ratio: float = 2,
+    mode: str = "bilinear",
+    align_corners: bool = False,
+) -> torch.Tensor:
     return interpolate_groups(g, ratio, mode, align_corners)
 
 
-def downsample_groups(g: torch.Tensor,
-                      ratio: float = 1 / 2,
-                      mode: str = 'area',
-                      align_corners: bool = None) -> torch.Tensor:
+def downsample_groups(
+    g: torch.Tensor,
+    ratio: float = 1 / 2,
+    mode: str = "area",
+    align_corners: bool = None,
+) -> torch.Tensor:
     return interpolate_groups(g, ratio, mode, align_corners)
 
 
@@ -90,11 +98,13 @@ class ResMLP(nn.Module):
 
 
 class MainToGroupDistributor(nn.Module):
-    def __init__(self,
-                 x_transform: Optional[nn.Module] = None,
-                 g_transform: Optional[nn.Module] = None,
-                 method: str = 'cat',
-                 reverse_order: bool = False):
+    def __init__(
+        self,
+        x_transform: Optional[nn.Module] = None,
+        g_transform: Optional[nn.Module] = None,
+        method: str = "cat",
+        reverse_order: bool = False,
+    ):
         super().__init__()
 
         self.x_transform = x_transform
@@ -102,7 +112,9 @@ class MainToGroupDistributor(nn.Module):
         self.method = method
         self.reverse_order = reverse_order
 
-    def forward(self, x: torch.Tensor, g: torch.Tensor, skip_expand: bool = False) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, g: torch.Tensor, skip_expand: bool = False
+    ) -> torch.Tensor:
         num_objects = g.shape[1]
 
         if self.x_transform is not None:
@@ -113,16 +125,16 @@ class MainToGroupDistributor(nn.Module):
 
         if not skip_expand:
             x = x.unsqueeze(1).expand(-1, num_objects, -1, -1, -1)
-        if self.method == 'cat':
+        if self.method == "cat":
             if self.reverse_order:
                 g = torch.cat([g, x], 2)
             else:
                 g = torch.cat([x, g], 2)
-        elif self.method == 'add':
+        elif self.method == "add":
             g = x + g
-        elif self.method == 'mulcat':
+        elif self.method == "mulcat":
             g = torch.cat([x * g, g], dim=2)
-        elif self.method == 'muladd':
+        elif self.method == "muladd":
             g = x * g + g
         else:
             raise NotImplementedError

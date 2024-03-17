@@ -10,6 +10,7 @@ class ObjectManager:
     Object (real) IDs are immutable. The same ID always represent the same object.
     Temporary IDs are the positions of each object in the tensor. It changes as objects get removed.
     """
+
     def __init__(self):
         self.obj_to_tmp_id: Dict[ObjectInfo, int] = {}
         self.tmp_id_to_obj: Dict[int, ObjectInfo] = {}
@@ -24,8 +25,8 @@ class ObjectManager:
         self.obj_id_to_obj = {obj.id: obj for obj in self.obj_to_tmp_id}
 
     def add_new_objects(
-            self, objects: Union[List[ObjectInfo], ObjectInfo,
-                                 List[int]]) -> (List[int], List[int]):
+        self, objects: Union[List[ObjectInfo], ObjectInfo, List[int]]
+    ) -> (List[int], List[int]):
         if not isinstance(objects, list):
             objects = [objects]
 
@@ -39,8 +40,9 @@ class ObjectManager:
             # simple heuristic to determine RGB/0~255; works most of the time except when it doesn't
             count = 0
             new_obj = ObjectInfo(id=obj.id)
-            while (new_obj.id in self.all_historical_object_ids) or (self.use_long_id
-                                                                     and new_obj.id < 256):
+            while (new_obj.id in self.all_historical_object_ids) or (
+                self.use_long_id and new_obj.id < 256
+            ):
                 if self.use_long_id:
                     new_id = np.random.randint(256, 256**3)
                 else:
@@ -49,8 +51,10 @@ class ObjectManager:
                 count += 1
 
                 if count > 5000:
-                    raise ValueError("We cannot find a new ID for this object." +
-                                     "Perhaps you should use long ID?")
+                    raise ValueError(
+                        "We cannot find a new ID for this object."
+                        + "Perhaps you should use long ID?"
+                    )
             new_obj.copy_meta_info(obj)
 
             # new object
@@ -62,7 +66,9 @@ class ObjectManager:
             corresponding_obj_ids.append(new_obj.id)
 
         self._recompute_obj_id_to_obj_mapping()
-        assert corresponding_tmp_ids == sorted(corresponding_tmp_ids), 'tmp id assignment bugged'
+        assert corresponding_tmp_ids == sorted(
+            corresponding_tmp_ids
+        ), "tmp id assignment bugged"
         return corresponding_tmp_ids, corresponding_obj_ids
 
     def delete_object(self, obj_ids_to_remove: Union[int, List[int]]) -> None:
@@ -88,8 +94,9 @@ class ObjectManager:
         self.tmp_id_to_obj = local_tmp_to_obj_id
         self._recompute_obj_id_to_obj_mapping()
 
-    def purge_inactive_objects(self,
-                               max_missed_detection_count: int) -> (bool, List[int], List[int]):
+    def purge_inactive_objects(
+        self, max_missed_detection_count: int
+    ) -> (bool, List[int], List[int]):
         # remove tmp ids of objects that are removed
         obj_id_to_be_deleted = []
         tmp_id_to_be_deleted = []
@@ -135,7 +142,9 @@ class ObjectManager:
         for _, obj in self.tmp_id_to_obj.items():
             output.append(cls_mask == obj.id)
         if len(output) == 0:
-            output = torch.zeros((0, *cls_mask.shape), dtype=torch.bool, device=cls_mask.device)
+            output = torch.zeros(
+                (0, *cls_mask.shape), dtype=torch.bool, device=cls_mask.device
+            )
         else:
             output = torch.stack(output, dim=0)
         return output
@@ -143,11 +152,13 @@ class ObjectManager:
     def get_current_segments_info(self) -> List[Dict]:
         segments_info = []
         for obj in self.obj_to_tmp_id:
-            segments_info.append({
-                'category_id': obj.vote_category_id(),
-                'id': int(obj.id),
-                'score': obj.vote_score(),
-            })
+            segments_info.append(
+                {
+                    "category_id": obj.vote_category_id(),
+                    "id": int(obj.id),
+                    "score": obj.vote_score(),
+                }
+            )
         return segments_info
 
     @property

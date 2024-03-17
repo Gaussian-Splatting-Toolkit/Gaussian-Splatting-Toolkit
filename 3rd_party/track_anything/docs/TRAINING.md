@@ -37,13 +37,13 @@ To generate OVIS-VOS-train, use something like https://github.com/youtubevos/vis
 
 ## Training Command
 The training command is the same as in XMem. We tried training with 4/8 GPUs.
-With 8 GPUs, 
+With 8 GPUs,
 ```
 python -m torch.distributed.run --master_port 25763 --nproc_per_node=8 deva/train.py --exp_id deva_retrain --stage 03
 ```
-- Change `nproc_per_node` to change the number of GPUs. 
-- Prepend `CUDA_VISIBLE_DEVICES=...` if you want to use specific GPUs. 
-- Change `master_port` if you encounter port collision. 
-- `exp_id` is a unique experiment identifier that does not affect how the training is done. 
-- Models will be saved in `./saves/`. 
+- Change `nproc_per_node` to change the number of GPUs.
+- Prepend `CUDA_VISIBLE_DEVICES=...` if you want to use specific GPUs.
+- Change `master_port` if you encounter port collision.
+- `exp_id` is a unique experiment identifier that does not affect how the training is done.
+- Models will be saved in `./saves/`.
 - We simply use the last trained model without model selection.

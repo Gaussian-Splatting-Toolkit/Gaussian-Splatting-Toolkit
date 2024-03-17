@@ -1,4 +1,3 @@
-import os
 from os import path
 from argparse import ArgumentParser
 
@@ -18,7 +17,7 @@ from deva.ext.automatic_processor import process_frame_automatic as process_fram
 from tqdm import tqdm
 import json
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     torch.autograd.set_grad_enabled(False)
 
     # for id2rgb
@@ -32,32 +31,41 @@ if __name__ == '__main__':
     add_ext_eval_args(parser)
     add_auto_default_args(parser)
     deva_model, cfg, args = get_model_and_config(parser)
-    sam_model = get_sam_model(cfg, 'cuda')
+    sam_model = get_sam_model(cfg, "cuda")
     """
     Temporal setting
     """
-    cfg['temporal_setting'] = args.temporal_setting.lower()
-    assert cfg['temporal_setting'] in ['semionline', 'online']
+    cfg["temporal_setting"] = args.temporal_setting.lower()
+    assert cfg["temporal_setting"] in ["semionline", "online"]
 
     # get data
-    video_reader = SimpleVideoReader(cfg['img_path'])
-    loader = DataLoader(video_reader, batch_size=None, collate_fn=no_collate, num_workers=8)
-    out_path = cfg['output']
+    video_reader = SimpleVideoReader(cfg["img_path"])
+    loader = DataLoader(
+        video_reader, batch_size=None, collate_fn=no_collate, num_workers=8
+    )
+    out_path = cfg["output"]
 
     # Start eval
     vid_length = len(loader)
     # no need to count usage for LT if the video is not that long anyway
-    cfg['enable_long_term_count_usage'] = (
-        cfg['enable_long_term']
-        and (vid_length / (cfg['max_mid_term_frames'] - cfg['min_mid_term_frames']) *
-             cfg['num_prototypes']) >= cfg['max_long_term_elements'])
+    cfg["enable_long_term_count_usage"] = (
+        cfg["enable_long_term"]
+        and (
+            vid_length
+            / (cfg["max_mid_term_frames"] - cfg["min_mid_term_frames"])
+            * cfg["num_prototypes"]
+        )
+        >= cfg["max_long_term_elements"]
+    )
 
-    print('Configuration:', cfg)
+    print("Configuration:", cfg)
 
     deva = DEVAInferenceCore(deva_model, config=cfg)
     deva.next_voting_frame = args.num_voting_frames - 1
     deva.enabled_long_id()
-    result_saver = ResultSaver(out_path, None, dataset='demo', object_manager=deva.object_manager)
+    result_saver = ResultSaver(
+        out_path, None, dataset="demo", object_manager=deva.object_manager
+    )
 
     with torch.cuda.amp.autocast(enabled=args.amp):
         for ti, (frame, im_path) in enumerate(tqdm(loader)):
@@ -66,5 +74,5 @@ if __name__ == '__main__':
     result_saver.end()
 
     # save this as a video-level json
-    with open(path.join(out_path, 'pred.json'), 'w') as f:
+    with open(path.join(out_path, "pred.json"), "w") as f:
         json.dump(result_saver.video_json, f, indent=4)  # prettier json

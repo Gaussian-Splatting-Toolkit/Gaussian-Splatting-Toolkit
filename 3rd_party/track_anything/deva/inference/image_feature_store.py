@@ -13,6 +13,7 @@ class ImageFeatureStore:
 
     Feature of a frame should be associated with a unique index -- typically the frame id.
     """
+
     def __init__(self, network: DEVA, no_warning: bool = False):
         self.network = network
         self._store = {}
@@ -45,4 +46,4 @@ class ImageFeatureStore:
 
     def __del__(self):
         if len(self._store) > 0 and not self.no_warning:
-            warnings.warn(f'Leaking {self._store.keys()} in the image feature store')
+            warnings.warn(f"Leaking {self._store.keys()} in the image feature store")

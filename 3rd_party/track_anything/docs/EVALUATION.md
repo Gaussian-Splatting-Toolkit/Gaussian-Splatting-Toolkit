@@ -9,7 +9,7 @@ The scripts are:
 4. Referring Video Object Segmentation (Ref-VOS) evaluation for the Ref-DAVIS dataset
 5. Referring Video Object Segmentation (Ref-VOS) evaluation for the Ref-YouTubeVOS dataset
 
-Only (1) is standalone. (2)-(5) require detections from an image model. 
+Only (1) is standalone. (2)-(5) require detections from an image model.
 
 We provide:
 1. Pretrained DEVA model (which you can obtain from `scripts/download_models.sh`).
@@ -23,17 +23,17 @@ Here are some of the useful argument options that are shared for all the evaluat
 - Specify `--amp` to use mixed precision for faster processing with a lower memory footprint.
 - Specify `--size [xxx]` to change the internal processing resolution. The default is 480.
 - Specify `--chunk_size [xxx]` to change the number of objects processed at once. The default is -1, which means all objects are processed in a single pass as a batch.
-- Specify `--model [xxx]` to change the path to the pretrained DEVA model. 
+- Specify `--model [xxx]` to change the path to the pretrained DEVA model.
 
 ## Video Object Segmentation
 
 ```bash
-python evaluation/eval_vos.py --dataset [dataset] --output [output directory] 
+python evaluation/eval_vos.py --dataset [dataset] --output [output directory]
 ```
 
 - Possible options for [dataset]: `D16` (DAVIS 2016), `D17` (DAVIS 2017), `Y18` (YouTubeVOS-2018), `Y19` (YouTubeVOS-2019), and `G` (Generic dataset, see below).
 - Specify `--split test` to test on the DAVIS 2017 test-dev set.
-- For generic dataset, additionally specify `--generic_path`. It should point to a directory that contains `JPEGImages` and `Annotations`. In each of those folders, there should be directories of the same name as the video names. Each of those directories should contain the images or annotations for the video. 
+- For generic dataset, additionally specify `--generic_path`. It should point to a directory that contains `JPEGImages` and `Annotations`. In each of those folders, there should be directories of the same name as the video names. Each of those directories should contain the images or annotations for the video.
 - By default, we only use the first-frame annotation in the generic mode. Specify `--use_all_masks` to incorporate new objects (as in the YouTubeVOS dataset).
 
 To get quantitative results:
@@ -50,7 +50,7 @@ To get quantitative results:
 
 **VIPSeg:**
 
-Download VIPSeg from https://github.com/VIPSeg-Dataset/VIPSeg-Dataset and 
+Download VIPSeg from https://github.com/VIPSeg-Dataset/VIPSeg-Dataset and
 convert the data into 720p using their scripts.
 
 Then,
@@ -58,7 +58,7 @@ Then,
 python evaluation/eval_with_detections.py \
 --mask_path [path to detections] --img_path [path to 720p VIPSeg images] \
 --dataset vipseg --temporal_setting [online/semionline] \
---output [output directory] --chunk_size 4 
+--output [output directory] --chunk_size 4
 ```
 
 Quantitative results should be computed automatically.
@@ -78,7 +78,7 @@ Then,
 python evaluation/eval_with_detections.py \
 --mask_path [path to detections] --img_path [path to BURST images] \
 --dataset burst  --save_all --temporal_setting [online/semionline] \
---output [output directory] --chunk_size 4 
+--output [output directory] --chunk_size 4
 ```
 
 Quantitative results can be obtained using https://github.com/Ali2500/BURST-benchmark.
@@ -89,7 +89,7 @@ Detection models:
 
 **DAVIS 2017:**
 
-Download DAVIS 2017 from https://davischallenge.org/. 
+Download DAVIS 2017 from https://davischallenge.org/.
 
 Then,
 ```bash
@@ -106,7 +106,7 @@ Detection models:
 
 **Demo:**
 
-We provide a demo script that runs DEVA on a single video. 
+We provide a demo script that runs DEVA on a single video.
 ```bash
 python evaluation/eval_with_detections.py  \
 --mask_path ./example/vipseg/source --img_path ./example/vipseg/images \
@@ -116,7 +116,7 @@ python evaluation/eval_with_detections.py  \
 
 ## Unsupervised (Salient) Video Object Segmentation
 
-Download DAVIS 2016 from https://davischallenge.org/. 
+Download DAVIS 2016 from https://davischallenge.org/.
 ```bash
 python evaluation/eval_saliency.py \
 --mask_path [path to detections] --img_path [path to 480p DAVIS images] \
@@ -136,7 +136,7 @@ DIS: https://github.com/xuebinqin/DIS
 
 Download Referring-DAVIS from https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/research/video-segmentation/video-object-segmentation-with-language-referring-expressions.
 
-Then, 
+Then,
 ```bash
 python evaluation/eval_ref_davis.py \
 --mask_path [path to detections] --img_path [path to 480p DAVIS images] \
@@ -154,7 +154,7 @@ ReferFormer: https://github.com/wjn922/ReferFormer
 
 Download Referring-YouTubeVOS from https://youtube-vos.org/dataset/rvos/.
 
-Then, 
+Then,
 ```bash
 python evaluation/eval_ref_youtubevos.py \
 --mask_path [path to detections] --img_path [path to YouTubeVOS images] \

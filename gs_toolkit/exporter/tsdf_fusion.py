@@ -1,3 +1,4 @@
+from pathlib import Path
 import open3d as o3d
 import numpy as np
 import json
@@ -5,8 +6,9 @@ from rich.progress import track
 
 
 class CameraPose:
-    def __init__(self, meta, mat) -> None:
+    def __init__(self, meta, mat, intrinsic) -> None:
         self.metadata = meta
+        self.intrinsic = intrinsic
         self.pose = mat
 
     def __str__(self) -> str:
@@ -20,41 +22,37 @@ class CameraPose:
         )
 
 
-class RGBDFusion:
+class TSDFFusion:
     def __init__(
         self,
-        intrinsic: o3d.camera.PinholeCameraIntrinsic,
-        data_path: str,
-        save_path: str = None,
+        data_path: Path,
         using_OpenGL_world_coord: bool = False,
         method: str = "marching_cubes",
-        experiment_name: str = "experiment",
+        voxel_length: float = 4.0 / 512.0,
+        sdf_trunc: float = 0.04,
         mask: bool = False,
-        device: str = "cuda:0",
-        filter_ply: bool = False,
-        bounding_box: bool = True,
+        filter_pcd: bool = False,
+        bounding_box: bool = False,
     ) -> None:
-        self.intrinsic = intrinsic
         self.data_path = data_path
-        self.save_path = save_path
         self.use_OpenGL_world_coord = using_OpenGL_world_coord
         self.method = method
-        self.camera_poses_path = self.data_path + "/poses.json"
+        self.camera_poses_path = self.data_path / "poses.json"
         self.camera_poses = self.read_trajectory()
-        self.experiment_name = experiment_name
         self.mask = mask
-        self.device = o3d.core.Device(device)
-        self.filter_ply = filter_ply
+        self.filter_pcd = filter_pcd
         self.bounding_box = bounding_box
+        self.voxel_length = voxel_length
+        self.sdf_trunc = sdf_trunc
 
     def read_trajectory(self) -> list[CameraPose]:
         traj = []
         # Read from json file
         f = open(self.camera_poses_path, "r")
         data = json.load(f)
-        for idx, pose in enumerate(data["camera_path"]):
+        for idx, camera in enumerate(data):
             metadata = idx
-            mat = np.array(pose)
+            mat = np.array(camera["pose"])
             if self.use_OpenGL_world_coord:
                 mat[2, :] *= -1
                 mat = mat[np.array([1, 0, 2, 3]), :]
@@ -63,13 +61,21 @@ class RGBDFusion:
                 [[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
             )
             mat = transform @ mat
-            traj.append(CameraPose(metadata, mat))
+            intrinsic = o3d.camera.PinholeCameraIntrinsic(
+                width=camera["camera"]["width"],
+                height=camera["camera"]["height"],
+                fx=camera["camera"]["fx"],
+                fy=camera["camera"]["fy"],
+                cx=camera["camera"]["cx"],
+                cy=camera["camera"]["cy"],
+            )
+            traj.append(CameraPose(metadata, mat, intrinsic))
         return traj
 
     def integrate(self) -> o3d.pipelines.integration.ScalableTSDFVolume:
         volume = o3d.pipelines.integration.ScalableTSDFVolume(
-            voxel_length=4.0 / 512.0,
-            sdf_trunc=0.04,
+            voxel_length=self.voxel_length,
+            sdf_trunc=self.sdf_trunc,
             color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
         )
 
@@ -78,10 +84,14 @@ class RGBDFusion:
             description="Integrating",
             total=len(self.camera_poses),
         ):
-            color = o3d.io.read_image(self.data_path + f"/rgb/frame_{i:05}.png")
-            depth = o3d.io.read_image(self.data_path + f"/depth/depth_{i:05}.png")
+            color = o3d.io.read_image(str(self.data_path / "rgb" / f"frame_{i:05}.png"))
+            depth = o3d.io.read_image(
+                str(self.data_path / "depth" / f"depth_{i:05}.png")
+            )
             if self.mask:
-                mask = o3d.io.read_image(self.data_path + f"/mask/frame_{i:05}.png")
+                mask = o3d.io.read_image(
+                    str(self.data_path / "mask" / f"frame_{i:05}.png")
+                )
                 # Set depth to 0 where mask is 0
                 mask_np = np.asarray(mask)
                 if self.bounding_box:
@@ -99,7 +109,9 @@ class RGBDFusion:
             rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
                 color, depth, depth_trunc=4.0, convert_rgb_to_intensity=False
             )
-            volume.integrate(rgbd, self.intrinsic, np.linalg.inv(camera_pose.pose))
+            volume.integrate(
+                rgbd, camera_pose.intrinsic, np.linalg.inv(camera_pose.pose)
+            )
 
         return volume
 
@@ -112,7 +124,7 @@ class RGBDFusion:
             pcd = volume.extract_point_cloud()
             return mesh, pcd
         elif self.method == "poisson":
-            if self.filter_ply:
+            if self.filter_pcd:
                 pcd = self.filter_point(volume)
             else:
                 pcd = volume.extract_point_cloud()
