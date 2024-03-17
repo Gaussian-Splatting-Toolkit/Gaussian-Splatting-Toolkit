@@ -26,7 +26,7 @@ A Gaussian Splatting Toolkit for robotics research. Developed based on nerfstudi
 
 To install the Gaussian Splatting Toolkit, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/H-tr/gaussian-splatting-toolkit.git`
+1. Clone the repository: `git clone https://github.com/H-tr/gaussian-splatting-toolkit.git --recursive`
 2. Navigate to the toolkit directory: `cd gaussian-splatting-toolkit`
 3. Install the third party dictionaries
 4. Install dependencies: `pip install -e .`
@@ -104,13 +104,19 @@ gs-render pose --config-file /path/to/config.yml --output-dir /path/to/output/fo
 Export the gaussians as ply
 
 ```bash
-gs-export gaussian-splat --load-config /path/to/config.yml --output-dir exports/pcd/
+gs-export gaussian-splat --load-config /path/to/config.yml --output-dir exports/gaussians/
 ```
 
 Export camera poses
 
 ```bash
 gs-export camera-poses --load-config /path/to/config.yml --output-dir exports/cameras/
+```
+
+Export the point cloud
+
+```bash
+gs-export point-cloud --load-config /path/to/config.yml --output-dir exports/pcd/
 ```
 
 ## Contribute

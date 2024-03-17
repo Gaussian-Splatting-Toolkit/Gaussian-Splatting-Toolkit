@@ -143,7 +143,7 @@ class ExportGaussianSplat(Exporter):
 
 @dataclass
 class ExportPointCloud(Exporter):
-    """Export NeRF as a point cloud."""
+    """Export Gaussian Splatting as a point cloud."""
 
     """Number of points to generate. May result in less if outlier removal is used."""
     remove_outliers: bool = True
@@ -231,11 +231,47 @@ class ExportPointCloud(Exporter):
         CONSOLE.print("[bold green]:white_check_mark: Saving Point Cloud")
 
 
+@dataclass
+class ExportTSDF(Exporter):
+    """Export Gaussian Splatting as a point cloud and a mesh using tsdf fusion."""
+
+    mesh_method: Literal["marching_cubes", "poisson"] = "marching_cubes"
+    """Method to use for meshing."""
+    using_mask: bool = False
+    """Whether to use the mask for meshing."""
+    filter_pcd: bool = False
+    """Whether to filter the masked point cloud."""
+    bounding_box: bool = False
+    """Whether to use the bounding box for meshing."""
+    using_gt: bool = False
+    """Whether to use ground truth for meshing."""
+    render_path: Optional[Path] = None
+    """Path to the rendered images."""
+
+    def main(self) -> None:
+        """Export point cloud."""
+
+        # If not rendered, render the model
+        if self.render_path is None:
+            raise ValueError("You need to render first for TSDF export")
+
+        CONSOLE.print(f"[bold green]:white_check_mark: Generated {pcd}")
+        CONSOLE.print("Saving Point Cloud...")
+        tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+        # The legacy PLY writer converts colors to UInt8,
+        # let us do the same to save space.
+        tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)  # type: ignore
+        o3d.t.io.write_point_cloud(str(self.output_dir / "point_cloud.ply"), tpcd)
+        print("\033[A\033[A")
+        CONSOLE.print("[bold green]:white_check_mark: Saving Point Cloud")
+
+
 Commands = tyro.conf.FlagConversionOff[
     Union[
         Annotated[ExportGaussianSplat, tyro.conf.subcommand(name="gaussian-splat")],
         Annotated[ExportCameraPoses, tyro.conf.subcommand(name="camera-poses")],
         Annotated[ExportPointCloud, tyro.conf.subcommand(name="point-cloud")],
+        Annotated[ExportTSDF, tyro.conf.subcommand(name="offline-tsdf")],
     ]
 ]
 

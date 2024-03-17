@@ -6,7 +6,7 @@ import cv2
 from PIL import Image
 
 import numpy as np
-from gs_toolkit.render.render import Renderer
+from gs_toolkit.render.renderer import Renderer
 from gs_toolkit.utils.eval_utils import eval_setup
 import json
 import tyro
@@ -47,7 +47,6 @@ class RenderFromTrajectory:
         CONSOLE.print(f"Total number of frames: {num}")
         interval = num // self.num_frames_target
         assert interval > 0
-        poses = []
         # Render
         idx = 0
         for i in track(range(0, num, interval), description="Rendering"):
@@ -64,24 +63,13 @@ class RenderFromTrajectory:
             depth_path = self.output_dir / "depth" / f"depth_{idx:05d}.png"
             depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
             depth.save(str(depth_path))
-            # pose[:3, 3] = pose[:3, 3] * 1000
-            poses.append(pose)
             idx += 1
-        # Save poses in json
-        poses = np.array(poses)
-        poses = poses.tolist()
-        poses = {"camera_path": poses}
-        poses_path = self.output_dir / "poses.json"
-        with open(poses_path, "w") as f:
-            json.dump(poses, f)
 
 
 @dataclass
 class RenderFromCameraPoses:
     config_file: Path
     output_dir: Path
-    width: int = 1280
-    height: int = 720
 
     def __post_init__(self):
         self._validate()
@@ -110,20 +98,27 @@ class RenderFromCameraPoses:
 
     def main(self):
         # Render
-        poses = []
+        traj = []
         _, pipeline, _, _ = eval_setup(self.config_file)
         cameras = pipeline.datamanager.train_dataset.cameras
         image_filenames = pipeline.datamanager.train_dataset.image_filenames
 
         for i in track(range(len(cameras)), description="Rendering training set"):
             # camera = camera.squeeze(0)
+            node = {}
             camera = cameras[i]
-            # Image file name is the last part of the path
-            # image_filename = str(image_filenames[i]).split("/")[-1].split(".")[0]
+            node["camera"] = {
+                "width": int(camera.width.cpu().numpy()),
+                "height": int(camera.height.cpu().numpy()),
+                "fx": float(camera.fx.cpu().numpy()),
+                "fy": float(camera.fy.cpu().numpy()),
+                "cx": float(camera.cx.cpu().numpy()),
+                "cy": float(camera.cy.cpu().numpy()),
+            }
             pose = camera.camera_to_worlds.cpu().numpy()
             pose = np.vstack([pose, np.array([0, 0, 0, 1])])
             self.renderer.get_output_from_pose(
-                pose, width=self.width, height=self.height
+                pose, width=camera.width, height=camera.height
             )
             # Save rgb image
             rgb = self.renderer.rgb
@@ -136,7 +131,9 @@ class RenderFromCameraPoses:
             depth.save(str(depth_path))
             pose = camera.camera_to_worlds.cpu().numpy()
             pose = np.vstack([pose, np.array([0, 0, 0, 1])])
-            poses.append(pose)
+            node["pose"] = pose.tolist()
+
+            traj.append(node)
 
             # Copy the ground truth rgb and depth images to the output directory
             rgb_gt_path = image_filenames[i]
@@ -160,12 +157,9 @@ class RenderFromCameraPoses:
             shutil.move(str(self.gt_rgb_path / rgb_gt_path.name), str(new_name))
 
         # Write the poses to a file
-        poses = np.array(poses)
-        poses = poses.tolist()
-        poses = {"camera_path": poses}
         poses_path = self.output_dir / "poses.json"
         with open(poses_path, "w") as f:
-            json.dump(poses, f)
+            json.dump(traj, f)
 
 
 Commands = tyro.conf.FlagConversionOff[

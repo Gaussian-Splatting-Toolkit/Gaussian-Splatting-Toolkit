@@ -1,4 +1,4 @@
-from gs_toolkit.render.render import Renderer
+from gs_toolkit.render.renderer import Renderer
 from pathlib import Path
 import numpy as np
 
