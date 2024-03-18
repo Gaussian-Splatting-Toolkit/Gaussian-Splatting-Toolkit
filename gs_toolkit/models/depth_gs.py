@@ -73,7 +73,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """weight of ssim loss"""
     depth_lambda: float = 0.2
     """weight of depth loss"""
-    stop_split_at: int = 10_000
+    stop_split_at: int = 13_000
     """stop splitting at this step"""
     sh_degree: int = 3
     """maximum degree of spherical harmonics to use"""
@@ -99,6 +99,18 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     However, PLY exported with antialiased rasterize mode is not compatible with classic mode. Thus many web viewers that
     were implemented for classic mode can not render antialiased mode PLY properly without modifications.
     """
+    use_sparse_loss: bool = True
+    """If True, use sparse loss for alpha channel"""
+    sparse_lambda: float = 0.1
+    """weight of sparse loss"""
+    sparse_loss_start_iteration: int = 10_000
+    """start iteration of sparse loss"""
+    use_depth_loss: bool = True
+    """If True, use depth loss"""
+    depth_lambda: float = 0.1
+    """weight of depth loss"""
+    depth_loss_start_iteration: int = 10_000
+    """start iteration of depth loss"""
 
 
 class DepthGSModel(GaussianSplattingModel):
@@ -116,8 +128,8 @@ class DepthGSModel(GaussianSplattingModel):
         seed_points: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         **kwargs,
     ):
-        self.seed_points = seed_points
-        super().__init__(*args, **kwargs)
+        # self.seed_points = seed_points
+        super().__init__(seed_points=seed_points, *args, **kwargs)
 
     def _downscale_if_required(self, image):
         d = self._get_downscale_factor()
@@ -377,7 +389,7 @@ class DepthGSModel(GaussianSplattingModel):
         gt_img = self.composite_with_background(
             self.get_gt_img(batch["image"]), outputs["background"]
         )
-        if "depth" in batch:
+        if "depth" in batch and self.step > self.config.depth_loss_start_iteration:
             gt_depth = self.get_gt_img(batch["depth"])
         pred_img = outputs["rgb"]
         pred_depth = outputs["depth"]
@@ -403,6 +415,7 @@ class DepthGSModel(GaussianSplattingModel):
         )
         loss_dict["main_loss"] = (1 - self.config.ssim_lambda) * Ll1
         +self.config.ssim_lambda * simloss
+
         if self.config.use_scale_regularization and self.step % 10 == 0:
             scale_exp = torch.exp(self.scales)
             scale_reg = (
@@ -416,9 +429,24 @@ class DepthGSModel(GaussianSplattingModel):
         else:
             scale_reg = torch.tensor(0.0).to(self.device)
 
+        if (
+            self.config.use_sparse_loss
+            and self.step % 10 == 0
+            and self.step > self.config.sparse_loss_start_iteration
+        ):
+            l_sparse = (
+                torch.log(self.gauss_params["opacities"] + 1e-6)
+                + torch.log(1 - self.gauss_params["opacities"] + 1e-6)
+            ).mean()
+            loss_dict["sparse_loss"] = self.config.sparse_lambda * l_sparse
+
         loss_dict["scale_reg"] = scale_reg
 
-        if "depth" in batch:
+        if (
+            "depth" in batch
+            and self.config.use_depth_loss
+            and self.step > self.config.depth_loss_start_iteration
+        ):
             depth_nonzero = gt_depth > 0
             pred_depth = pred_depth.squeeze(-1)
             Ll1_depth = torch.abs(

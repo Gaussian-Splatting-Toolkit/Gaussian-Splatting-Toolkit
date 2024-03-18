@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=11.8.0
+ARG CUDA_VERSION=12.1.0
 ARG OS_VERSION=22.04
 ARG USER_ID=1000
 # Define base image.
@@ -166,12 +166,12 @@ SHELL ["/bin/bash", "-c"]
 RUN python3.10 -m pip install --upgrade pip setuptools pathtools promise pybind11
 # Install pytorch and submodules
 RUN CUDA_VER=${CUDA_VERSION%.*} && CUDA_VER=${CUDA_VER//./} && python3.10 -m pip install \
-    torch==2.0.1+cu${CUDA_VER} \
-    torchvision==0.15.2+cu${CUDA_VER} \
+    torch==2.2.0+cu${CUDA_VER} \
+    torchvision==0.17.0+cu${CUDA_VER} \
         --extra-index-url https://download.pytorch.org/whl/cu${CUDA_VER}
 # Install tynyCUDNN (we need to set the target architectures as environment variable first).
 ENV TCNN_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}
-RUN python3.10 -m pip install git+https://github.com/NVlabs/tiny-cuda-nn.git@v1.6#subdirectory=bindings/torch
+RUN python3.10 -m pip install git+https://github.com/NVlabs/tiny-cuda-nn.git#subdirectory=bindings/torch
 
 RUN python3.10 -m pip install omegaconf
 # Copy gstoolkit folder and give ownership to user.

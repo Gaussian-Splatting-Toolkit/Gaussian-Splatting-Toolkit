@@ -153,5 +153,5 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
   - [x] Render GS model without loading pipeline
 - [ ] Documentation
 - [ ] Tests
-- [ ] CUDA
-  - [ ] migrate the rasterizer to cuda-12.1
+- [x] CUDA
+  - [x] migrate the rasterizer to cuda-12.1
