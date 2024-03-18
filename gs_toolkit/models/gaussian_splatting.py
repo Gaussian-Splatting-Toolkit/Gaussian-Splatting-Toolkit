@@ -564,9 +564,9 @@ class GaussianSplattingModel(Model):
         """
         n_bef = self.num_points
         # cull transparent ones
-        culls = (
-            torch.sigmoid(self.opacities) < self.config.cull_alpha_thresh
-        ).squeeze()
+        # culls = (
+        #     torch.sigmoid(self.opacities) < self.config.cull_alpha_thresh
+        # ).squeeze()
         below_alpha_count = torch.sum(culls).item()
         toobigs_count = 0
         if extra_cull_mask is not None:
@@ -600,9 +600,9 @@ class GaussianSplattingModel(Model):
         This function splits gaussians that are too large
         """
         n_splits = split_mask.sum().item()
-        CONSOLE.log(
-            f"Splitting {split_mask.sum().item()/self.num_points} gaussians: {n_splits}/{self.num_points}"
-        )
+        # CONSOLE.log(
+        #     f"Splitting {split_mask.sum().item()/self.num_points} gaussians: {n_splits}/{self.num_points}"
+        # )
         centered_samples = torch.randn(
             (samps * n_splits, 3), device=self.device
         )  # Nx3 of axis-aligned scales
@@ -647,10 +647,10 @@ class GaussianSplattingModel(Model):
         """
         This function duplicates gaussians that are too small
         """
-        n_dups = dup_mask.sum().item()
-        CONSOLE.log(
-            f"Duplicating {dup_mask.sum().item()/self.num_points} gaussians: {n_dups}/{self.num_points}"
-        )
+        # n_dups = dup_mask.sum().item()
+        # CONSOLE.log(
+        #     f"Duplicating {dup_mask.sum().item()/self.num_points} gaussians: {n_dups}/{self.num_points}"
+        # )
         new_dups = {}
         for name, param in self.gauss_params.items():
             new_dups[name] = param[dup_mask]

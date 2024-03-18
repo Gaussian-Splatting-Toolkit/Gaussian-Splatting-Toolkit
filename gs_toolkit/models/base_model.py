@@ -42,13 +42,13 @@ class ModelConfig(InstantiateConfig):
     eval_num_rays_per_chunk: int = 4096
     """specifies number of rays per chunk during eval"""
     prompt: Optional[str] = None
-    """A prompt to be used in text to NeRF models"""
+    """A prompt to be used in text to GS models"""
 
 
 class Model(nn.Module):
     """Model class
     Where everything (Fields, Optimizers, Samplers, Visualization, etc) is linked together. This should be
-    subclassed for custom NeRF model.
+    subclassed for custom GS model.
 
     Args:
         config: configuration for instantiating model

@@ -167,7 +167,7 @@ class ControlPanel:
             "Composite depth",
             self.default_composite_depth,
             cb_hook=lambda _: rerender_cb(),
-            hint="Allow NeRF to occlude 3D browser objects",
+            hint="Allow GS to occlude 3D browser objects",
         )
         self._max_res = ViewerSlider(
             "Max res",

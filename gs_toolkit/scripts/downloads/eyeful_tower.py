@@ -165,14 +165,14 @@ class EyefulTowerDownload(DatasetDownload):
         target_height: int,
         extension: str,
     ) -> dict:
-        """Converts EyefulTower cameras.json format to Nerfstudio's transforms.json format
+        """Converts EyefulTower cameras.json format to GSTK's transforms.json format
 
         The EyefulTower dataset provides a cameras.json file containing geometric calibration information for the
         original resolution ~8K images, similar to the cameras.xml file from Metashape. The main advantage is that data
         is provided for each individual image, rather than being structured hierarchically with rig constraints (as in
         the Metashape cameras.xml).
 
-        This function takes the cameras.json file and converts it to the transforms.json Nerfstudio expects, with the
+        This function takes the cameras.json file and converts it to the transforms.json GSTK expects, with the
         necessary scaling of intrinsics parameters applied. This function also handles the EyefulTower splits.json file,
         describing the breakdown of training and validation images, and adds the appropriate fields to transforms.json.
         This function works for both fisheye (V1) and pinhole (V2) cameras. Scene-specific fisheye mask radii are added
@@ -187,7 +187,7 @@ class EyefulTowerDownload(DatasetDownload):
             extension: Extension of output images
 
         Returns:
-            Dict in the Nerfstudio transforms.json format, with scaled camera parameters, splits, and optional metadata.
+            Dict in the GSTK transforms.json format, with scaled camera parameters, splits, and optional metadata.
         """
         output = {}
 
@@ -273,10 +273,10 @@ class EyefulTowerDownload(DatasetDownload):
 
     @staticmethod
     def subsample_gstk_transforms(transforms: dict, n: int):
-        """Uniformly samples n frames from a Nerfstudio transforms.json dict.
+        """Uniformly samples n frames from a GSTK transforms.json dict.
 
         Args:
-            transforms: Dictionary in Nerfstudio transforms.json format
+            transforms: Dictionary in GSTK transforms.json format
             n: Number of frames to uniformly subsample
 
         Returns:
@@ -308,7 +308,7 @@ class EyefulTowerDownload(DatasetDownload):
           data is not downloaded, so this function can safely (and performantly) be called multiple times with
           increasing scope of datasets and resolutions.
         * Generates updated Metashape cameras.xml for lower resolution downloads.
-        * Generates Nerfstudio transform.json for each resolution. Additionally generates transforms_300.json and
+        * Generates GSTK transform.json for each resolution. Additionally generates transforms_300.json and
           transforms_half.json containing subsets (300 frames, half the frames) of the full set to help with iteration.
 
         Args:

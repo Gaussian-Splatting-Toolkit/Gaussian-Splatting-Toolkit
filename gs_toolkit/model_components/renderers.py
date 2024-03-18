@@ -14,23 +14,9 @@ Example:
 """
 import contextlib
 
-# import math
 from typing import Literal, Optional, Union, Generator
-
-# from typing import Tuple
-
-# import nerfacc
-# import torch
 from jaxtyping import Float
-
-# from jaxtyping import Int
 from torch import Tensor
-
-# from torch import nn
-
-# from gs_toolkit.cameras.rays import RaySamples
-# from gs_toolkit.utils import colors
-# from gs_toolkit.utils.math import components_from_spherical_harmonics, safe_normalize
 
 BackgroundColor = Union[
     Literal["random", "last_sample", "black", "white"],

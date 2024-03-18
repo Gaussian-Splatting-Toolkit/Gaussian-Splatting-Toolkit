@@ -24,7 +24,7 @@ except ImportError:
 
 ARIA_CAMERA_MODEL = "FISHEYE624"
 
-# The Aria coordinate system is different than the Blender/NerfStudio coordinate system.
+# The Aria coordinate system is different than the Blender/GSToolkit coordinate system.
 # Blender / GSToolkit: +Z = back, +Y = up, +X = right
 # Surreal: +Z = forward, +Y = down, +X = right
 T_ARIA_NERFSTUDIO = SE3.from_matrix(
@@ -208,8 +208,8 @@ class ProcessProjectAria:
             for index in range(0, provider.get_num_data(stream_id))
         ]
 
-        # create the NerfStudio frames from the AriaImageFrames.
-        print("Creating NerfStudio frames...")
+        # create the GSTK frames from the AriaImageFrames.
+        print("Creating GSTK frames...")
         CANONICAL_RGB_VALID_RADIUS = 707.5
         CANONICAL_RGB_WIDTH = 1408
         rgb_valid_radius = CANONICAL_RGB_VALID_RADIUS * (

@@ -124,7 +124,7 @@ class ViewerControl:
         if not client_id:
             client_id = list(clients.keys())[0]
 
-        from gs_toolkit.viewer.viewer import VISER_NERFSTUDIO_SCALE_RATIO
+        from gs_toolkit.viewer.viewer import VISER_GSTK_SCALE_RATIO
 
         client = clients[client_id]
         R = vtf.SO3(wxyz=client.camera.wxyz)
@@ -132,7 +132,7 @@ class ViewerControl:
         R = torch.tensor(R.as_matrix())
         pos = (
             torch.tensor(client.camera.position, dtype=torch.float64)
-            / VISER_NERFSTUDIO_SCALE_RATIO
+            / VISER_GSTK_SCALE_RATIO
         )
         c2w = torch.concatenate([R, pos[:, None]], dim=1)
         camera_state = CameraState(
@@ -151,7 +151,7 @@ class ViewerControl:
             cb: The callback to call when a click is detected.
                 The callback should take a ViewerClick object as an argument
         """
-        from gs_toolkit.viewer.viewer import VISER_NERFSTUDIO_SCALE_RATIO
+        from gs_toolkit.viewer.viewer import VISER_GSTK_SCALE_RATIO
 
         def wrapped_cb(scene_pointer_msg: ScenePointerEvent):
             # only call the callback if the event is a click
@@ -160,7 +160,7 @@ class ViewerControl:
             origin = scene_pointer_msg.ray_origin
             direction = scene_pointer_msg.ray_direction
 
-            origin = tuple([x / VISER_NERFSTUDIO_SCALE_RATIO for x in origin])
+            origin = tuple([x / VISER_GSTK_SCALE_RATIO for x in origin])
             assert len(origin) == 3
 
             click = ViewerClick(origin, direction)

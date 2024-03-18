@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from gs_toolkit.engine.trainer import Trainer
 
 
-VISER_NERFSTUDIO_SCALE_RATIO: float = 10.0
+VISER_GSTK_SCALE_RATIO: float = 10.0
 
 
 @decorate_all([check_main_thread])
@@ -128,7 +128,7 @@ class Viewer:
             viser.theme.TitlebarButton(
                 text="Github",
                 icon="GitHub",
-                href="https://github.com/nerfstudio-project/nerfstudio",
+                href="https://github.com/H-tr/Gaussian-Splatting-Toolkit",
             ),
             viser.theme.TitlebarButton(
                 text="Documentation",
@@ -139,7 +139,7 @@ class Viewer:
         image = viser.theme.TitlebarImage(
             image_url_light="https://docs.nerf.studio/_static/imgs/logo.png",
             image_url_dark="https://docs.nerf.studio/_static/imgs/logo-dark.png",
-            image_alt="NerfStudio Logo",
+            image_alt="GS Toolkit Logo",
             href="https://docs.nerf.studio/",
         )
         titlebar_theme = viser.theme.TitlebarConfig(buttons=buttons, image=image)
@@ -186,7 +186,7 @@ class Viewer:
             self.control_panel = ControlPanel(
                 self.viser_server,
                 self.include_time,
-                VISER_NERFSTUDIO_SCALE_RATIO,
+                VISER_GSTK_SCALE_RATIO,
                 self._trigger_rerender,
                 self._output_type_change,
                 self._output_split_type_change,
@@ -296,7 +296,7 @@ class Viewer:
         R = torch.tensor(R.as_matrix())
         pos = (
             torch.tensor(client.camera.position, dtype=torch.float64)
-            / VISER_NERFSTUDIO_SCALE_RATIO
+            / VISER_GSTK_SCALE_RATIO
         )
         c2w = torch.concatenate([R, pos[:, None]], dim=1)
         if self.ready and self.render_tab_state.preview_render:
@@ -328,7 +328,7 @@ class Viewer:
 
     def handle_new_client(self, client: viser.ClientHandle) -> None:
         self.render_statemachines[client.client_id] = RenderStateMachine(
-            self, VISER_NERFSTUDIO_SCALE_RATIO, client
+            self, VISER_GSTK_SCALE_RATIO, client
         )
         self.render_statemachines[client.client_id].start()
 
@@ -376,9 +376,7 @@ class Viewer:
             )
             R = vtf.SO3.from_matrix(c2w[:3, :3])  # type: ignore
             R = R @ vtf.SO3.from_x_radians(np.pi)
-            self.camera_handles[key].position = (
-                c2w[:3, 3] * VISER_NERFSTUDIO_SCALE_RATIO
-            )
+            self.camera_handles[key].position = c2w[:3, 3] * VISER_GSTK_SCALE_RATIO
             self.camera_handles[key].wxyz = R.wxyz
 
     def _trigger_rerender(self) -> None:
@@ -460,7 +458,7 @@ class Viewer:
                 aspect=float(camera.cx[0] / camera.cy[0]),
                 image=image_uint8,
                 wxyz=R.wxyz,
-                position=c2w[:3, 3] * VISER_NERFSTUDIO_SCALE_RATIO,
+                position=c2w[:3, 3] * VISER_GSTK_SCALE_RATIO,
             )
 
             @camera_handle.on_click

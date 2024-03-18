@@ -489,7 +489,7 @@ def populate_render_tab(
     datapath: Path,
     control_panel: Optional[ControlPanel] = None,
 ) -> RenderTabState:
-    from gs_toolkit.viewer.viewer import VISER_NERFSTUDIO_SCALE_RATIO
+    from gs_toolkit.viewer.viewer import VISER_GSTK_SCALE_RATIO
 
     render_tab_state = RenderTabState(
         preview_render=False,
@@ -937,8 +937,7 @@ def populate_render_tab(
                         )
                         camera_path.add_camera(
                             Keyframe(
-                                position=pose.translation()
-                                * VISER_NERFSTUDIO_SCALE_RATIO,
+                                position=pose.translation() * VISER_GSTK_SCALE_RATIO,
                                 wxyz=pose.rotation().wxyz,
                                 # There are some floating point conversions between degrees and radians, so the fov and
                                 # default_Fov values will not be exactly matched.
@@ -1026,7 +1025,7 @@ def populate_render_tab(
         for keyframe, dummy in camera_path._keyframes.values():
             pose = tf.SE3.from_rotation_and_translation(
                 tf.SO3(keyframe.wxyz) @ tf.SO3.from_x_radians(np.pi),
-                keyframe.position / VISER_NERFSTUDIO_SCALE_RATIO,
+                keyframe.position / VISER_GSTK_SCALE_RATIO,
             )
             keyframes.append(
                 {
@@ -1061,7 +1060,7 @@ def populate_render_tab(
             # rotate the axis of the camera 180 about x axis
             pose = tf.SE3.from_rotation_and_translation(
                 pose.rotation() @ tf.SO3.from_x_radians(np.pi),
-                pose.translation() / VISER_NERFSTUDIO_SCALE_RATIO,
+                pose.translation() / VISER_GSTK_SCALE_RATIO,
             )
             camera_path_list.append(
                 {

@@ -1,6 +1,6 @@
 {
   "short_name": "gs_toolkit viewer",
-  "name": "Interactive NeRF viewer",
+  "name": "Interactive GS viewer",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
