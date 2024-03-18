@@ -65,7 +65,7 @@ class ExperimentConfig(InstantiateConfig):
         "viewer+tensorboard",
         "viewer+comet",
         "viewer_legacy",
-    ] = "wandb"
+    ] = "tensorboard"
     """Which visualizer to use."""
     data: Optional[Path] = None
     """Alias for --pipeline.datamanager.data"""

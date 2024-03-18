@@ -243,6 +243,16 @@ class DataManager(nn.Module):
         raise NotImplementedError
 
     @abstractmethod
+    def get_train_rays_per_batch(self) -> int:
+        """Returns the number of rays per batch for training."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_eval_rays_per_batch(self) -> int:
+        """Returns the number of rays per batch for evaluation."""
+        raise NotImplementedError
+
+    @abstractmethod
     def get_datapath(self) -> Path:
         """Returns the path to the data. This is used to determine where to save camera paths."""
 

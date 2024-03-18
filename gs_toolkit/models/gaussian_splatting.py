@@ -100,7 +100,7 @@ class GaussianSplattingModelConfig(ModelConfig):
     """period of steps where refinement is turned off"""
     refine_every: int = 100
     """period of steps where gaussians are culled and densified"""
-    resolution_schedule: int = 3000
+    resolution_schedule: int = 2000
     """training starts at 1/d resolution, every n steps this is doubled"""
     background_color: Literal["random", "black", "white"] = "random"
     """Whether to randomize the background color."""
@@ -138,7 +138,7 @@ class GaussianSplattingModelConfig(ModelConfig):
     """weight of ssim loss"""
     depth_lambda: float = 0.2
     """weight of depth loss"""
-    stop_split_at: int = 15000
+    stop_split_at: int = 10_000
     """stop splitting at this step"""
     sh_degree: int = 3
     """maximum degree of spherical harmonics to use"""
@@ -562,13 +562,13 @@ class GaussianSplattingModel(Model):
         This function deletes gaussians with under a certain opacity threshold
         extra_cull_mask: a mask indicates extra gaussians to cull besides existing culling criterion
         """
-        n_bef = self.num_points
+        # n_bef = self.num_points
         # cull transparent ones
-        # culls = (
-        #     torch.sigmoid(self.opacities) < self.config.cull_alpha_thresh
-        # ).squeeze()
-        below_alpha_count = torch.sum(culls).item()
-        toobigs_count = 0
+        culls = (
+            torch.sigmoid(self.opacities) < self.config.cull_alpha_thresh
+        ).squeeze()
+        # below_alpha_count = torch.sum(culls).item()
+        # toobigs_count = 0
         if extra_cull_mask is not None:
             culls = culls | extra_cull_mask
         if self.step > self.config.refine_every * self.config.reset_alpha_every:
@@ -584,14 +584,14 @@ class GaussianSplattingModel(Model):
                     toobigs | (self.max_2Dsize > self.config.cull_screen_size).squeeze()
                 )
             culls = culls | toobigs
-            toobigs_count = torch.sum(toobigs).item()
+            # toobigs_count = torch.sum(toobigs).item()
         for name, param in self.gauss_params.items():
             self.gauss_params[name] = torch.nn.Parameter(param[~culls])
 
-        CONSOLE.log(
-            f"Culled {n_bef - self.num_points} gaussians "
-            f"({below_alpha_count} below alpha thresh, {toobigs_count} too bigs, {self.num_points} remaining)"
-        )
+        # CONSOLE.log(
+        #     f"Culled {n_bef - self.num_points} gaussians "
+        #     f"({below_alpha_count} below alpha thresh, {toobigs_count} too bigs, {self.num_points} remaining)"
+        # )
 
         return culls
 

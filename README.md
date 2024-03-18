@@ -148,7 +148,6 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [ ] Visualization
   - [ ] normal visualization
   - [ ] gaussian ellipsoid visualization
-  - [ ] loss function visualization
 - [x] Render
   - [x] Render GS model without loading pipeline
 - [ ] Documentation
