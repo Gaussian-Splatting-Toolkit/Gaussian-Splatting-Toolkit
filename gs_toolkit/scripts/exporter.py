@@ -24,7 +24,7 @@ from gs_toolkit.exporter.exporter_utils import (
     generate_point_cloud,
 )
 from gs_toolkit.exporter.tsdf_fusion import TSDFFusion
-from gs_toolkit.models.gaussian_splatting import GaussianSplattingModel
+from gs_toolkit.models.depth_gs import GaussianSplattingModel
 from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
 from gs_toolkit.utils.eval_utils import eval_setup

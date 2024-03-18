@@ -64,7 +64,8 @@ gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/fo
 ### Train the Gaussian Splatting
 
 ```bash
-gs-train --data /path/to/processed/data
+gs-train gaussian-splatting --data /path/to/processed/data
+gs-train depth-gs --data /path/to/processed/data
 ```
 
 ### Visualize the result

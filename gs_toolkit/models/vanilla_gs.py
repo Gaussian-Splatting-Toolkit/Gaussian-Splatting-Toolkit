@@ -6,19 +6,18 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
 from rasterizer._torch_impl import quat_to_rotmat
 from rasterizer.project_gaussians import project_gaussians
 from rasterizer.rasterize import rasterize_gaussians
-from rasterizer.sh import spherical_harmonics, num_sh_bases
+from rasterizer.sh import num_sh_bases, spherical_harmonics
 from pytorch_msssim import SSIM
 from torch.nn import Parameter
+from typing_extensions import Literal
 
-from gs_toolkit.cameras.camera_optimizers import CameraOptimizerConfig
-from gs_toolkit.utils.colors import get_color
 from gs_toolkit.cameras.cameras import Cameras
 from gs_toolkit.data.scene_box import OrientedBox
 from gs_toolkit.engine.callbacks import (
@@ -31,69 +30,15 @@ from gs_toolkit.engine.optimizers import Optimizers
 # need following import for background color override
 from gs_toolkit.model_components import renderers
 from gs_toolkit.models.base_model import Model, ModelConfig
+from gs_toolkit.utils.colors import get_color
 from gs_toolkit.utils.rich_utils import CONSOLE
 
-
-def random_quat_tensor(N):
-    """
-    Defines a random quaternion tensor of shape (N, 4)
-    """
-    u = torch.rand(N)
-    v = torch.rand(N)
-    w = torch.rand(N)
-    return torch.stack(
-        [
-            torch.sqrt(1 - u) * torch.sin(2 * math.pi * v),
-            torch.sqrt(1 - u) * torch.cos(2 * math.pi * v),
-            torch.sqrt(u) * torch.sin(2 * math.pi * w),
-            torch.sqrt(u) * torch.cos(2 * math.pi * w),
-        ],
-        dim=-1,
-    )
-
-
-def RGB2SH(rgb):
-    """
-    Converts from RGB values [0,1] to the 0th spherical harmonic coefficient
-    """
-    C0 = 0.28209479177387814
-    return (rgb - 0.5) / C0
-
-
-def SH2RGB(sh):
-    """
-    Converts from the 0th spherical harmonic coefficient to RGB values [0,1]
-    """
-    C0 = 0.28209479177387814
-    return sh * C0 + 0.5
-
-
-def projection_matrix(
-    znear, zfar, fovx, fovy, device: Union[str, torch.device] = "cpu"
-):
-    """
-    Constructs an OpenGL-style perspective projection matrix.
-    """
-    t = znear * math.tan(0.5 * fovy)
-    b = -t
-    r = znear * math.tan(0.5 * fovx)
-    l = -r  # noqa: E741
-    n = znear
-    f = zfar
-    return torch.tensor(
-        [
-            [2 * n / (r - l), 0.0, (r + l) / (r - l), 0.0],
-            [0.0, 2 * n / (t - b), (t + b) / (t - b), 0.0],
-            [0.0, 0.0, (f + n) / (f - n), -1.0 * f * n / (f - n)],
-            [0.0, 0.0, 1.0, 0.0],
-        ],
-        device=device,
-    )
+from gs_toolkit.utils.comms import random_quat_tensor, RGB2SH, SH2RGB, projection_matrix
 
 
 @dataclass
 class GaussianSplattingModelConfig(ModelConfig):
-    """Gaussian Splatting Model Config"""
+    """Splatfacto Model Config, nerfstudio's implementation of Gaussian Splatting"""
 
     _target: Type = field(default_factory=lambda: GaussianSplattingModel)
     warmup_length: int = 500
@@ -136,23 +81,17 @@ class GaussianSplattingModelConfig(ModelConfig):
     "Size of the cube to initialize random gaussians within"
     ssim_lambda: float = 0.2
     """weight of ssim loss"""
-    depth_lambda: float = 0.2
-    """weight of depth loss"""
     stop_split_at: int = 10_000
     """stop splitting at this step"""
     sh_degree: int = 3
     """maximum degree of spherical harmonics to use"""
-    camera_optimizer: CameraOptimizerConfig = field(
-        default_factory=CameraOptimizerConfig
-    )
-    """camera optimizer config"""
     use_scale_regularization: bool = False
     """If enabled, a scale regularization introduced in PhysGauss (https://xpandora.github.io/PhysGaussian/) is used for reducing huge spikey gaussians."""
     max_gauss_ratio: float = 10.0
     """threshold of ratio of gaussian max to min scale before applying regularization
     loss from the PhysGaussian paper
     """
-    output_depth_during_training: bool = True
+    output_depth_during_training: bool = False
     """If True, output depth during training. Otherwise, only output depth during evaluation."""
     rasterize_mode: Literal["classic", "antialiased"] = "classic"
     """
@@ -167,10 +106,10 @@ class GaussianSplattingModelConfig(ModelConfig):
 
 
 class GaussianSplattingModel(Model):
-    """Gaussian Splatting model
+    """Nerfstudio's implementation of Gaussian Splatting
 
     Args:
-        config: Gaussian Splatting configuration to instantiate model
+        config: Splatfacto configuration to instantiate model
     """
 
     config: GaussianSplattingModelConfig
@@ -600,9 +539,7 @@ class GaussianSplattingModel(Model):
         This function splits gaussians that are too large
         """
         n_splits = split_mask.sum().item()
-        # CONSOLE.log(
-        #     f"Splitting {split_mask.sum().item()/self.num_points} gaussians: {n_splits}/{self.num_points}"
-        # )
+        # CONSOLE.log(f"Splitting {split_mask.sum().item()/self.num_points} gaussians: {n_splits}/{self.num_points}")
         centered_samples = torch.randn(
             (samps * n_splits, 3), device=self.device
         )  # Nx3 of axis-aligned scales
@@ -648,9 +585,7 @@ class GaussianSplattingModel(Model):
         This function duplicates gaussians that are too small
         """
         # n_dups = dup_mask.sum().item()
-        # CONSOLE.log(
-        #     f"Duplicating {dup_mask.sum().item()/self.num_points} gaussians: {n_dups}/{self.num_points}"
-        # )
+        # CONSOLE.log(f"Duplicating {dup_mask.sum().item()/self.num_points} gaussians: {n_dups}/{self.num_points}")
         new_dups = {}
         for name, param in self.gauss_params.items():
             new_dups[name] = param[dup_mask]
@@ -729,17 +664,13 @@ class GaussianSplattingModel(Model):
             # torchvision can be slow to import, so we do it lazily.
             import torchvision.transforms.functional as TF
 
-            if len(image.shape) == 2:
-                # Squeeze the dimension to 3 and then unsqueeze it back to 2
-                return TF.resize(image[None, :, :], newsize, antialias=None)[0]
-            else:
-                return TF.resize(
-                    image.permute(2, 0, 1), newsize, antialias=None
-                ).permute(1, 2, 0)
+            return TF.resize(image.permute(2, 0, 1), newsize, antialias=None).permute(
+                1, 2, 0
+            )
         return image
 
     def get_outputs(self, camera: Cameras) -> Dict[str, Union[torch.Tensor, List]]:
-        """Takes in a camera and returns a dictionary of outputs.
+        """Takes in a Ray Bundle and returns a dictionary of outputs.
 
         Args:
             ray_bundle: Input bundle of rays. This raybundle should have all the
@@ -790,7 +721,7 @@ class GaussianSplattingModel(Model):
         # shift the camera to center of scene looking at center
         R = camera.camera_to_worlds[0, :3, :3]  # 3 x 3
         T = camera.camera_to_worlds[0, :3, 3:4]  # 3 x 1
-        # flip the z and y axes to align with rasterizer conventions
+        # flip the z and y axes to align with gsplat conventions
         R_edit = torch.diag(
             torch.tensor([1, -1, -1], device=self.device, dtype=R.dtype)
         )
@@ -979,10 +910,7 @@ class GaussianSplattingModel(Model):
         gt_img = self.composite_with_background(
             self.get_gt_img(batch["image"]), outputs["background"]
         )
-        if "depth" in batch:
-            gt_depth = self.get_gt_img(batch["depth"])
         pred_img = outputs["rgb"]
-        pred_depth = outputs["depth"]
 
         # Set masked part of both ground-truth and rendered image to black.
         # This is a little bit sketchy for the SSIM loss.
@@ -994,17 +922,10 @@ class GaussianSplattingModel(Model):
             gt_img = gt_img * mask
             pred_img = pred_img * mask
 
-            gt_depth = gt_depth * mask
-            pred_depth = pred_depth * mask
-
-        loss_dict = {}
-
         Ll1 = torch.abs(gt_img - pred_img).mean()
         simloss = 1 - self.ssim(
             gt_img.permute(2, 0, 1)[None, ...], pred_img.permute(2, 0, 1)[None, ...]
         )
-        loss_dict["main_loss"] = (1 - self.config.ssim_lambda) * Ll1
-        +self.config.ssim_lambda * simloss
         if self.config.use_scale_regularization and self.step % 10 == 0:
             scale_exp = torch.exp(self.scales)
             scale_reg = (
@@ -1017,16 +938,6 @@ class GaussianSplattingModel(Model):
             scale_reg = 0.1 * scale_reg.mean()
         else:
             scale_reg = torch.tensor(0.0).to(self.device)
-
-        loss_dict["scale_reg"] = scale_reg
-
-        if "depth" in batch:
-            depth_nonzero = gt_depth > 0
-            pred_depth = pred_depth.squeeze(-1)
-            Ll1_depth = torch.abs(
-                gt_depth * depth_nonzero - pred_depth * depth_nonzero
-            ).mean()
-            loss_dict["depth_l1"] = Ll1_depth
 
         return {
             "main_loss": (1 - self.config.ssim_lambda) * Ll1
