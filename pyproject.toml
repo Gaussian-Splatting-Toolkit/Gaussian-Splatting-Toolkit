@@ -3,7 +3,7 @@ name = "gstoolkit"
 authors = [
     "Hu Tianrun <tianrunhu@gmail.com>",
 ]
-version = "0.0.1"
+version = "0.1.0"
 description = "Gaussian Splatting Toolkit for robotics perception"
 readme = "README.md"
 classifiers = [
@@ -45,6 +45,7 @@ ruff = "0.1.14"
 ssh-config = "0.1.5"
 viser = "0.1.21"
 wandb = "0.16.2"
+bpy = "4.0.0"
 segment-anything = {git = "https://github.com/facebookresearch/segment-anything.git"}
 GroundingDINO = {git = "https://github.com/IDEA-Research/GroundingDINO.git"}
 rasterizer = {path = "gs_toolkit/gs_components"}
