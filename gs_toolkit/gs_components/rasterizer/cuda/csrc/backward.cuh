@@ -12,8 +12,9 @@ __global__ void project_gaussians_backward_kernel(
     const float *__restrict__ projmat, const float4 intrins,
     const dim3 img_size, const float *__restrict__ cov3d,
     const int *__restrict__ radii, const float3 *__restrict__ conics,
-    const float2 *__restrict__ v_xy, const float *__restrict__ v_depth,
-    const float3 *__restrict__ v_conic, float3 *__restrict__ v_cov2d,
+    const float *__restrict__ compensation, const float2 *__restrict__ v_xy,
+    const float *__restrict__ v_depth, const float3 *__restrict__ v_conic,
+    const float *__restrict__ v_compensation, float3 *__restrict__ v_cov2d,
     float *__restrict__ v_cov3d, float3 *__restrict__ v_mean3d,
     float3 *__restrict__ v_scale, float4 *__restrict__ v_quat);
 
@@ -28,7 +29,7 @@ __global__ void nd_rasterize_backward_kernel(
     const float *__restrict__ v_output,
     const float *__restrict__ v_output_alpha, float2 *__restrict__ v_xy,
     float3 *__restrict__ v_conic, float *__restrict__ v_rgb,
-    float *__restrict__ v_opacity, float *__restrict__ workspace);
+    float *__restrict__ v_opacity);
 
 __global__ void rasterize_backward_kernel(
     const dim3 tile_bounds, const dim3 img_size,

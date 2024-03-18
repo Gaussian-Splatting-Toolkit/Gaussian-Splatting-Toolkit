@@ -123,6 +123,8 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 
 - [x] OpenCV marker ground truth measurement.
 - [x] Surface distance module
+- [ ] Data
+  - [ ] Data synthetic with blender
 - [ ] Data preprocessing
   - [x] Colmap preprocessing
   - [x] RGB-D Data processing
@@ -131,19 +133,25 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
     - [ ] iPhone/ iPad
 - [x] Evaluation
 - [x] Gaussian Splatting module
-- [ ] Gaussian Refinement
 - [x] Depth Loss
 - [x] Point cloud export
 - [x] Mesh extraction
   - [x] Marching cube
   - [x] TSDF
   - [x] Piossion reconstruction
+- [x] Training
+  - [x] Course to fine
 - [ ] Mask
 - [ ] Model
-  - [ ] SuGaR
-  - [ ] SplaTAM
-- [x] Visualization
-- [ ] Render
-  - [ ] Render GS model without loading pipeline
+  - [ ] Gaussian Splatting SLAM
+  - [ ] GaussianShader
+- [ ] Visualization
+  - [ ] normal visualization
+  - [ ] gaussian ellipsoid visualization
+  - [ ] loss function visualization
+- [x] Render
+  - [x] Render GS model without loading pipeline
 - [ ] Documentation
 - [ ] Tests
+- [ ] CUDA
+  - [ ] migrate the rasterizer to cuda-12.1

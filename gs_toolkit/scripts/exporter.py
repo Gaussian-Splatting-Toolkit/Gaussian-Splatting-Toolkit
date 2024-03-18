@@ -96,7 +96,7 @@ class ExportGaussianSplat(Exporter):
 
         with torch.no_grad():
             param_group = model.get_gaussian_param_groups()
-            xyz = param_group["xyz"][0].detach().cpu().numpy()
+            xyz = param_group["means"][0].detach().cpu().numpy()
             normals = np.zeros_like(xyz)
             f_dc = param_group["features_dc"][0].detach().cpu().numpy()
             f_rest = (
@@ -108,9 +108,9 @@ class ExportGaussianSplat(Exporter):
                 .cpu()
                 .numpy()
             )
-            opacities = param_group["opacity"][0].detach().cpu().numpy()
-            scale = param_group["scaling"][0].detach().cpu().numpy()
-            rotation = param_group["rotation"][0].detach().cpu().numpy()
+            opacities = param_group["opacities"][0].detach().cpu().numpy()
+            scale = param_group["scales"][0].detach().cpu().numpy()
+            rotation = param_group["quats"][0].detach().cpu().numpy()
 
             dtype_full = [
                 (attribute, "f4")
@@ -135,9 +135,9 @@ class ExportGaussianSplat(Exporter):
         ):
             l.append("f_rest_{}".format(i))
         l.append("opacity")
-        for i in range(param["scaling"][0].shape[1]):
+        for i in range(param["scales"][0].shape[1]):
             l.append("scale_{}".format(i))
-        for i in range(param["rotation"][0].shape[1]):
+        for i in range(param["quats"][0].shape[1]):
             l.append("rot_{}".format(i))
         return l
 
