@@ -118,6 +118,12 @@ Export tsdf with mask
 gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/ --mask-path /path/to/mask
 ```
 
+Export object pointcloud and mesh with prompt
+
+```bash
+gs-export offline-tsdf --render-path exports/milk/ --output-dir exports/tsdf/milk_text_seg --seg-prompt milkbox
+```
+
 ## Contribute
 
 To add a new submodule, run

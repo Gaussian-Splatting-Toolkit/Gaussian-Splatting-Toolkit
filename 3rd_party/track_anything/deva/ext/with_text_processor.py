@@ -18,6 +18,7 @@ except ImportError:
     # not sure why this happens sometimes
     from GroundingDINO.groundingdino.util.inference import Model as GroundingDINOModel
 from segment_anything import SamPredictor
+from typing import Tuple
 
 
 def make_segmentation_with_text(
@@ -27,7 +28,7 @@ def make_segmentation_with_text(
     sam_model: SamPredictor,
     prompts: List[str],
     min_side: int,
-) -> (torch.Tensor, List[ObjectInfo]):
+) -> Tuple[torch.Tensor, List[ObjectInfo]]:
     mask, segments_info = segment_with_text(
         cfg, gd_model, sam_model, image_np, prompts, min_side
     )

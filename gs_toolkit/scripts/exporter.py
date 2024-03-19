@@ -28,6 +28,7 @@ from gs_toolkit.models.depth_gs import GaussianSplattingModel
 from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
 from gs_toolkit.utils.eval_utils import eval_setup
+from gs_toolkit.exporter.mask_generater import generate_mask_from_text
 from gs_toolkit.utils.rich_utils import CONSOLE
 
 
@@ -245,6 +246,19 @@ class ExportTSDF:
 
         if not self.output_dir.exists():
             self.output_dir.mkdir(parents=True)
+
+        if self.seg_prompt is not None:
+            # TODO: If no checkpoint, install
+            generate_mask_from_text(
+                chunk_size=4,
+                img_path=self.render_path / "rgb",
+                size=480,
+                prompt=self.seg_prompt,
+                amp=True,
+                temporal_setting="semionline",
+                output=self.render_path / "mask",
+            )
+            self.mask_path = self.render_path / "mask"
 
         fusion = TSDFFusion(
             data_path=self.render_path,

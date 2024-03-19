@@ -4,6 +4,7 @@ import open3d as o3d
 import numpy as np
 import json
 from rich.progress import track
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 
 class CameraPose:
@@ -109,6 +110,8 @@ class TSDFFusion:
                     str(self.data_path / "depth" / f"depth_{i:05}.png")
                 )
             if self.mask is not None:
+                if self.mask.exists() is False:
+                    CONSOLE.print(f"[bold yellow] Cannot find mask at {self.mask}")
                 mask = o3d.io.read_image(
                     str(self.mask / "Annotations" / f"frame_{i:05}.png")
                 )
