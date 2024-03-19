@@ -154,7 +154,7 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
   - [x] Piossion reconstruction
 - [x] Training
   - [x] Course to fine
-- [ ] Mask
+- [x] Mask
 - [ ] Model
   - [ ] Gaussian Splatting SLAM
   - [ ] GaussianShader
@@ -164,6 +164,8 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
   - [ ] pointcloud
   - [ ] mesh
   - [ ] Any gaussians without loading pipeline
+  - [ ] mask prompt
+  - [ ] segmentation visualization
 - [x] Render
   - [x] Render GS model without loading pipeline
 - [ ] Documentation

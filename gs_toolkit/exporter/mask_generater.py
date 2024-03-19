@@ -15,7 +15,6 @@ from deva.ext.with_text_processor import process_frame_with_text as process_fram
 from deva.model.network import DEVA
 from gs_toolkit.utils.rich_utils import CONSOLE
 
-from tqdm import tqdm
 import json
 
 
@@ -134,7 +133,7 @@ def generate_mask_from_text(
         >= config["max_long_term_elements"]
     )
 
-    CONSOLE.print("Configuration:", config)
+    CONSOLE.print("Mask Generation Configuration:", config)
 
     deva = DEVAInferenceCore(deva_model, config=config)
     deva.next_voting_frame = config["num_voting_frames"] - 1
@@ -144,12 +143,15 @@ def generate_mask_from_text(
     )
 
     with torch.cuda.amp.autocast(enabled=config["amp"]):
-        for ti, (frame, im_path) in enumerate(tqdm(loader)):
+        for ti, (frame, im_path) in enumerate(loader):
             process_frame(
                 deva, gd_model, sam_model, im_path, result_saver, ti, image_np=frame
             )
         flush_buffer(deva, result_saver)
     result_saver.end()
+    CONSOLE.print(
+        f"[bold green]:white_check_mark: Done! Masks saved at {out_path}[/bold green]"
+    )
 
     # save this as a video-level json
     with open(path.join(out_path, "pred.json"), "w") as f:

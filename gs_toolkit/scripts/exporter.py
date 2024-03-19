@@ -29,7 +29,7 @@ from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
 from gs_toolkit.utils.eval_utils import eval_setup
 from gs_toolkit.exporter.mask_generater import generate_mask_from_text
-from gs_toolkit.utils.rich_utils import CONSOLE
+from gs_toolkit.utils.rich_utils import CONSOLE, status
 
 
 @dataclass
@@ -236,6 +236,10 @@ class ExportTSDF:
     """Path to the mask."""
     seg_prompt: Optional[str] = None
     """Segmentation prompt for the meshing."""
+    clean: bool = True
+    """Whether to clean the mesh using pymeshlab."""
+    verbose: bool = False
+    """Whether to print verbose output."""
 
     def main(self) -> None:
         """Export point cloud."""
@@ -249,15 +253,20 @@ class ExportTSDF:
 
         if self.seg_prompt is not None:
             # TODO: If no checkpoint, install
-            generate_mask_from_text(
-                chunk_size=4,
-                img_path=self.render_path / "rgb",
-                size=480,
-                prompt=self.seg_prompt,
-                amp=True,
-                temporal_setting="semionline",
-                output=self.render_path / "mask",
-            )
+            with status(
+                msg="[bold yellow]Generating Masks",
+                spinner="circle",
+                verbose=self.verbose,
+            ):
+                generate_mask_from_text(
+                    chunk_size=4,
+                    img_path=self.render_path / "rgb",
+                    size=480,
+                    prompt=self.seg_prompt,
+                    amp=True,
+                    temporal_setting="semionline",
+                    output=self.render_path / "mask",
+                )
             self.mask_path = self.render_path / "mask"
 
         fusion = TSDFFusion(
@@ -271,7 +280,12 @@ class ExportTSDF:
             bounding_box=False,
             using_gt=self.using_gt,
         )
-        mesh, pcd = fusion.run()
+        with status(
+            msg="[bold yellow]Running TSDF Fusion",
+            spinner="dots",
+            verbose=self.verbose,
+        ):
+            mesh, pcd = fusion.run()
 
         CONSOLE.print(f"[bold green]:white_check_mark: Generated {pcd}")
         CONSOLE.print("Saving Point Cloud...")
@@ -288,6 +302,19 @@ class ExportTSDF:
         o3d.io.write_triangle_mesh(str(self.output_dir / "mesh.ply"), mesh)
         print("\033[A\033[A")
         CONSOLE.print("[bold green]:white_check_mark: Saving Mesh")
+
+        # Clean Mesh
+        if self.clean:
+            import pymeshlab
+
+            ms = pymeshlab.MeshSet()
+            ms.load_new_mesh(os.path.join(self.output_dir, "mesh.ply"))
+            ms.meshing_remove_unreferenced_vertices()
+            ms.meshing_remove_duplicate_faces()
+            ms.meshing_remove_null_faces()
+            ms.meshing_remove_connected_component_by_face_number(mincomponentsize=20000)
+            ms.save_current_mesh(os.path.join(self.output_dir, "cleaned_mesh.ply"))
+            CONSOLE.print("[bold green]:white_check_mark: Mesh Cleaned")
 
 
 Commands = tyro.conf.FlagConversionOff[

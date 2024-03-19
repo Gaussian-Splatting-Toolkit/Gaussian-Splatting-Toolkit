@@ -3,7 +3,6 @@ from typing import Optional
 import open3d as o3d
 import numpy as np
 import json
-from rich.progress import track
 from gs_toolkit.utils.rich_utils import CONSOLE
 
 
@@ -83,11 +82,7 @@ class TSDFFusion:
             color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8,
         )
 
-        for i, camera_pose in track(
-            enumerate(self.camera_poses),
-            description="Integrating",
-            total=len(self.camera_poses),
-        ):
+        for i, camera_pose in enumerate(self.camera_poses):
             if self.using_gt:
                 color_path = self.data_path / "gt" / "rgb" / f"frame_{i:05}.jpg"
                 color = o3d.io.read_image(str(color_path))
@@ -207,11 +202,7 @@ class TSDFFusion:
         valid_points = np.zeros(len(points), dtype=int)
 
         # Process each camera pose and update the valid_points array
-        for i, camera_pose in track(
-            enumerate(self.camera_poses),
-            description="Filtering",
-            total=len(self.camera_poses),
-        ):
+        for i, camera_pose in enumerate(self.camera_poses):
             # Project all points onto the 2D camera plane
             points_2d = self.batch_project_to_2d(
                 points, self.intrinsic, np.linalg.inv(camera_pose.pose)
