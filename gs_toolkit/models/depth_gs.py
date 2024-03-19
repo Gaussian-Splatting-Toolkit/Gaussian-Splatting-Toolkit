@@ -103,8 +103,6 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """If True, use sparse loss for alpha channel"""
     sparse_lambda: float = 0.1
     """weight of sparse loss"""
-    sparse_loss_start_iteration: int = 10_000
-    """start iteration of sparse loss"""
     use_depth_loss: bool = True
     """If True, use depth loss"""
     depth_lambda: float = 0.1
@@ -429,11 +427,7 @@ class DepthGSModel(GaussianSplattingModel):
         else:
             scale_reg = torch.tensor(0.0).to(self.device)
 
-        if (
-            self.config.use_sparse_loss
-            and self.step % 10 == 0
-            and self.step > self.config.sparse_loss_start_iteration
-        ):
+        if self.config.use_sparse_loss and self.step % 10 == 0:
             l_sparse = (
                 torch.log(self.gauss_params["opacities"] + 1e-6)
                 + torch.log(1 - self.gauss_params["opacities"] + 1e-6)

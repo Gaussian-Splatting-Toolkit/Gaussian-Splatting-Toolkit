@@ -112,6 +112,12 @@ gs-export point-cloud --load-config /path/to/config.yml --output-dir exports/pcd
 gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/
 ```
 
+Export tsdf with mask
+
+```bash
+gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/ --mask-path /path/to/mask
+```
+
 ## Contribute
 
 To add a new submodule, run
@@ -149,6 +155,9 @@ git subtree add --prefix {local directory being pulled into} {remote repo URL} {
 - [ ] Visualization
   - [ ] normal visualization
   - [ ] gaussian ellipsoid visualization
+  - [ ] pointcloud
+  - [ ] mesh
+  - [ ] Any gaussians without loading pipeline
 - [x] Render
   - [x] Render GS model without loading pipeline
 - [ ] Documentation

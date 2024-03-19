@@ -231,6 +231,10 @@ class ExportTSDF:
     """SDF truncation for the volume."""
     using_gt: bool = False
     """Whether to use ground truth for meshing."""
+    mask_path: Optional[Path] = None
+    """Path to the mask."""
+    seg_prompt: Optional[str] = None
+    """Segmentation prompt for the meshing."""
 
     def main(self) -> None:
         """Export point cloud."""
@@ -248,7 +252,7 @@ class ExportTSDF:
             method="marching_cubes",
             voxel_length=self.vox_length,
             sdf_trunc=self.sdf_trunc,
-            mask=False,
+            mask=self.mask_path,
             filter_pcd=False,
             bounding_box=False,
             using_gt=self.using_gt,

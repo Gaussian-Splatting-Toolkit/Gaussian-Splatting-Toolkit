@@ -1,6 +1,5 @@
 # Reference: https://github.com/IDEA-Research/Grounded-Segment-Anything
 
-from typing import Dict, List, Optional
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -9,6 +8,7 @@ from segment_anything import sam_model_registry
 from deva.ext.SAM.automatic_mask_generator import SamAutomaticMaskGenerator
 from deva.ext.MobileSAM.setup_mobile_sam import setup_model as setup_mobile_sam
 from deva.inference.object_info import ObjectInfo
+from typing import Dict, List, Optional, Tuple
 
 
 def get_sam_model(config: Dict, device: str) -> SamAutomaticMaskGenerator:
@@ -54,7 +54,7 @@ def auto_segment(
     forward_mask: Optional[torch.Tensor],
     min_side: int,
     suppress_small_mask: bool,
-) -> (torch.Tensor, List[ObjectInfo]):
+) -> Tuple[torch.Tensor, List[ObjectInfo]]:
     """
     config: the global configuration dictionary
     image: the image to segment; should be a numpy array; H*W*3; unnormalized (0~255)

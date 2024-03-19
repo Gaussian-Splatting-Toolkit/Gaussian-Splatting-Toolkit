@@ -277,9 +277,11 @@ def save_result(queue: Queue):
                             confidence=np.array(all_scores),
                             class_id=np.array(all_cat_ids),
                         )
-                        annotator = sv.BoxAnnotator()
-                        blend = annotator.annotate(
-                            scene=blend, detections=detections, labels=labels
+                        annotator = sv.BoundingBoxAnnotator()
+                        blend = annotator.annotate(scene=blend, detections=detections)
+                        label_annotator = sv.LabelAnnotator()
+                        blend = label_annotator.annotate(
+                            scene=blend, labels=labels, detections=detections
                         )
 
                 if saver.dataset != "gradio":

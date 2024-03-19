@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 import open3d as o3d
 import numpy as np
 import json
@@ -30,7 +31,7 @@ class TSDFFusion:
         method: str = "marching_cubes",
         voxel_length: float = 4.0 / 512.0,
         sdf_trunc: float = 0.04,
-        mask: bool = False,
+        mask: Optional[Path] = None,
         filter_pcd: bool = False,
         bounding_box: bool = False,
         using_gt: bool = False,
@@ -107,12 +108,18 @@ class TSDFFusion:
                 depth = o3d.io.read_image(
                     str(self.data_path / "depth" / f"depth_{i:05}.png")
                 )
-            if self.mask:
+            if self.mask is not None:
                 mask = o3d.io.read_image(
-                    str(self.data_path / "mask" / f"frame_{i:05}.png")
+                    str(self.mask / "Annotations" / f"frame_{i:05}.png")
                 )
                 # Set depth to 0 where mask is 0
                 mask_np = np.asarray(mask)
+                gray_array = (
+                    0.21 * mask_np[:, :, 0]
+                    + 0.72 * mask_np[:, :, 1]
+                    + 0.07 * mask_np[:, :, 2]
+                )
+                mask_np = gray_array.astype(np.uint8)
                 if self.bounding_box:
                     # Get the bounding box of the mask
                     bb_mask = self.create_bounding_box_mask(mask_np, 5)
