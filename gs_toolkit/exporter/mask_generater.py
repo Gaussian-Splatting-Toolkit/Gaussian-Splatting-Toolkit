@@ -104,6 +104,9 @@ def generate_mask_from_text(
     }
 
     deva_model = DEVA(config).cuda().eval()
+    if config["model"] is not None:
+        model_weights = torch.load(config["model"])
+        deva_model.load_weights(model_weights)
     gd_model, sam_model = get_grounding_dino_model(config, "cuda")
     """
     Temporal setting

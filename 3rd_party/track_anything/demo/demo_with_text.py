@@ -13,6 +13,7 @@ from deva.inference.demo_utils import flush_buffer
 from deva.ext.ext_eval_args import add_ext_eval_args, add_text_default_args
 from deva.ext.grounding_dino import get_grounding_dino_model
 from deva.ext.with_text_processor import process_frame_with_text as process_frame
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 from tqdm import tqdm
 import json
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         >= cfg["max_long_term_elements"]
     )
 
-    print("Configuration:", cfg)
+    CONSOLE.print("Configuration:", cfg)
 
     deva = DEVAInferenceCore(deva_model, config=cfg)
     deva.next_voting_frame = cfg["num_voting_frames"] - 1
