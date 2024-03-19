@@ -252,21 +252,16 @@ class ExportTSDF:
             self.output_dir.mkdir(parents=True)
 
         if self.seg_prompt is not None:
-            # TODO: If no checkpoint, install
-            with status(
-                msg="[bold yellow]Generating Masks",
-                spinner="circle",
+            generate_mask_from_text(
+                chunk_size=4,
+                img_path=self.render_path / "rgb",
+                size=480,
+                prompt=self.seg_prompt,
+                amp=True,
+                temporal_setting="semionline",
+                output=self.render_path / "mask",
                 verbose=self.verbose,
-            ):
-                generate_mask_from_text(
-                    chunk_size=4,
-                    img_path=self.render_path / "rgb",
-                    size=480,
-                    prompt=self.seg_prompt,
-                    amp=True,
-                    temporal_setting="semionline",
-                    output=self.render_path / "mask",
-                )
+            )
             self.mask_path = self.render_path / "mask"
 
         fusion = TSDFFusion(
@@ -301,7 +296,7 @@ class ExportTSDF:
         CONSOLE.print("Saving Mesh...")
         o3d.io.write_triangle_mesh(str(self.output_dir / "mesh.ply"), mesh)
         print("\033[A\033[A")
-        CONSOLE.print("[bold green]:white_check_mark: Saving Mesh")
+        CONSOLE.log("[bold green]:white_check_mark: Saving Mesh")
 
         # Clean Mesh
         if self.clean:
