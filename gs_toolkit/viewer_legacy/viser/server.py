@@ -9,7 +9,7 @@ import viser.infra
 from typing_extensions import override
 
 from .message_api import MessageApi
-from .messages import GuiUpdateMessage, GSToolkitMessage
+from .messages import GuiUpdateMessage, GSTKMessage
 
 
 class ViserServer(MessageApi):
@@ -37,16 +37,14 @@ class ViserServer(MessageApi):
         self._ws_server.start()
 
     @override
-    def _queue(self, message: GSToolkitMessage) -> None:
+    def _queue(self, message: GSTKMessage) -> None:
         """Implements message enqueue required by MessageApi.
 
         Pushes a message onto a broadcast queue."""
         self._ws_server.broadcast(message)
 
     def register_handler(
-        self,
-        message_type: Type[GSToolkitMessage],
-        handler: Callable[[GSToolkitMessage], None],
+        self, message_type: Type[GSTKMessage], handler: Callable[[GSTKMessage], None]
     ) -> None:
         """Register a handler for incoming messages.
 

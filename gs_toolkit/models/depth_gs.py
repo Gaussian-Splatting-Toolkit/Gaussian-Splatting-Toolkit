@@ -39,7 +39,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """training starts at 1/d resolution, every n steps this is doubled"""
     background_color: Literal["random", "black", "white"] = "random"
     """Whether to randomize the background color."""
-    num_downscales: int = 2
+    num_downscales: int = 0
     """at the beginning, resolution is 1/2^d, where d is this number"""
     cull_alpha_thresh: float = 0.1
     """threshold of opacity for culling gaussians. One can set it to a lower value (e.g. 0.005) for higher quality."""
@@ -99,7 +99,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     However, PLY exported with antialiased rasterize mode is not compatible with classic mode. Thus many web viewers that
     were implemented for classic mode can not render antialiased mode PLY properly without modifications.
     """
-    use_sparse_loss: bool = True
+    use_sparse_loss: bool = False
     """If True, use sparse loss for alpha channel"""
     sparse_lambda: float = 0.1
     """weight of sparse loss"""
@@ -107,7 +107,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """If True, use depth loss"""
     depth_lambda: float = 0.1
     """weight of depth loss"""
-    depth_loss_start_iteration: int = 10_000
+    depth_loss_start_iteration: int = 4_000
     """start iteration of depth loss"""
 
 
@@ -331,7 +331,7 @@ class DepthGSModel(GaussianSplattingModel):
             ]  # type: ignore
             depth_im = torch.where(alpha > 0, depth_im / alpha, depth_im.detach().max())
 
-        return {"rgb": rgb, "depth": depth_im, "accumulation": alpha, "background": background}  # type: ignore
+        return {"rgb": rgb, "depth": depth_im}  # type: ignore
 
     def get_gt_img(self, image: torch.Tensor):
         """Compute groundtruth image with iteration dependent downscale factor for evaluation purpose

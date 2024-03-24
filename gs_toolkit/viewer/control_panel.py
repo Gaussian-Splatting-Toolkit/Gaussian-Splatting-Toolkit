@@ -6,6 +6,8 @@ import numpy as np
 import torch
 import viser
 import viser.transforms as vtf
+from viser import ViserServer
+
 from gs_toolkit.data.scene_box import OrientedBox
 from gs_toolkit.utils.colormaps import ColormapOptions, Colormaps
 from gs_toolkit.viewer.viewer_elements import (  # ViewerButtonGroup,
@@ -18,7 +20,6 @@ from gs_toolkit.viewer.viewer_elements import (  # ViewerButtonGroup,
     ViewerSlider,
     ViewerVec3,
 )
-from viser import ViserServer
 
 
 class ControlPanel:
@@ -163,12 +164,12 @@ class ControlPanel:
             step=0.05,
             hint="Target training utilization, 0.0 is slow, 1.0 is fast. Doesn't affect final render quality",
         )
-        self._layer_depth = ViewerCheckbox(
-            "Composite depth",
-            self.default_composite_depth,
-            cb_hook=lambda _: rerender_cb(),
-            hint="Allow GS to occlude 3D browser objects",
-        )
+        # self._layer_depth = ViewerCheckbox(
+        #     "Composite depth",
+        #     self.default_composite_depth,
+        #     cb_hook=lambda _: rerender_cb(),
+        #     hint="Allow NeRF to occlude 3D browser objects",
+        # )
         self._max_res = ViewerSlider(
             "Max res",
             512,
@@ -249,7 +250,6 @@ class ControlPanel:
             self.add_element(self._max_res)
             self.add_element(self._output_render)
             self.add_element(self._colormap)
-            self.add_element(self._layer_depth)
             # colormap options
             self.add_element(self._invert, additional_tags=("colormap",))
             self.add_element(self._normalize, additional_tags=("colormap",))
@@ -461,9 +461,9 @@ class ControlPanel:
             invert=self._split_invert.value,
         )
 
-    @property
-    def layer_depth(self):
-        return self._layer_depth.value
+    # @property
+    # def layer_depth(self):
+    #     return self._layer_depth.value
 
 
 def _get_colormap_options(dimensions: int, dtype: type) -> List[Colormaps]:

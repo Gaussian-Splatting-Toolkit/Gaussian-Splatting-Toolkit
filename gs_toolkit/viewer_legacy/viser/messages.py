@@ -10,7 +10,7 @@ import viser.infra
 from typing_extensions import override
 
 
-class GSToolkitMessage(viser.infra.Message):
+class GSTKMessage(viser.infra.Message):
     """Base message type for controlling our viewer."""
 
     @override
@@ -19,7 +19,7 @@ class GSToolkitMessage(viser.infra.Message):
 
 
 @dataclasses.dataclass
-class BackgroundImageMessage(GSToolkitMessage):
+class BackgroundImageMessage(GSTKMessage):
     """Message for rendering a background image."""
 
     media_type: Literal["image/jpeg", "image/png"]
@@ -27,7 +27,7 @@ class BackgroundImageMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class GuiAddMessage(GSToolkitMessage):
+class GuiAddMessage(GSTKMessage):
     """Sent server->client to add a new GUI input."""
 
     name: str
@@ -40,7 +40,7 @@ class GuiAddMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class GuiRemoveMessage(GSToolkitMessage):
+class GuiRemoveMessage(GSTKMessage):
     """Sent server->client to add a new GUI input."""
 
     name: str
@@ -51,7 +51,7 @@ class GuiRemoveMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class GuiUpdateMessage(GSToolkitMessage):
+class GuiUpdateMessage(GSTKMessage):
     """Sent client->server when a GUI input is changed."""
 
     name: str
@@ -63,7 +63,7 @@ class GuiUpdateMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class GuiSetHiddenMessage(GSToolkitMessage):
+class GuiSetHiddenMessage(GSTKMessage):
     """Sent client->server when a GUI input is changed."""
 
     name: str
@@ -75,7 +75,7 @@ class GuiSetHiddenMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class GuiSetValueMessage(GSToolkitMessage):
+class GuiSetValueMessage(GSTKMessage):
     """Sent server->client to set the value of a particular input."""
 
     name: str
@@ -87,7 +87,7 @@ class GuiSetValueMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class GuiSetLevaConfMessage(GSToolkitMessage):
+class GuiSetLevaConfMessage(GSTKMessage):
     """Sent server->client to override some part of an input's Leva config."""
 
     name: str
@@ -99,7 +99,7 @@ class GuiSetLevaConfMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class FilePathInfoMessage(GSToolkitMessage):
+class FilePathInfoMessage(GSTKMessage):
     """Experiment file path info"""
 
     config_base_dir: str
@@ -111,7 +111,7 @@ class FilePathInfoMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class SetCameraMessage(GSToolkitMessage):
+class SetCameraMessage(GSTKMessage):
     """Set the current camera."""
 
     fov: Optional[float]
@@ -125,7 +125,7 @@ class SetCameraMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class CameraMessage(GSToolkitMessage):
+class CameraMessage(GSTKMessage):
     """Render camera data."""
 
     aspect: float
@@ -162,7 +162,7 @@ class CameraMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class SceneBoxMessage(GSToolkitMessage):
+class SceneBoxMessage(GSTKMessage):
     """Scene Box data."""
 
     min: Tuple[float, float, float]
@@ -172,7 +172,7 @@ class SceneBoxMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class DatasetImageMessage(GSToolkitMessage):
+class DatasetImageMessage(GSTKMessage):
     """Message for rendering a dataset image frustum."""
 
     idx: str
@@ -186,7 +186,7 @@ class DatasetImageMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class TrainingStateMessage(GSToolkitMessage):
+class TrainingStateMessage(GSTKMessage):
     """Whether the scene is in training mode or not."""
 
     training_state: Literal["training", "paused", "completed"]
@@ -194,7 +194,7 @@ class TrainingStateMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class CameraPathPayloadMessage(GSToolkitMessage):
+class CameraPathPayloadMessage(GSTKMessage):
     """Camera path"""
 
     camera_path_filename: str
@@ -204,12 +204,12 @@ class CameraPathPayloadMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class CameraPathOptionsRequest(GSToolkitMessage):
+class CameraPathOptionsRequest(GSTKMessage):
     """Request list of existing camera paths"""
 
 
 @dataclasses.dataclass
-class CameraPathsMessage(GSToolkitMessage):
+class CameraPathsMessage(GSTKMessage):
     """Dictionary of camera paths"""
 
     payload: Any
@@ -217,7 +217,7 @@ class CameraPathsMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class CropParamsMessage(GSToolkitMessage):
+class CropParamsMessage(GSTKMessage):
     """Crop parameters"""
 
     crop_enabled: bool
@@ -231,7 +231,7 @@ class CropParamsMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class StatusMessage(GSToolkitMessage):
+class StatusMessage(GSTKMessage):
     """Status message."""
 
     eval_res: str
@@ -241,17 +241,17 @@ class StatusMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class SaveCheckpointMessage(GSToolkitMessage):
+class SaveCheckpointMessage(GSTKMessage):
     """Save checkpoint message."""
 
 
 @dataclasses.dataclass
-class UseTimeConditioningMessage(GSToolkitMessage):
+class UseTimeConditioningMessage(GSTKMessage):
     """Use time conditioning message."""
 
 
 @dataclasses.dataclass
-class TimeConditionMessage(GSToolkitMessage):
+class TimeConditionMessage(GSTKMessage):
     """Time conditioning message."""
 
     time: float
@@ -259,7 +259,7 @@ class TimeConditionMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class ClickMessage(GSToolkitMessage):
+class ClickMessage(GSTKMessage):
     """Click message."""
 
     origin: Tuple[float, float, float]
@@ -269,7 +269,7 @@ class ClickMessage(GSToolkitMessage):
 
 
 @dataclasses.dataclass
-class OutputOptionsMessage(GSToolkitMessage):
+class OutputOptionsMessage(GSTKMessage):
     """Output options message which are used in the export panel.
     TODO: remove when export panel is becomes python defined.
     """

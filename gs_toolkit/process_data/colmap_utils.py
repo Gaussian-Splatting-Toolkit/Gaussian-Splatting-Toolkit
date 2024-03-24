@@ -156,7 +156,6 @@ def run_colmap(
         f"--database_path {colmap_dir / 'database.db'}",
         f"--image_path {image_dir}",
         f"--output_path {sparse_dir}",
-        "--Mapper.ba_global_max_num_iterations 10",
     ]
 
     mapper_cmd = " ".join(mapper_cmd)
@@ -751,7 +750,7 @@ def align_depth(
         uu, vv = uv[:, 0].astype(int), uv[:, 1].astype(int)
         depth_measure = depth_img[vv, uu]
         # Choose the idx that depth measure is not 0
-        idx = np.where((depth_measure > 30) & (depth_measure < 3_000))
+        idx = np.where((depth_measure > 30) & (depth_measure < 1_000))
         z = z[idx]
         depth_measure = depth_measure[idx] / 1000
         if len(z) != 0:

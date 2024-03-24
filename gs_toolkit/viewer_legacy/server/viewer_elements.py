@@ -168,7 +168,7 @@ class ViewerElement(Generic[TValue]):
         from gs_toolkit.utils.rich_utils import CONSOLE
 
         CONSOLE.print(
-            "WARNING: viewer_legacy.server.viewer_elements is deprecated and will be removed in the future. Use the new gs_toolkit.viewer instead",
+            "WARNING: viewer_legacy.server.viewer_elements is deprecated and will be removed in the future. Use the new nerfstudio.viewer instead",
             style="bold yellow",
         )
 

@@ -10,6 +10,8 @@ import torch
 
 from gs_toolkit.cameras.cameras import Cameras
 from gs_toolkit.model_components.renderers import background_color_override_context
+from gs_toolkit.models.vanilla_gs import GaussianSplattingModel
+from gs_toolkit.models.depth_gs import DepthGSModel
 from gs_toolkit.utils import colormaps, writer
 from gs_toolkit.utils.writer import GLOBAL_BUFFER, EventName, TimeWriter
 from gs_toolkit.viewer_legacy.server import viewer_utils
@@ -116,10 +118,18 @@ class RenderStateMachine(threading.Thread):
         with self.viewer.train_lock if self.viewer.train_lock is not None else contextlib.nullcontext():
             # TODO jake-austin: Make this check whether the model inherits from a camera based model or a ray based model
             # TODO Zhuoyang: First made some dummy judgements, need to be fixed later
-            # TODO fix me before ship
-            camera_ray_bundle = camera.generate_rays(
-                camera_indices=0, aabb_box=self.viewer.get_model().render_aabb
+            isGaussianSplattingModel = isinstance(
+                self.viewer.get_model(), (GaussianSplattingModel, DepthGSModel)
             )
+            if isGaussianSplattingModel:
+                # TODO fix me before ship
+                camera_ray_bundle = camera.generate_rays(
+                    camera_indices=0, aabb_box=self.viewer.get_model().render_aabb
+                )
+            else:
+                camera_ray_bundle = camera.generate_rays(
+                    camera_indices=0, aabb_box=self.viewer.get_model().render_aabb
+                )
 
             with TimeWriter(None, None, write=False) as vis_t:
                 self.viewer.get_model().eval()
@@ -138,10 +148,24 @@ class RenderStateMachine(threading.Thread):
                     with background_color_override_context(
                         background_color
                     ), torch.no_grad():
-                        outputs = self.viewer.get_model().get_outputs_for_camera(camera)
+                        if isGaussianSplattingModel:
+                            outputs = self.viewer.get_model().get_outputs_for_camera(
+                                camera
+                            )
+                        else:
+                            outputs = self.viewer.get_model().get_outputs_for_camera_ray_bundle(
+                                camera_ray_bundle
+                            )
                 else:
                     with torch.no_grad():
-                        outputs = self.viewer.get_model().get_outputs_for_camera(camera)
+                        if isGaussianSplattingModel:
+                            outputs = self.viewer.get_model().get_outputs_for_camera(
+                                camera
+                            )
+                        else:
+                            outputs = self.viewer.get_model().get_outputs_for_camera_ray_bundle(
+                                camera_ray_bundle
+                            )
                 self.viewer.get_model().train()
         if True:
             num_rays = (camera.height * camera.width).item()

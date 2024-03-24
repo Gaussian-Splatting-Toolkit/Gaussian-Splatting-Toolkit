@@ -18,6 +18,8 @@ from gs_toolkit.cameras.cameras import CameraType
 from gs_toolkit.configs import base_config as cfg
 from gs_toolkit.data.datasets.base_dataset import InputDataset
 from gs_toolkit.models.base_model import Model
+from gs_toolkit.models.vanilla_gs import GaussianSplattingModel
+from gs_toolkit.models.depth_gs import DepthGSModel
 from gs_toolkit.pipelines.base_pipeline import Pipeline
 from gs_toolkit.utils.decorators import check_main_thread, decorate_all
 from gs_toolkit.utils.writer import GLOBAL_BUFFER, EventName
@@ -199,7 +201,9 @@ class Viewer:
             )
 
         with tabs.add_tab("Export", viser.Icon.PACKAGE_EXPORT):
-            populate_export_tab(self.viser_server, self.control_panel, config_path)
+            populate_export_tab(
+                self.viser_server, self.control_panel, config_path, self.pipeline.model
+            )
 
         # Keep track of the pointers to generated GUI folders, because each generated folder holds a unique ID.
         viewer_gui_folders = dict()
@@ -247,7 +251,7 @@ class Viewer:
                 from gs_toolkit.utils.rich_utils import CONSOLE
 
                 CONSOLE.print(
-                    "Legacy ViewerElements detected in model, please import gs_toolkit.viewer.viewer_elements instead",
+                    "Legacy ViewerElements detected in model, please import nerfstudio.viewer.viewer_elements instead",
                     style="bold yellow",
                 )
             self.viewer_elements = []
@@ -265,6 +269,17 @@ class Viewer:
         for c in self.viewer_controls:
             c._setup(self)
 
+        # Diagnostics for Gaussian Splatting: where the points are at the start of training.
+        # This is hidden by default, it can be shown from the Viser UI's scene tree table.
+        if isinstance(pipeline.model, (GaussianSplattingModel, DepthGSModel)):
+            self.viser_server.add_point_cloud(
+                "/gaussian_splatting_initial_points",
+                points=pipeline.model.means.numpy(force=True) * VISER_GSTK_SCALE_RATIO,
+                colors=(255, 0, 0),
+                point_size=0.01,
+                point_shape="circle",
+                visible=False,  # Hidden by default.
+            )
         self.ready = True
 
     def toggle_pause_button(self) -> None:
@@ -305,6 +320,7 @@ class Viewer:
                 fov=self.render_tab_state.preview_fov,
                 aspect=self.render_tab_state.preview_aspect,
                 c2w=c2w,
+                time=self.render_tab_state.preview_time,
                 camera_type=CameraType.PERSPECTIVE
                 if camera_type == "Perspective"
                 else CameraType.FISHEYE

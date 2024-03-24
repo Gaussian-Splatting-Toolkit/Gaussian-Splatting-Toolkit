@@ -117,7 +117,7 @@ class MessageApi(abc.ABC):
         self._gui_folder_labels: List[str] = []
 
     @abc.abstractmethod
-    def _queue(self, message: messages.GSToolkitMessage) -> None:
+    def _queue(self, message: messages.GSTKMessage) -> None:
         """Abstract method for sending messages."""
         ...
 

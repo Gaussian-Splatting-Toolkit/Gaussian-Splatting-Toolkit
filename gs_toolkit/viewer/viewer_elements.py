@@ -1,4 +1,4 @@
-""" Viewer GUI elements for the gs_toolkit viewer """
+""" Viewer GUI elements for the gaussian splatting viewer """
 
 
 from __future__ import annotations

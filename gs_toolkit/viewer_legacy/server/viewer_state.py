@@ -39,7 +39,7 @@ from gs_toolkit.viewer_legacy.viser.messages import (
     CameraPathPayloadMessage,
     ClickMessage,
     CropParamsMessage,
-    GSToolkitMessage,
+    GSTKMessage,
     SaveCheckpointMessage,
     TimeConditionMessage,
     TrainingStateMessage,
@@ -220,21 +220,20 @@ class ViewerLegacyState:
                 RenderAction("rerender", self.camera_message)
             )
 
-    def _handle_training_state_message(self, message: GSToolkitMessage) -> None:
+    def _handle_training_state_message(self, message: GSTKMessage) -> None:
         """Handle training state message from viewer."""
         assert isinstance(message, TrainingStateMessage)
         self.train_btn_state = message.training_state
         self.training_state = message.training_state
         self.viser_server.set_training_state(message.training_state)
 
-    def _handle_save_checkpoint(self, message: GSToolkitMessage) -> None:
+    def _handle_save_checkpoint(self, message: GSTKMessage) -> None:
         """Handle save checkpoint message from viewer."""
         assert isinstance(message, SaveCheckpointMessage)
         if self.trainer is not None:
             self.trainer.save_checkpoint(self.step)
-            self.trainer.save_ply(self.step)
 
-    def _handle_camera_update(self, message: GSToolkitMessage) -> None:
+    def _handle_camera_update(self, message: GSTKMessage) -> None:
         """Handle camera update message from viewer."""
         assert isinstance(message, CameraMessage)
         self.camera_message = message
@@ -246,7 +245,7 @@ class ViewerLegacyState:
             self.render_statemachine.action(RenderAction("static", self.camera_message))
             self.training_state = self.train_btn_state
 
-    def _handle_camera_path_option_request(self, message: GSToolkitMessage) -> None:
+    def _handle_camera_path_option_request(self, message: GSTKMessage) -> None:
         """Handle camera path option request message from viewer."""
         assert isinstance(message, CameraPathOptionsRequest)
         camera_path_dir = self.datapath / "camera_paths"
@@ -257,7 +256,7 @@ class ViewerLegacyState:
                     all_path_dict[path.stem] = load_from_json(path)
             self.viser_server.send_camera_paths(all_path_dict)
 
-    def _handle_camera_path_payload(self, message: GSToolkitMessage) -> None:
+    def _handle_camera_path_payload(self, message: GSTKMessage) -> None:
         """Handle camera path payload message from viewer."""
         assert isinstance(message, CameraPathPayloadMessage)
         camera_path_filename = message.camera_path_filename + ".json"
@@ -266,7 +265,7 @@ class ViewerLegacyState:
         camera_paths_directory.mkdir(parents=True, exist_ok=True)
         write_to_json(camera_paths_directory / camera_path_filename, camera_path)
 
-    def _handle_crop_params_message(self, message: GSToolkitMessage) -> None:
+    def _handle_crop_params_message(self, message: GSTKMessage) -> None:
         """Handle crop parameters message from viewer."""
         assert isinstance(message, CropParamsMessage)
         self.control_panel.crop_viewport = message.crop_enabled
@@ -278,13 +277,13 @@ class ViewerLegacyState:
         self.control_panel.crop_min = tuple(crop_min.tolist())  # type: ignore
         self.control_panel.crop_max = tuple(crop_max.tolist())  # type: ignore
 
-    def _handle_click_message(self, message: GSToolkitMessage) -> None:
+    def _handle_click_message(self, message: GSTKMessage) -> None:
         """Handle click message from viewer."""
         assert isinstance(message, ClickMessage)
         for controls in self.viewer_controls:
             controls.on_click(message)
 
-    def _handle_time_condition_message(self, message: GSToolkitMessage) -> None:
+    def _handle_time_condition_message(self, message: GSTKMessage) -> None:
         """Handle time conditioning message from viewer."""
         assert isinstance(message, TimeConditionMessage)
         self.control_panel.time = message.time

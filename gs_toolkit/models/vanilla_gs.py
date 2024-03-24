@@ -854,7 +854,7 @@ class GaussianSplattingModel(Model):
             ]  # type: ignore
             depth_im = torch.where(alpha > 0, depth_im / alpha, depth_im.detach().max())
 
-        return {"rgb": rgb, "depth": depth_im, "accumulation": alpha, "background": background}  # type: ignore
+        return {"rgb": rgb, "depth": depth_im}  # type: ignore
 
     def get_gt_img(self, image: torch.Tensor):
         """Compute groundtruth image with iteration dependent downscale factor for evaluation purpose

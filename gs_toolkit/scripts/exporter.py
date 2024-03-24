@@ -226,9 +226,9 @@ class ExportTSDF:
     """Path to the rendered images."""
     output_dir: Optional[Path] = None
     """Path to the output directory."""
-    vox_length: float = 4.0 / 512
+    vox_length: float = 3.0 / 512
     """Voxel length for the volume."""
-    sdf_trunc: float = 0.04
+    sdf_trunc: float = 0.05
     """SDF truncation for the volume."""
     using_gt: bool = False
     """Whether to use ground truth for meshing."""

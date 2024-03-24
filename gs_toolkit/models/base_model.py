@@ -17,7 +17,7 @@ from gs_toolkit.cameras.cameras import Cameras
 from gs_toolkit.cameras.rays import RayBundle
 from gs_toolkit.configs.base_config import InstantiateConfig
 from gs_toolkit.configs.config_utils import to_immutable_dict
-from gs_toolkit.data.scene_box import SceneBox, OrientedBox
+from gs_toolkit.data.scene_box import OrientedBox, SceneBox
 from gs_toolkit.engine.callbacks import TrainingCallback, TrainingCallbackAttributes
 from gs_toolkit.model_components.scene_colliders import NearFarCollider
 
@@ -42,13 +42,13 @@ class ModelConfig(InstantiateConfig):
     eval_num_rays_per_chunk: int = 4096
     """specifies number of rays per chunk during eval"""
     prompt: Optional[str] = None
-    """A prompt to be used in text to GS models"""
+    """A prompt to be used in text to NeRF models"""
 
 
 class Model(nn.Module):
     """Model class
     Where everything (Fields, Optimizers, Samplers, Visualization, etc) is linked together. This should be
-    subclassed for custom GS model.
+    subclassed for custom NeRF model.
 
     Args:
         config: configuration for instantiating model
@@ -125,7 +125,7 @@ class Model(nn.Module):
         """
 
     def forward(
-        self, cameras: Union[RayBundle, Cameras]
+        self, ray_bundle: Union[RayBundle, Cameras]
     ) -> Dict[str, Union[torch.Tensor, List]]:
         """Run forward starting with a ray bundle. This outputs different things depending on the configuration
         of the model and whether or not the batch is provided (whether or not we are training basically)
@@ -135,9 +135,9 @@ class Model(nn.Module):
         """
 
         if self.collider is not None:
-            cameras = self.collider(cameras)
+            ray_bundle = self.collider(ray_bundle)
 
-        return self.get_outputs(cameras)
+        return self.get_outputs(ray_bundle)
 
     def get_metrics_dict(self, outputs, batch) -> Dict[str, torch.Tensor]:
         """Compute and returns metrics.

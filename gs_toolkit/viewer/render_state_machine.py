@@ -3,18 +3,22 @@ from __future__ import annotations
 
 import contextlib
 import threading
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Tuple, get_args
 
 import numpy as np
 import torch
+from viser import ClientHandle
+
 from gs_toolkit.cameras.cameras import Cameras
 from gs_toolkit.model_components.renderers import background_color_override_context
+from gs_toolkit.models.vanilla_gs import GaussianSplattingModel
+from gs_toolkit.models.depth_gs import DepthGSModel
 from gs_toolkit.utils import colormaps, writer
 from gs_toolkit.utils.writer import GLOBAL_BUFFER, EventName, TimeWriter
-from gs_toolkit.viewer_legacy.server import viewer_utils
 from gs_toolkit.viewer.utils import CameraState, get_camera
-from viser import ClientHandle
+from gs_toolkit.viewer_legacy.server import viewer_utils
 
 if TYPE_CHECKING:
     from gs_toolkit.viewer.viewer import Viewer
@@ -113,6 +117,10 @@ class RenderStateMachine(threading.Thread):
 
         image_height, image_width = self._calculate_image_res(camera_state.aspect)
 
+        # These 2 lines make the control panel's time option independent from the render panel's.
+        # When outside of render preview, it will use the control panel's time.
+        if not self.viewer.render_tab_state.preview_render and self.viewer.include_time:
+            camera_state.time = self.viewer.control_panel.time
         camera = get_camera(camera_state, image_height, image_width)
         camera = camera.to(self.viewer.get_model().device)
         assert isinstance(camera, Cameras)
@@ -120,12 +128,15 @@ class RenderStateMachine(threading.Thread):
 
         with TimeWriter(None, None, write=False) as vis_t:
             with self.viewer.train_lock if self.viewer.train_lock is not None else contextlib.nullcontext():
-                color = self.viewer.control_panel.background_color
-                background_color = torch.tensor(
-                    [color[0] / 255.0, color[1] / 255.0, color[2] / 255.0],
-                    device=self.viewer.get_model().device,
-                )
-                self.viewer.get_model().set_background(background_color)
+                if isinstance(
+                    self.viewer.get_model(), (GaussianSplattingModel, DepthGSModel)
+                ):
+                    color = self.viewer.control_panel.background_color
+                    background_color = torch.tensor(
+                        [color[0] / 255.0, color[1] / 255.0, color[2] / 255.0],
+                        device=self.viewer.get_model().device,
+                    )
+                    self.viewer.get_model().set_background(background_color)
                 self.viewer.get_model().eval()
                 step = self.viewer.step
                 try:
@@ -172,6 +183,9 @@ class RenderStateMachine(threading.Thread):
     def run(self):
         """Main loop for the render thread"""
         while self.running:
+            if not self.viewer.ready:
+                time.sleep(0.1)
+                continue
             if not self.render_trigger.wait(0.2):
                 # if we haven't received a trigger in a while, send a static action
                 self.action(
@@ -256,11 +270,6 @@ class RenderStateMachine(threading.Thread):
             )
 
         selected_output = (selected_output * 255).type(torch.uint8)
-        depth = (
-            outputs["gl_z_buf_depth"].cpu().numpy() * self.viser_scale_ratio
-            if "gl_z_buf_depth" in outputs
-            else None
-        )
 
         # Convert to numpy.
         selected_output = selected_output.cpu().numpy()
@@ -290,9 +299,9 @@ class RenderStateMachine(threading.Thread):
             selected_output,
             format=self.viewer.config.image_format,
             jpeg_quality=jpg_quality,
-            depth=depth,
+            depth=None,
         )
-        res = f"{selected_output.shape[0]}x{selected_output.shape[1]}px"
+        res = f"{selected_output.shape[1]}x{selected_output.shape[0]}px"
         self.viewer.stats_markdown.content = self.viewer.make_stats_markdown(None, res)
 
     def _calculate_image_res(self, aspect_ratio: float) -> Tuple[int, int]:

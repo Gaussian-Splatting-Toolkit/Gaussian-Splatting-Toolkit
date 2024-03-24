@@ -6,10 +6,11 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 import numpy as np
 import torch
 from jaxtyping import Float
+from torch import nn
+
 from gs_toolkit.cameras.cameras import Cameras, CameraType
 from gs_toolkit.data.scene_box import SceneBox
 from gs_toolkit.models.base_model import Model
-from torch import nn
 
 
 @dataclass
@@ -26,6 +27,8 @@ class CameraState:
         CameraType.PERSPECTIVE, CameraType.EQUIRECTANGULAR, CameraType.FISHEYE
     ]
     """Type of camera to render."""
+    time: float = 0.0
+    """The rendering time of the camera state."""
 
 
 def get_camera(
@@ -66,7 +69,7 @@ def get_camera(
         cy=pp_h,
         camera_type=camera_state.camera_type,
         camera_to_worlds=camera_state.c2w.to(torch.float32)[None, ...],
-        times=torch.tensor([0.0], dtype=torch.float32),
+        times=torch.tensor([camera_state.time], dtype=torch.float32),
     )
     return camera
 
