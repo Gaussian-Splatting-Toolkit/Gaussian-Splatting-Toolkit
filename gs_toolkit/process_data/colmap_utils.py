@@ -764,6 +764,37 @@ def align_depth(
     return image_id_to_depth_path, np.mean(total_scale)
 
 
+def get_depth_files(
+    recon_dir: Path,
+    depth_dir: Path,
+    verbose: bool = True,
+) -> Dict[int, Path]:
+    if not depth_dir.exists():
+        raise RuntimeError(f"You are required to provide depth maps in {depth_dir}")
+    im_id_to_image = read_images_binary(recon_dir / "images.bin")
+
+    if verbose:
+        iter_images = track(
+            im_id_to_image.items(),
+            total=len(im_id_to_image.items()),
+            description="Calculating depth maps ...",
+        )
+    else:
+        iter_images = iter(im_id_to_image.items())
+
+    image_id_to_depth_path = {}
+    # cov = []
+    for im_id, im_data in iter_images:
+        # Replace jpg with png in im_data.name as depth name
+        depth_name = im_data.name.replace(".jpg", ".png")
+        # Replace prefix from "frame_" to "depth_"
+        depth_name = depth_name.replace("frame_", "depth_")
+        depth_path = depth_dir / depth_name
+        image_id_to_depth_path[im_id] = depth_path
+
+    return image_id_to_depth_path
+
+
 def get_matching_summary(num_initial_frames: int, num_matched_frames: int) -> str:
     """Returns a summary of the matching results.
 

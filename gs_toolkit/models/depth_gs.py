@@ -25,6 +25,8 @@ from gs_toolkit.models.vanilla_gs import (
     GaussianSplattingModel,
 )
 
+from gs_toolkit.utils.losses import local_pearson_loss
+
 
 @dataclass
 class DepthGSModelConfig(GaussianSplattingModelConfig):
@@ -109,6 +111,8 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """weight of depth loss"""
     depth_loss_start_iteration: int = 4_000
     """start iteration of depth loss"""
+    use_est_depth: bool = False
+    """If True, use estimated depth for depth loss"""
 
 
 class DepthGSModel(GaussianSplattingModel):
@@ -331,7 +335,7 @@ class DepthGSModel(GaussianSplattingModel):
             ]  # type: ignore
             depth_im = torch.where(alpha > 0, depth_im / alpha, depth_im.detach().max())
 
-        return {"rgb": rgb, "depth": depth_im}  # type: ignore
+        return {"rgb": rgb, "depth": depth_im, "background": background}  # type: ignore
 
     def get_gt_img(self, image: torch.Tensor):
         """Compute groundtruth image with iteration dependent downscale factor for evaluation purpose
@@ -441,11 +445,16 @@ class DepthGSModel(GaussianSplattingModel):
             and self.config.use_depth_loss
             and self.step > self.config.depth_loss_start_iteration
         ):
-            depth_nonzero = gt_depth > 0
-            pred_depth = pred_depth.squeeze(-1)
-            Ll1_depth = torch.abs(
-                gt_depth * depth_nonzero - pred_depth * depth_nonzero
-            ).mean()
-            loss_dict["depth_l1"] = Ll1_depth
+            if self.config.use_est_depth:
+                loss_dict["depth_pearson"] = local_pearson_loss(
+                    pred_depth, gt_depth, 64, 0.5
+                )
+            else:
+                depth_nonzero = gt_depth > 0
+                pred_depth = pred_depth.squeeze(-1)
+                Ll1_depth = torch.abs(
+                    gt_depth * depth_nonzero - pred_depth * depth_nonzero
+                ).mean()
+                loss_dict["depth_l1"] = Ll1_depth
 
         return loss_dict

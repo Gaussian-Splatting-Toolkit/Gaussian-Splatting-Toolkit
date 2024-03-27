@@ -56,9 +56,11 @@ gs-download-data gstk --save-dir /path/to/save/dir --capture-name all
 # Extract from video
 gs-process-data video --data /path/to/video --output-dir /path/to/output-dir --num-frames-target 1000
 # Extract from images
-gs-process-data images --data /path/to/image/folder --output-dir /path/to/output-dir
+gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir
 # Extract with both rgb and depth
 gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/folder --output-dir /path/to/output-dir
+# Process with mono depth estimation
+gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/folder --using-est-depth --output-dir /path/to/output-dir
 ```
 
 ### Train the Gaussian Splatting
@@ -66,6 +68,8 @@ gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/fo
 ```bash
 gs-train gaussian-splatting --data /path/to/processed/data
 gs-train depth-gs --data /path/to/processed/data
+# Train with mono depth estimation
+gs-train depth-gs --data /path/to/processed/data --pipeline.model.use-est-depth True
 ```
 
 ### Visualize the result
@@ -121,7 +125,7 @@ gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir expor
 Export object pointcloud and mesh with prompt
 
 ```bash
-gs-export offline-tsdf --render-path exports/milk/ --output-dir exports/tsdf/milk_text_seg --seg-prompt milkbox
+gs-export offline-tsdf --render-path exports/milk/ --output-dir exports/tsdf/milk_text_seg --seg-prompt your.prompt
 ```
 
 ## Contribute

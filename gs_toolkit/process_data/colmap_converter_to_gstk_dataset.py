@@ -91,6 +91,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
     """Whether to assume all images are same dimensions and so to use fast downscaling with no autorotation."""
     depth_data: Optional[Path] = None
     """Path to depth data. If set, will use this depth data instead of running COLMAP to generate depth data."""
+    using_est_depth: bool = False
+    """If True, using estimated depth data."""
 
     @staticmethod
     def default_colmap_path() -> Path:
@@ -175,8 +177,14 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
 
     def _align_depth(self) -> float:
         scale_factor = 1.0
-        if self.depth_data is not None:
+        if self.depth_data is not None and not self.using_est_depth:
             image_id_to_depth_path, scale_factor = colmap_utils.align_depth(
+                recon_dir=self.output_dir / self.default_colmap_path(),
+                depth_dir=self.depth_image_dir,
+            )
+            return image_id_to_depth_path, scale_factor
+        elif self.using_est_depth:
+            image_id_to_depth_path = colmap_utils.get_depth_files(
                 recon_dir=self.output_dir / self.default_colmap_path(),
                 depth_dir=self.depth_image_dir,
             )
