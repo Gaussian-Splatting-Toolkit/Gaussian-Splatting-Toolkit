@@ -154,7 +154,7 @@ We welcome contributions from the community and are grateful for any help you ca
 - Documentation: Help us improve the documentation by fixing typos, adding examples, or clarifying explanations.
 - Community Support: Engage with other users and contributors on GitHub or other platforms to help answer questions and share knowledge.
 
-Before contributing, please review the CONTRIBUTING.md(CONTRIBUTING.md) file for detailed guidelines.
+Before contributing, please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed guidelines.
 
 ## License 📄
 
