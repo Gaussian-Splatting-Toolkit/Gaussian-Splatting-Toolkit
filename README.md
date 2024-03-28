@@ -1,35 +1,43 @@
-# Gaussian Splatting Toolkit
+# Gaussian Splatting Toolkit 🛠️
 
 The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed for new view synthesis using Gaussian splatting techniques, providing a novel explicit 3D representation for scene rendering.
 
-## Table of Contents
+## Table of Contents 📖
 
-- [Gaussian Splatting Toolkit](#gaussian-splatting-toolkit)
-  - [Table of Contents](#table-of-contents)
-  - [Introduction](#introduction)
-  - [Installation](#installation)
-  - [Usage](#usage)
-    - [Download the opensource datasets](#download-the-opensource-datasets)
-    - [Data processing](#data-processing)
-    - [Train the Gaussian Splatting](#train-the-gaussian-splatting)
-    - [Visualize the result](#visualize-the-result)
-    - [Render the rgb and depth](#render-the-rgb-and-depth)
-    - [Export](#export)
-  - [Contribute](#contribute)
-  - [TODO](#todo)
+<details>
+  <summary>Table of Content</summary>
+  - [Gaussian Splatting Toolkit 🛠️](#gaussian-splatting-toolkit-️)
+    - [Table of Contents 📖](#table-of-contents-)
+    - [Introduction 🎉](#introduction-)
+    - [Features 🌟](#features-)
+    - [Installation 💻](#installation-)
+    - [Usage 🚀](#usage-)
+      - [Download the opensource datasets](#download-the-opensource-datasets)
+      - [Data processing](#data-processing)
+      - [Train the Gaussian Splatting](#train-the-gaussian-splatting)
+      - [Visualize the result](#visualize-the-result)
+      - [Render the rgb and depth](#render-the-rgb-and-depth)
+      - [Export](#export)
+    - [Contribute 🤝](#contribute-)
+    - [License 📄](#license-)
+    - [Citation 📚](#citation-)
+    - [TODO 📝](#todo-)
+</details>
 
-## Introduction
+## Introduction 🎉
 
-A Gaussian Splatting Toolkit for robotics research. Developed based on nerfstudio.
+A Gaussian Splatting Toolkit for robotics research, developed based on nerfstudio.
 
-## Installation
+## Features 🌟
 
-To install the Gaussian Splatting Toolkit, follow these steps:
+- **Explicit 3D Representation:** Utilizes Gaussian splatting for a novel approach to scene rendering.
+- **New View Synthesis:** Advanced tools for synthesizing new views from existing data.
+- **Data Processing:** Comprehensive data processing capabilities for video and image inputs.
+- **Training and Evaluation:** Robust training and evaluation modules for Gaussian Splatting models.
+- **Rendering:** High-quality rendering of RGB and depth from various camera poses.
+- **Exporting:** Ability to export gaussians, point clouds, camera poses, and TSDFs for further analysis.
 
-1. Clone the repository: `git clone https://github.com/H-tr/gaussian-splatting-toolkit.git --recursive`
-2. Navigate to the toolkit directory: `cd gaussian-splatting-toolkit`
-3. Install the third party dictionaries
-4. Install dependencies: `pip install -e .`
+## Installation 💻
 
 Using conda:
 
@@ -42,7 +50,7 @@ pip install -e .
 
 This repository also provides a devcontainer for your convenience.
 
-## Usage
+## Usage 🚀
 
 ### Download the opensource datasets
 
@@ -130,16 +138,34 @@ Export object pointcloud and mesh with prompt
 gs-export offline-tsdf --render-path exports/milk/ --output-dir exports/tsdf/milk_text_seg --seg-prompt your.prompt
 ```
 
-## Contribute
+## Contribute 🤝
 
-To add a new submodule, run
+We welcome contributions from the community! If you have a feature request, bug report, or a new idea, feel free to open an issue or submit a pull request. To add a new submodule, run:
 
 ```bash
 git subtree add --prefix {local directory being pulled into} {remote repo URL} {remote branch} --squash
 ```
 
-## TODO
+## License 📄
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Citation 📚
+
+If you use the Gaussian Splatting Toolkit in your research, please cite it as follows:
+
+```bibtex
+@misc{gaussian_splatting_toolkit,
+  author = {Your Name},
+  title = {Gaussian Splatting Toolkit: A Toolkit for 3D Reconstruction and New View Synthesis},
+  year = {2024},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/H-tr/gaussian-splatting-toolkit}}
+}
+```
+
+## TODO 📝
 - [x] OpenCV marker ground truth measurement.
 - [x] Surface distance module
 - [ ] Data

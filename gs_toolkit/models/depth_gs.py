@@ -447,7 +447,7 @@ class DepthGSModel(GaussianSplattingModel):
         ):
             if self.config.use_est_depth:
                 loss_dict["depth_pearson"] = local_pearson_loss(
-                    pred_depth, gt_depth, 64, 0.5
+                    pred_depth, gt_depth, 128, 0.5
                 )
             else:
                 depth_nonzero = gt_depth > 0
