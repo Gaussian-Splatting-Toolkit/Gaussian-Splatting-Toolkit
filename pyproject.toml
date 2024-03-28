@@ -51,7 +51,7 @@ segment-anything = {git = "https://github.com/Gaussian-Splatting-Toolkit/segment
 GroundingDINO = {git = "https://github.com/Gaussian-Splatting-Toolkit/GroundingDINO.git"}
 rasterizer = {path = "gs_toolkit/gs_components"}
 deva = {git = "https://github.com/Gaussian-Splatting-Toolkit/Tracking-Anything-with-DEVA.git"}
-blendersynth = {git = "https://github.com/OllieBoyne/BlenderSynth.git"}
+blendersynth = {git = "https://github.com/Gaussian-Splatting-Toolkit/BlenderSynth.git"}
 
 [tool.poetry.scripts]
 gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"
