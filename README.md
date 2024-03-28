@@ -61,6 +61,8 @@ gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-d
 gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/folder --output-dir /path/to/output-dir
 # Process with mono depth estimation
 gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/folder --using-est-depth --output-dir /path/to/output-dir
+# Process with mask
+gs-process-data images --data /mnt/d/Datasets/object/milk_2/rgb/ --depth-data /mnt/d/Datasets/object/milk_2/depth_est/ --using-est-depth --mask-data /mnt/d/Datasets/object/milk_2/masks/ --output-dir /mnt/d/Datasets/gs-recon/object/milk_mask
 ```
 
 ### Train the Gaussian Splatting

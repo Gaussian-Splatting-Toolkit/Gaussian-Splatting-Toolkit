@@ -60,10 +60,6 @@ class TSDFFusion:
                 mat[2, :] *= -1
                 mat = mat[np.array([1, 0, 2, 3]), :]
                 mat[0:3, 1:3] *= -1
-            transform = np.array(
-                [[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
-            )
-            mat = transform @ mat
             intrinsic = o3d.camera.PinholeCameraIntrinsic(
                 width=camera["camera"]["width"],
                 height=camera["camera"]["height"],

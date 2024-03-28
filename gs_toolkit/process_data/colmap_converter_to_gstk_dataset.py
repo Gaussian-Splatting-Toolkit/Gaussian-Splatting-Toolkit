@@ -91,6 +91,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
     """Whether to assume all images are same dimensions and so to use fast downscaling with no autorotation."""
     depth_data: Optional[Path] = None
     """Path to depth data. If set, will use this depth data instead of running COLMAP to generate depth data."""
+    mask_data: Optional[Path] = None
+    """Path to mask data. If set, will use this mask data instead of running COLMAP to generate mask data."""
     using_est_depth: bool = False
     """If True, using estimated depth data."""
 
@@ -111,7 +113,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         num_frames: int,
         scale_factor: float = 1.0,
         image_id_to_depth_path: Optional[Dict[int, Path]] = None,
-        camera_mask_path: Optional[Path] = None,
+        image_id_to_mask_path: Optional[Dict[int, Path]] = None,
         image_rename_map: Optional[Dict[str, str]] = None,
     ) -> List[str]:
         """Save colmap transforms into the output folder
@@ -130,7 +132,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
                     recon_dir=self.absolute_colmap_model_path,
                     output_dir=self.output_dir,
                     image_id_to_depth_path=image_id_to_depth_path,
-                    camera_mask_path=camera_mask_path,
+                    image_id_to_mask_path=image_id_to_mask_path,
                     image_rename_map=image_rename_map,
                 )
                 summary_log.append(f"Colmap matched {num_matched_frames} images")
@@ -175,22 +177,35 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
             return image_id_to_depth_path, summary_log
         return None, summary_log
 
-    def _align_depth(self) -> float:
+    def _align_depth(self) -> Tuple[Optional[Dict[int, Path]], List[str]]:
         scale_factor = 1.0
         if self.depth_data is not None and not self.using_est_depth:
             image_id_to_depth_path, scale_factor = colmap_utils.align_depth(
                 recon_dir=self.output_dir / self.default_colmap_path(),
                 depth_dir=self.depth_image_dir,
+                verbose=self.verbose,
             )
             return image_id_to_depth_path, scale_factor
         elif self.using_est_depth:
             image_id_to_depth_path = colmap_utils.get_depth_files(
                 recon_dir=self.output_dir / self.default_colmap_path(),
                 depth_dir=self.depth_image_dir,
+                verbose=self.verbose,
             )
             return image_id_to_depth_path, scale_factor
         CONSOLE.print(f"Scale factor: {scale_factor}")
         return None, scale_factor
+
+    def _export_mask(self) -> Optional[Dict[int, Path]]:
+        if self.mask_data is not None:
+            mask_dir = self.output_dir / "masks"
+            mask_dir.mkdir(parents=True, exist_ok=True)
+            image_id_to_mask_path = colmap_utils.get_mask_files(
+                recon_dir=self.output_dir / self.default_colmap_path(),
+                mask_dir=mask_dir,
+                verbose=self.verbose,
+            )
+            return image_id_to_mask_path
 
     def _run_colmap(self, mask_path: Optional[Path] = None):
         """

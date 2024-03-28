@@ -24,7 +24,9 @@ from gs_toolkit.exporter.exporter_utils import (
     generate_point_cloud,
 )
 from gs_toolkit.exporter.tsdf_fusion import TSDFFusion
-from gs_toolkit.models.depth_gs import GaussianSplattingModel
+from gs_toolkit.models.depth_gs import DepthGSModel
+from gs_toolkit.models.vanilla_gs import GaussianSplattingModel
+from gs_toolkit.models.surface_gs import SurfaceGSModel
 from gs_toolkit.pipelines.base_pipeline import VanillaPipeline
 from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
 from gs_toolkit.utils.eval_utils import eval_setup
@@ -89,9 +91,11 @@ class ExportGaussianSplat(Exporter):
 
         _, pipeline, _, _ = eval_setup(self.load_config)
 
-        assert isinstance(pipeline.model, GaussianSplattingModel)
+        assert isinstance(
+            pipeline.model, (GaussianSplattingModel, DepthGSModel, SurfaceGSModel)
+        )
 
-        model: GaussianSplattingModel = pipeline.model
+        model = pipeline.model
 
         filename = self.output_dir / "gaussians.ply"
 
@@ -226,9 +230,9 @@ class ExportTSDF:
     """Path to the rendered images."""
     output_dir: Optional[Path] = None
     """Path to the output directory."""
-    vox_length: float = 3.0 / 512
+    vox_length: float = 4.0 / 512
     """Voxel length for the volume."""
-    sdf_trunc: float = 0.05
+    sdf_trunc: float = 0.02
     """SDF truncation for the volume."""
     using_gt: bool = False
     """Whether to use ground truth for meshing."""
@@ -240,6 +244,8 @@ class ExportTSDF:
     """Whether to clean the mesh using pymeshlab."""
     verbose: bool = False
     """Whether to print verbose output."""
+    using_OpenGL_world_coord: bool = False
+    """Whether to use OpenGL world coordinates."""
 
     def main(self) -> None:
         """Export point cloud."""
@@ -266,13 +272,13 @@ class ExportTSDF:
 
         fusion = TSDFFusion(
             data_path=self.render_path,
-            using_OpenGL_world_coord=True,
+            using_OpenGL_world_coord=self.using_OpenGL_world_coord,
             method="marching_cubes",
             voxel_length=self.vox_length,
             sdf_trunc=self.sdf_trunc,
             mask=self.mask_path,
-            filter_pcd=False,
-            bounding_box=False,
+            filter_pcd=self.filter_pcd,
+            bounding_box=self.bounding_box,
             using_gt=self.using_gt,
         )
         with status(

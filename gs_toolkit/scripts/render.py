@@ -6,6 +6,7 @@ import cv2
 from PIL import Image
 
 import numpy as np
+import torch
 from gs_toolkit.render.renderer import Renderer
 from gs_toolkit.utils.eval_utils import eval_setup
 import json
@@ -16,6 +17,7 @@ from rich.progress import track
 from gs_toolkit.utils.rich_utils import (
     CONSOLE,
 )
+from gs_toolkit.data.datamanagers.full_images_datamanager import FullImageDatamanager
 
 
 @dataclass
@@ -99,7 +101,9 @@ class RenderFromCameraPoses:
     def main(self):
         # Render
         traj = []
+        poses = []
         _, pipeline, _, _ = eval_setup(self.config_file)
+        assert isinstance(pipeline.datamanager, (FullImageDatamanager))
         cameras = pipeline.datamanager.train_dataset.cameras
         image_filenames = pipeline.datamanager.train_dataset.image_filenames
 
@@ -130,9 +134,8 @@ class RenderFromCameraPoses:
             depth = Image.fromarray((1000 * depth[:, :, 0]).astype(np.uint32))
             depth.save(str(depth_path))
             pose = camera.camera_to_worlds.cpu().numpy()
-            pose = np.vstack([pose, np.array([0, 0, 0, 1])])
-            node["pose"] = pose.tolist()
-
+            # pose = np.vstack([pose, np.array([0, 0, 0, 1])])
+            poses.append(pose)
             traj.append(node)
 
             # Copy the ground truth rgb and depth images to the output directory
@@ -156,6 +159,17 @@ class RenderFromCameraPoses:
             new_name = self.gt_rgb_path / f"frame_{i:05}.jpg"
             shutil.move(str(self.gt_rgb_path / rgb_gt_path.name), str(new_name))
 
+        poses = np.stack(poses, axis=0)
+        poses = (
+            pipeline.datamanager.train_dataparser_outputs.transform_poses_to_original_space(
+                torch.from_numpy(poses)
+            )
+            .cpu()
+            .numpy()
+        )
+        for idx, node in enumerate(traj):
+            pose = np.vstack([poses[idx], np.array([0, 0, 0, 1])])
+            node["pose"] = pose.tolist()
         # Write the poses to a file
         poses_path = self.output_dir / "poses.json"
         with open(poses_path, "w") as f:

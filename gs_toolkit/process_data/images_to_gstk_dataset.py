@@ -92,6 +92,20 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
                     keep_image_dir=False,
                 )
                 image_rename_map_paths.update(depth_image_rename_map_paths)
+            if self.mask_data is not None:
+                depth_image_rename_map_paths = process_data_utils.copy_images(
+                    self.mask_data,
+                    image_dir=self.mask_image_dir,
+                    crop_factor=self.crop_factor,
+                    image_prefix="frame_train_"
+                    if self.eval_data is not None
+                    else "frame_",
+                    verbose=self.verbose,
+                    num_downscales=self.num_downscales,
+                    same_dimensions=self.same_dimensions,
+                    keep_image_dir=False,
+                )
+                image_rename_map_paths.update(depth_image_rename_map_paths)
             if self.eval_data is not None:
                 eval_image_rename_map_paths = process_data_utils.copy_images(
                     self.eval_data,
@@ -143,6 +157,8 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
         scale_factor = 1.0
         image_id_to_depth_path, scale_factor = self._align_depth()
 
+        image_id_to_mask_path = self._export_mask()
+
         if (
             require_cameras_exist
             and not (self.absolute_colmap_model_path / "cameras.bin").exists()
@@ -155,7 +171,7 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
             num_frames=num_frames,
             scale_factor=scale_factor,
             image_id_to_depth_path=image_id_to_depth_path,
-            camera_mask_path=None,
+            image_id_to_mask_path=image_id_to_mask_path,
             image_rename_map=image_rename_map,
         )
 

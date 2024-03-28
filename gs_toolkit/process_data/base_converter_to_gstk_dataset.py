@@ -33,6 +33,10 @@ class BaseConverterToGSToolkitDataset(ABC):
     def depth_image_dir(self) -> Path:
         return self.output_dir / "depth"
 
+    @property
+    def mask_image_dir(self) -> Path:
+        return self.output_dir / "masks"
+
     @abstractmethod
     def main(self) -> None:
         """This method implements the conversion logic for each type of data"""

@@ -437,7 +437,7 @@ def colmap_to_json(
     scale_factor: float,
     recon_dir: Path,
     output_dir: Path,
-    camera_mask_path: Optional[Path] = None,
+    image_id_to_mask_path: Optional[Dict[int, Path]] = None,
     image_id_to_depth_path: Optional[Dict[int, Path]] = None,
     image_rename_map: Optional[Dict[str, str]] = None,
 ) -> int:
@@ -492,10 +492,9 @@ def colmap_to_json(
             "transform_matrix": c2w.tolist(),
             "colmap_im_id": im_id,
         }
-        if camera_mask_path is not None:
-            frame["mask_path"] = camera_mask_path.relative_to(
-                camera_mask_path.parent.parent
-            ).as_posix()
+        if image_id_to_mask_path is not None:
+            mask_path = image_id_to_mask_path[im_id]
+            frame["mask_path"] = str(mask_path.relative_to(mask_path.parent.parent))
         if image_id_to_depth_path is not None:
             depth_path = image_id_to_depth_path[im_id]
             frame["depth_path"] = str(depth_path.relative_to(depth_path.parent.parent))
@@ -777,7 +776,7 @@ def get_depth_files(
         iter_images = track(
             im_id_to_image.items(),
             total=len(im_id_to_image.items()),
-            description="Calculating depth maps ...",
+            description="Getting the depth ...",
         )
     else:
         iter_images = iter(im_id_to_image.items())
@@ -791,6 +790,35 @@ def get_depth_files(
         depth_name = depth_name.replace("frame_", "depth_")
         depth_path = depth_dir / depth_name
         image_id_to_depth_path[im_id] = depth_path
+
+    return image_id_to_depth_path
+
+
+def get_mask_files(
+    recon_dir: Path,
+    mask_dir: Path,
+    verbose: bool = True,
+) -> Dict[int, Path]:
+    if not mask_dir.exists():
+        raise RuntimeError(f"You are required to provide masks in {mask_dir}")
+    im_id_to_image = read_images_binary(recon_dir / "images.bin")
+
+    if verbose:
+        iter_images = track(
+            im_id_to_image.items(),
+            total=len(im_id_to_image.items()),
+            description="Getting the mask ...",
+        )
+    else:
+        iter_images = iter(im_id_to_image.items())
+
+    image_id_to_depth_path = {}
+    # cov = []
+    for im_id, im_data in iter_images:
+        # Replace jpg with png in im_data.name as depth name
+        mask_name = im_data.name.replace(".jpg", ".png")
+        mask_path = mask_dir / mask_name
+        image_id_to_depth_path[im_id] = mask_path
 
     return image_id_to_depth_path
 
