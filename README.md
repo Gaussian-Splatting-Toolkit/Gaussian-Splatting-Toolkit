@@ -1,3 +1,5 @@
+![small object reconstruction](assets/small_obj.png)
+
 # Gaussian Splatting Toolkit 🛠️
 
 The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed for new view synthesis using Gaussian splatting techniques, providing a novel explicit 3D representation for scene rendering.
@@ -23,6 +25,7 @@ The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed fo
   - [License 📄](#license-)
   - [Citation 📚](#citation-)
   - [TODO 📝](#todo-)
+  - [Acknowledgements 🌟](#acknowledgements-)
 
 </details>
 
@@ -32,12 +35,11 @@ A Gaussian Splatting Toolkit for robotics research, developed based on nerfstudi
 
 ## Features 🌟
 
-- **Explicit 3D Representation:** Utilizes Gaussian splatting for a novel approach to scene rendering.
-- **New View Synthesis:** Advanced tools for synthesizing new views from existing data.
-- **Data Processing:** Comprehensive data processing capabilities for video and image inputs.
-- **Training and Evaluation:** Robust training and evaluation modules for Gaussian Splatting models.
-- **Rendering:** High-quality rendering of RGB and depth from various camera poses.
-- **Exporting:** Ability to export gaussians, point clouds, camera poses, and TSDFs for further analysis.
+- **Camera Calibration**: Calibrate the camera intrinsics.
+- **Vanilla Gaussian Splatting Training Pipeline**: Inherented from Gausplato.
+- **Depth Alignment**: Align the scale of reconstruction using depth map.
+- **Depth Supervision**: Both sensor depth supervision and mono depth estimation supervision.
+- **Mesh Extraction**: Achieves the best practice so far.
 
 ## Installation 💻
 
@@ -220,3 +222,15 @@ If you use the Gaussian Splatting Toolkit in your research, please cite it as fo
     - [x] migrate the rasterizer to cuda-12.1
 
 </details>
+
+## Acknowledgements 🌟
+
+We extend our heartfelt thanks to the following open source projects and their contributors for providing valuable code and resources that greatly assisted in the development of the Gaussian Splatting Toolkit:
+
+- **[NeRF Studio](https://github.com/nerfstudio-project/nerfstudio):** For their innovative algorithms and architecture implementations.
+- **[Segment Anything](https://github.com/facebookresearch/segment-anything):** For their robust segmentation algorithm for efficient object selection in GSTK.
+- **[Tracking Anything](https://github.com/hkchengrex/Tracking-Anything-with-DEVA):** For their robust object tracking module process.
+- **[BlenderSynth](https://github.com/OllieBoyne/BlenderSynth):** For their data generation pipeline.
+- **All Open Source Contributors:** A special shoutout to all the developers and contributors in the open source community who share their knowledge and expertise. Your dedication to open collaboration is truly appreciated. 🤝
+
+We are immensely grateful for the generosity of the open source community, which has made this project possible. Your contributions are the backbone of innovation and progress in the tech world. 🌍
