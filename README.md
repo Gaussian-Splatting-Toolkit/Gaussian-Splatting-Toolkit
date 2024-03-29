@@ -1,4 +1,5 @@
 ![small object reconstruction](assets/small_obj.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Gaussian Splatting Toolkit 🛠️
 

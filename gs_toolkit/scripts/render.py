@@ -72,6 +72,7 @@ class RenderFromTrajectory:
 class RenderFromCameraPoses:
     config_file: Path
     output_dir: Path
+    transform_to_original_space: bool = False
 
     def __post_init__(self):
         self._validate()
@@ -160,13 +161,14 @@ class RenderFromCameraPoses:
             shutil.move(str(self.gt_rgb_path / rgb_gt_path.name), str(new_name))
 
         poses = np.stack(poses, axis=0)
-        poses = (
-            pipeline.datamanager.train_dataparser_outputs.transform_poses_to_original_space(
-                torch.from_numpy(poses)
+        if self.transform_to_original_space:
+            poses = (
+                pipeline.datamanager.train_dataparser_outputs.transform_poses_to_original_space(
+                    torch.from_numpy(poses)
+                )
+                .cpu()
+                .numpy()
             )
-            .cpu()
-            .numpy()
-        )
         for idx, node in enumerate(traj):
             pose = np.vstack([poses[idx], np.array([0, 0, 0, 1])])
             node["pose"] = pose.tolist()
