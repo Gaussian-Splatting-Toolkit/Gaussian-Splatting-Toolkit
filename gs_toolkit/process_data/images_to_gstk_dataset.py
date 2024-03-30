@@ -155,7 +155,12 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
 
         # Align depth maps
         scale_factor = 1.0
-        image_id_to_depth_path, scale_factor = self._align_depth()
+        scales = None
+        shifts = None
+        if not self.using_est_depth:
+            image_id_to_depth_path, scale_factor = self._align_depth()
+        else:
+            image_id_to_depth_path, scales, shifts = self._align_depth_est()
 
         image_id_to_mask_path = self._export_mask()
 
@@ -173,6 +178,8 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
             image_id_to_depth_path=image_id_to_depth_path,
             image_id_to_mask_path=image_id_to_mask_path,
             image_rename_map=image_rename_map,
+            scales=scales,
+            shifts=shifts,
         )
 
         CONSOLE.log("[bold green]:tada: :tada: :tada: All DONE :tada: :tada: :tada:")

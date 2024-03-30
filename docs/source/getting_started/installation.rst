@@ -24,9 +24,7 @@ Change into the toolkit directory:
 3. Install Third-Party Dictionaries (if applicable)
 ---------------------------------------------------
 
-.. code-block:: bash
-
-   # Add commands for installing third-party dictionaries here
+* Colmap: Download the dictionary file from the Colmap repository
 
 4. Install Dependencies
 -----------------------
@@ -47,8 +45,3 @@ Alternatively, you can use conda to create a virtual environment and install the
    pip install -e .
 
 Note: Replace the Python version and other dependencies as needed based on your project requirements.
-
-Development Environment (Optional)
-----------------------------------
-
-If you prefer to use a development container, this repository provides a devcontainer for your convenience.

@@ -115,6 +115,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         image_id_to_depth_path: Optional[Dict[int, Path]] = None,
         image_id_to_mask_path: Optional[Dict[int, Path]] = None,
         image_rename_map: Optional[Dict[str, str]] = None,
+        scales: Optional[List[float]] = None,
+        shifts: Optional[List[float]] = None,
     ) -> List[str]:
         """Save colmap transforms into the output folder
 
@@ -134,6 +136,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
                     image_id_to_depth_path=image_id_to_depth_path,
                     image_id_to_mask_path=image_id_to_mask_path,
                     image_rename_map=image_rename_map,
+                    scales=scales,
+                    shifts=shifts,
                 )
                 summary_log.append(f"Colmap matched {num_matched_frames} images")
             summary_log.append(
@@ -186,15 +190,18 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
                 verbose=self.verbose,
             )
             return image_id_to_depth_path, scale_factor
-        elif self.using_est_depth:
-            image_id_to_depth_path = colmap_utils.get_depth_files(
-                recon_dir=self.output_dir / self.default_colmap_path(),
-                depth_dir=self.depth_image_dir,
-                verbose=self.verbose,
-            )
-            return image_id_to_depth_path, scale_factor
         CONSOLE.print(f"Scale factor: {scale_factor}")
         return None, scale_factor
+
+    def _align_mono_depth(
+        self,
+    ) -> Tuple[Optional[Dict[int, Path]], List[str], List[str]]:
+        image_id_to_depth_path, scales, shifts = colmap_utils.align_mono_depth(
+            recon_dir=self.output_dir / self.default_colmap_path(),
+            depth_dir=self.depth_image_dir,
+            verbose=self.verbose,
+        )
+        return image_id_to_depth_path, scales, shifts
 
     def _export_mask(self) -> Optional[Dict[int, Path]]:
         if self.mask_data is not None:

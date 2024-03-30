@@ -93,10 +93,22 @@ Export various results such as gaussians, camera poses, point cloud, and TSDF:
 
    gs-export point-cloud --load-config /path/to/config.yml --output-dir exports/pcd/
 
-**Export TSDF with mask:**
+**Export TSDF:**
+
+.. code-block:: bash
+
+   gs-export offline-tsdf --load-config /path/to/config.yml --output-dir exports/tsdf/
+
+With mask:
 
 .. code-block:: bash
 
    gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/ --mask-path /path/to/mask
 
-These are the basic usage scenarios for the Gaussian Splatting Toolkit. For more advanced features and detailed documentation, please refer to the project's GitHub repository.
+Using prompt:
+
+.. code-block:: bash
+
+   gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/ --seg-prompt your.prompt
+
+These are the basic usage scenarios for the Gaussian Splatting Toolkit. For more advanced features and detailed documentation, please refer to the cli.

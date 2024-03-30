@@ -440,6 +440,8 @@ def colmap_to_json(
     image_id_to_mask_path: Optional[Dict[int, Path]] = None,
     image_id_to_depth_path: Optional[Dict[int, Path]] = None,
     image_rename_map: Optional[Dict[str, str]] = None,
+    scales: Optional[np.ndarray] = None,
+    shifts: Optional[np.ndarray] = None,
 ) -> int:
     """Converts COLMAP's cameras.bin and images.bin to a JSON file.
 
@@ -450,6 +452,8 @@ def colmap_to_json(
         camera_mask_path: Path to the camera mask.
         image_id_to_depth_path: When including sfm-based depth, embed these depth file paths in the exported json
         image_rename_map: Use these image names instead of the names embedded in the COLMAP db
+        scales: Scales for each depth image
+        shifts: Shifts for each depth image
 
     Returns:
         The number of registered images.
@@ -463,7 +467,7 @@ def colmap_to_json(
     im_id_to_image = read_images_binary(recon_dir / "images.bin")
 
     frames = []
-    for im_id, im_data in im_id_to_image.items():
+    for idx, im_id, im_data in enumerate(im_id_to_image.items()):
         # NB: COLMAP uses Eigen / scalar-first quaternions
         # * https://colmap.github.io/format.html
         # * https://github.com/colmap/colmap/blob/bf3e19140f491c3042bfd85b7192ef7d249808ec/src/base/pose.cc#L75
@@ -492,6 +496,10 @@ def colmap_to_json(
             "transform_matrix": c2w.tolist(),
             "colmap_im_id": im_id,
         }
+        if scales is not None:
+            frame["scale"] = float(scales[idx])
+        if shifts is not None:
+            frame["shift"] = float(shifts[idx])
         if image_id_to_mask_path is not None:
             mask_path = image_id_to_mask_path[im_id]
             frame["mask_path"] = str(mask_path.relative_to(mask_path.parent.parent))
@@ -763,24 +771,37 @@ def align_depth(
     return image_id_to_depth_path, np.mean(total_scale)
 
 
-def get_depth_files(
+def align_mono_depth(
     recon_dir: Path,
     depth_dir: Path,
     verbose: bool = True,
+    min_depth: float = 0.001,
+    max_depth: float = 10000,
+    max_repoj_err: float = 2.5,
+    min_n_visible: int = 2,
 ) -> Dict[int, Path]:
     if not depth_dir.exists():
         raise RuntimeError(f"You are required to provide depth maps in {depth_dir}")
+    ptid_to_info = read_points3D_binary(recon_dir / "points3D.bin")
+    cam_id_to_camera = read_cameras_binary(recon_dir / "cameras.bin")
     im_id_to_image = read_images_binary(recon_dir / "images.bin")
+
+    # Only support first camera
+    CAMERA_ID = 1
+    W = cam_id_to_camera[CAMERA_ID].width
+    H = cam_id_to_camera[CAMERA_ID].height
 
     if verbose:
         iter_images = track(
             im_id_to_image.items(),
             total=len(im_id_to_image.items()),
-            description="Getting the depth ...",
+            description="Calculating depth maps ...",
         )
     else:
         iter_images = iter(im_id_to_image.items())
 
+    scales = []
+    shifts = []
     image_id_to_depth_path = {}
     # cov = []
     for im_id, im_data in iter_images:
@@ -789,9 +810,49 @@ def get_depth_files(
         # Replace prefix from "frame_" to "depth_"
         depth_name = depth_name.replace("frame_", "depth_")
         depth_path = depth_dir / depth_name
+        # Read depth image
+        depth_img = cv2.imread(str(depth_path), cv2.IMREAD_ANYDEPTH)  # type: ignore
         image_id_to_depth_path[im_id] = depth_path
+        pids = [pid for pid in im_data.point3D_ids if pid != -1]
+        xyz_world = np.array([ptid_to_info[pid].xyz for pid in pids])
+        rotation = qvec2rotmat(im_data.qvec)
+        z = (rotation @ xyz_world.T)[-1] + im_data.tvec[-1]
+        errors = np.array([ptid_to_info[pid].error for pid in pids])
+        n_visible = np.array([len(ptid_to_info[pid].image_ids) for pid in pids])
+        uv = np.array(
+            [
+                im_data.xys[i]
+                for i in range(len(im_data.xys))
+                if im_data.point3D_ids[i] != -1
+            ]
+        )
+        idx = np.where(
+            (z >= min_depth)
+            & (z <= max_depth)
+            & (errors <= max_repoj_err)
+            & (n_visible >= min_n_visible)
+            & (uv[:, 0] >= 0)
+            & (uv[:, 0] < W)
+            & (uv[:, 1] >= 0)
+            & (uv[:, 1] < H)
+        )
+        z = z[idx]
+        uv = uv[idx]
 
-    return image_id_to_depth_path
+        uu, vv = uv[:, 0].astype(int), uv[:, 1].astype(int)
+        depth_est = depth_img[vv, uu]
+        # Choose the idx that depth measure is not 0
+        idx = np.where((depth_est > 30) & (depth_est < 1_000))
+        z = z[idx]
+        depth_est = depth_est[idx]
+        if len(z) != 0:
+            # fit a linear model
+            A = np.vstack([z, np.ones(len(z))]).T
+            m, c = np.linalg.lstsq(A, depth_est, rcond=None)[0]
+            scales.append(m)
+            shifts.append(c)
+
+    return image_id_to_depth_path, scales, shifts
 
 
 def get_mask_files(
