@@ -63,7 +63,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """if a gaussian is more than this percent of screen space, cull it"""
     split_screen_size: float = 0.05
     """if a gaussian is more than this percent of screen space, split it"""
-    stop_screen_size_at: int = 4000
+    stop_screen_size_at: int = 8000
     """stop culling/splitting at this step WRT screen size of gaussians"""
     random_init: bool = False
     """whether to initialize the positions uniformly randomly (not SFM points)"""
@@ -75,7 +75,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """weight of ssim loss"""
     depth_lambda: float = 0.2
     """weight of depth loss"""
-    stop_split_at: int = 13_000
+    stop_split_at: int = 25_000
     """stop splitting at this step"""
     sh_degree: int = 3
     """maximum degree of spherical harmonics to use"""
@@ -109,7 +109,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """If True, use depth loss"""
     depth_lambda: float = 0.1
     """weight of depth loss"""
-    depth_loss_start_iteration: int = 4_000
+    depth_loss_start_iteration: int = 6_000
     """start iteration of depth loss"""
     use_est_depth: bool = False
     """If True, use estimated depth for depth loss"""

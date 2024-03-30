@@ -72,7 +72,7 @@ class RenderFromTrajectory:
 class RenderFromCameraPoses:
     config_file: Path
     output_dir: Path
-    transform_to_original_space: bool = False
+    transform_to_original_space: bool = True
 
     def __post_init__(self):
         self._validate()
