@@ -473,6 +473,8 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
         data["image"] = data["image"].to(self.device)
         if "depth" in data:
             data["depth"] = data["depth"].to(self.device)
+        if "mask" in data:
+            data["mask"] = data["mask"].to(self.device)
 
         assert (
             len(self.train_dataset.cameras.shape) == 1

@@ -467,7 +467,7 @@ def colmap_to_json(
     im_id_to_image = read_images_binary(recon_dir / "images.bin")
 
     frames = []
-    for idx, im_id, im_data in enumerate(im_id_to_image.items()):
+    for idx, (im_id, im_data) in enumerate(im_id_to_image.items()):
         # NB: COLMAP uses Eigen / scalar-first quaternions
         # * https://colmap.github.io/format.html
         # * https://github.com/colmap/colmap/blob/bf3e19140f491c3042bfd85b7192ef7d249808ec/src/base/pose.cc#L75

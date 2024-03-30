@@ -90,6 +90,8 @@ class GSToolkit(DataParser):
         mask_filenames = []
         depth_filenames = []
         poses = []
+        mono_depth_scales = []
+        mono_depth_shifts = []
 
         fx_fixed = "fl_x" in meta
         fy_fixed = "fl_y" in meta
@@ -160,6 +162,10 @@ class GSToolkit(DataParser):
 
             image_filenames.append(fname)
             poses.append(np.array(frame["transform_matrix"]))
+            if "scale" in frame:
+                mono_depth_scales.append(frame["scale"])
+            if "shift" in frame:
+                mono_depth_shifts.append(frame["shift"])
             if "mask_path" in frame:
                 mask_filepath = Path(frame["mask_path"])
                 mask_fname = self._get_fname(

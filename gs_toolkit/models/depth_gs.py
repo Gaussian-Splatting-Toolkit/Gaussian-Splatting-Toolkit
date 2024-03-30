@@ -400,13 +400,15 @@ class DepthGSModel(GaussianSplattingModel):
         # This is a little bit sketchy for the SSIM loss.
         if "mask" in batch:
             # batch["mask"] : [H, W, 1]
-            mask = self._downscale_if_required(batch["mask"])
+            mask = self._downscale_if_required(batch["mask"]).unsqueeze(-1)
             mask = mask.to(self.device)
             assert mask.shape[:2] == gt_img.shape[:2] == pred_img.shape[:2]
-            gt_img = gt_img * mask
-            pred_img = pred_img * mask
+            rgb_mask = mask.repeat(1, 1, 3)
+            gt_img = gt_img * rgb_mask
+            pred_img = pred_img * rgb_mask
 
-            gt_depth = gt_depth * mask
+            if self.step > self.config.depth_loss_start_iteration:
+                gt_depth = gt_depth * mask
             pred_depth = pred_depth * mask
 
         loss_dict = {}

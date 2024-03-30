@@ -15,11 +15,14 @@ def get_image_mask_tensor_from_path(
     Utility function to read a mask image from the given path and return a boolean tensor
     """
     pil_mask = Image.open(filepath)
+    if len(np.array(pil_mask).shape) == 3:
+        pil_mask = pil_mask.convert("L")
     if scale_factor != 1.0:
         width, height = pil_mask.size
         newsize = (int(width * scale_factor), int(height * scale_factor))
         pil_mask = pil_mask.resize(newsize, resample=Image.NEAREST)
     mask_tensor = torch.from_numpy(np.array(pil_mask)).unsqueeze(-1).bool()
+    # mask_tensor = torch.from_numpy(np.array(pil_mask)).bool()
     if len(mask_tensor.shape) != 3:
         raise ValueError("The mask image should have 1 channel")
     return mask_tensor

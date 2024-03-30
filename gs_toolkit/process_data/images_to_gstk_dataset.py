@@ -160,7 +160,7 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
         if not self.using_est_depth:
             image_id_to_depth_path, scale_factor = self._align_depth()
         else:
-            image_id_to_depth_path, scales, shifts = self._align_depth_est()
+            image_id_to_depth_path, scales, shifts = self._align_mono_depth()
 
         image_id_to_mask_path = self._export_mask()
 
