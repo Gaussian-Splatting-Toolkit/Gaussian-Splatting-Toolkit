@@ -20,8 +20,8 @@ def local_pearson_loss(depth_src, depth_target, box_p, p_corr):
     # Randomly select patch, top left corner of the patch (x_0,y_0) has to be 0 <= x_0 <= max_h, 0 <= y_0 <= max_w
     num_box_h = math.floor(depth_src.shape[0] / box_p)
     num_box_w = math.floor(depth_src.shape[1] / box_p)
-    max_h = depth_src.shape[0] - box_p
-    max_w = depth_src.shape[1] - box_p
+    max_h = max(depth_src.shape[0] - box_p, 0)
+    max_w = max(depth_src.shape[1] - box_p, 0)
     _loss = torch.tensor(0.0, device="cuda")
     # Select the number of boxes based on hyperparameter p_corr
     n_corr = int(p_corr * num_box_h * num_box_w)

@@ -115,8 +115,8 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         image_id_to_depth_path: Optional[Dict[int, Path]] = None,
         image_id_to_mask_path: Optional[Dict[int, Path]] = None,
         image_rename_map: Optional[Dict[str, str]] = None,
-        scales: Optional[List[float]] = None,
-        shifts: Optional[List[float]] = None,
+        scales: Optional[Dict[int, float]] = None,
+        shifts: Optional[Dict[int, float]] = None,
     ) -> List[str]:
         """Save colmap transforms into the output folder
 
@@ -195,7 +195,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
 
     def _align_mono_depth(
         self,
-    ) -> Tuple[Optional[Dict[int, Path]], List[str], List[str]]:
+    ) -> Tuple[Optional[Dict[int, Path]], Dict[int, float], Dict[int, float]]:
         image_id_to_depth_path, scales, shifts = colmap_utils.align_mono_depth(
             recon_dir=self.output_dir / self.default_colmap_path(),
             depth_dir=self.depth_image_dir,

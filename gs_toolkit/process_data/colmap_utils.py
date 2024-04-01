@@ -3,8 +3,9 @@ Tools supporting the execution of COLMAP and preparation of COLMAP-based dataset
 """
 
 import json
+import os
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, Literal, Optional, Tuple, Union
 
 import appdirs
 import cv2
@@ -440,8 +441,8 @@ def colmap_to_json(
     image_id_to_mask_path: Optional[Dict[int, Path]] = None,
     image_id_to_depth_path: Optional[Dict[int, Path]] = None,
     image_rename_map: Optional[Dict[str, str]] = None,
-    scales: Optional[np.ndarray] = None,
-    shifts: Optional[np.ndarray] = None,
+    scales: Optional[Dict[int, float]] = None,
+    shifts: Optional[Dict[int, float]] = None,
 ) -> int:
     """Converts COLMAP's cameras.bin and images.bin to a JSON file.
 
@@ -467,7 +468,7 @@ def colmap_to_json(
     im_id_to_image = read_images_binary(recon_dir / "images.bin")
 
     frames = []
-    for idx, (im_id, im_data) in enumerate(im_id_to_image.items()):
+    for im_id, im_data in im_id_to_image.items():
         # NB: COLMAP uses Eigen / scalar-first quaternions
         # * https://colmap.github.io/format.html
         # * https://github.com/colmap/colmap/blob/bf3e19140f491c3042bfd85b7192ef7d249808ec/src/base/pose.cc#L75
@@ -497,9 +498,9 @@ def colmap_to_json(
             "colmap_im_id": im_id,
         }
         if scales is not None:
-            frame["scale"] = float(scales[idx])
+            frame["scale"] = scales[im_id]
         if shifts is not None:
-            frame["shift"] = float(shifts[idx])
+            frame["shift"] = shifts[im_id]
         if image_id_to_mask_path is not None:
             mask_path = image_id_to_mask_path[im_id]
             frame["mask_path"] = str(mask_path.relative_to(mask_path.parent.parent))
@@ -512,7 +513,8 @@ def colmap_to_json(
         raise RuntimeError("Only single camera shared for all images is supported.")
     out = parse_colmap_camera_params(cam_id_to_camera[1])
     out["applied_scale"] = scale_factor
-    out["ply_file_path"] = "colmap/point_cloud.ply"
+    if os.path.exists(recon_dir / "point_cloud.ply"):
+        out["ply_file_path"] = "colmap/point_cloud.ply"
     out["frames"] = frames
 
     applied_transform = np.eye(4)[:3, :]
@@ -779,7 +781,7 @@ def align_mono_depth(
     max_depth: float = 10000,
     max_repoj_err: float = 2.5,
     min_n_visible: int = 2,
-) -> Dict[int, Path]:
+) -> Tuple[Dict[int, Path], Dict[int, float], Dict[int, float]]:
     if not depth_dir.exists():
         raise RuntimeError(f"You are required to provide depth maps in {depth_dir}")
     ptid_to_info = read_points3D_binary(recon_dir / "points3D.bin")
@@ -800,8 +802,8 @@ def align_mono_depth(
     else:
         iter_images = iter(im_id_to_image.items())
 
-    scales = []
-    shifts = []
+    scales = {}
+    shifts = {}
     image_id_to_depth_path = {}
     # cov = []
     for im_id, im_data in iter_images:
@@ -840,17 +842,13 @@ def align_mono_depth(
         uv = uv[idx]
 
         uu, vv = uv[:, 0].astype(int), uv[:, 1].astype(int)
-        depth_est = depth_img[vv, uu]
-        # Choose the idx that depth measure is not 0
-        idx = np.where((depth_est > 30) & (depth_est < 1_000))
-        z = z[idx]
-        depth_est = depth_est[idx]
+        depth_est = depth_img[vv, uu] / 255.0
         if len(z) != 0:
             # fit a linear model
             A = np.vstack([z, np.ones(len(z))]).T
             m, c = np.linalg.lstsq(A, depth_est, rcond=None)[0]
-            scales.append(m)
-            shifts.append(c)
+            scales[im_id] = m
+            shifts[im_id] = c
 
     return image_id_to_depth_path, scales, shifts
 

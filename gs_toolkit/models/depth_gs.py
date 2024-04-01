@@ -113,6 +113,10 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """start iteration of depth loss"""
     use_est_depth: bool = False
     """If True, use estimated depth for depth loss"""
+    mono_depth_l1_start_iteration: int = 15_000
+    """start iteration of mono depth l1 loss"""
+    local_patch_size: int = 128
+    """size of local patch for local pearson loss"""
 
 
 class DepthGSModel(GaussianSplattingModel):
@@ -132,6 +136,72 @@ class DepthGSModel(GaussianSplattingModel):
     ):
         # self.seed_points = seed_points
         super().__init__(seed_points=seed_points, *args, **kwargs)
+
+    #     def prune_floaters(viewpoint_stack, gaussians, pipe, background, dataset, iteration):
+    #         N = #number of gaussians
+    #         mask = #initialize gaussian pruning masks
+
+    #         dips = [] #dip statistic
+    #         point_lists = [] #depth-ordered gaussian IDs
+    #         means2Ds = [] #view-space means
+    #         conic_opacities = [] #covariance matrix and opacity neatly packed
+    #         mode_ids = [] #our mode gaussians
+    #         diffs = [] #relative differences
+    #         names = [] #image names
+
+    #         for view in viewpoint_stack: #iterate over views
+    #             names.append(view.image_name)
+    #             render_pkg = render(.)
+    #             mode_id, mode, point_list, depth, means2D, conic_opacity = #extract from renders
+    #             diff = calc_diff(mode, depth)
+    #             means2Ds.append(means2D)
+    #             conic_opacities.append(conic_opacity)
+    #             mode_ids.append(mode_id)
+    #             diffs.append(diff)
+    #             dips.append(diptest.dipstat(diff[diff > 0].cpu().numpy()))
+
+    #             dips = np.array(dips)
+    #             avg_dip = dips.mean()
+    #             perc = 97*np.exp(-8*avg_dip) #empirically calculated curve
+
+    #             for name, mode_id, point_list, diff, means2D, conic_opacity in zip(names, mode_ids, point_lists, diffs, means2Ds, conic_opacities):
+    #                 submask = #initialize mask for current view
+    #                 diffpos = diff[diff > 0] #positive differences
+    #                 threshold = np.percentile(diffpos, perc)
+    #                 pruned_modes_mask = (diff > threshold)
+    #                 #get pixel indices of mode mask
+    #                 pixel_y, pixel_x = torch.meshgrid(torch.arange(pruned_modes_mask.shape[0]),
+    #                     torch.arange(pruned_modes_mask.shape[1]), indexing='ij')
+    #                 prune_mode_ids = mode_id[:,pruned_modes_mask]
+    #                 pixel_x = pixel_x[pruned_modes_mask]
+    #                 pixel_y = pixel_y[pruned_modes_mask]
+
+    #                 #filter out unpopulated modes
+    #                 neg_mask = (prune_mode_ids == -1).any(dim=0)
+    #                 prune_mode_ids = prune_mode_ids[:, neg_mask]
+    #                 pixel_x = pixel_x[neg_mask]
+    #                 pixel_y = pixel_y[neg_mask]
+
+    #                 #aggregate unique gaussians over selected mode ranges
+    #                 selected_gaussians = set()
+    #                 for j in range(prune_mode_ids.shape[-1]):
+    #                     x = pixel_x[j]
+    #                     y = pixel_y[j]
+    #                     gausses = point_list[prune_mode_ids[0,j]:prune_mode_ids[1,j]+1].long()
+    #                     c_opacs = conic_opacity[gausses]
+    #                     m2Ds = means2D[gausses]
+    #                     #test whether we are within sufficient gaussian range
+    #                     test_alpha = calc_alpha(m2Ds, c_opacs, x, y)
+    #                     alpha_mask = test_alpha > dataset.power_thresh
+    #                     gausses = gausses[alpha_mask]
+    #                     selected_gaussians.update(gausses.tolist())
+    #                     submask[list(selected_gaussians)] = True
+    #                     #aggregate mask
+    #                     mask = mask | submask
+    #                     num_points_pruned = submask.sum()
+    #                     print(f'Pruning {num_points_pruned} gaussians')
+
+    #                     gaussians.prune_points(mask)
 
     def _downscale_if_required(self, image):
         d = self._get_downscale_factor()
@@ -412,6 +482,8 @@ class DepthGSModel(GaussianSplattingModel):
             pred_depth = pred_depth * mask
 
         loss_dict = {}
+        # local_size = [256, 128, 64]
+        # selected_size = local_size[((self.step - self.config.depth_loss_start_iteration) // 1000) % 3]
 
         Ll1 = torch.abs(gt_img - pred_img).mean()
         simloss = 1 - self.ssim(
@@ -449,8 +521,20 @@ class DepthGSModel(GaussianSplattingModel):
         ):
             if self.config.use_est_depth:
                 loss_dict["depth_local_pearson"] = local_pearson_loss(
-                    pred_depth, gt_depth, 128, 0.5
+                    pred_depth, gt_depth, self.config.local_patch_size, 0.5
                 )
+                # loss_dict["depth_global_pearson"] = pearson_depth_loss(
+                #     pred_depth.reshape(-1), gt_depth.reshape(-1)
+                # )
+                if "mono_depth_scale" in batch:
+                    pred_depth = pred_depth.squeeze(-1)
+                    scaled_pred_depth = (
+                        batch["mono_depth_scale"] * pred_depth
+                        + batch["mono_depth_shift"]
+                    )
+                    loss_dict["log_depth"] = torch.log(
+                        1 + torch.abs(gt_depth - scaled_pred_depth)
+                    ).mean()
             else:
                 depth_nonzero = gt_depth > 0
                 pred_depth = pred_depth.squeeze(-1)

@@ -194,6 +194,18 @@ class GSToolkit(DataParser):
         Different number of image and depth filenames.
         You should check that depth_file_path is specified for every frame (or zero frames) in transforms.json.
         """
+        assert len(mono_depth_scales) == 0 or (
+            len(mono_depth_scales) == len(image_filenames)
+        ), """
+        Different number of image and mono depth scales.
+        You should check that scale is specified for every frame (or zero frames) in transforms.json.
+        """
+        assert len(mono_depth_shifts) == 0 or (
+            len(mono_depth_shifts) == len(image_filenames)
+        ), """
+        Different number of image and mono depth shifts.
+        You should check that shift is specified for every frame (or zero frames) in transforms.json.
+        """
 
         has_split_files_spec = any(
             f"{split}_filenames" in meta for split in ("train", "val", "test")
@@ -276,6 +288,17 @@ class GSToolkit(DataParser):
         )
         depth_filenames = (
             [depth_filenames[i] for i in indices] if len(depth_filenames) > 0 else []
+        )
+
+        mono_depth_scales = (
+            [mono_depth_scales[i] for i in indices]
+            if len(mono_depth_scales) > 0
+            else []
+        )
+        mono_depth_shifts = (
+            [mono_depth_shifts[i] for i in indices]
+            if len(mono_depth_shifts) > 0
+            else []
         )
 
         idx_tensor = torch.tensor(indices, dtype=torch.long)
@@ -401,6 +424,8 @@ class GSToolkit(DataParser):
                 if len(depth_filenames) > 0
                 else None,
                 "depth_unit_scale_factor": self.config.depth_unit_scale_factor,
+                "mono_depth_scales": mono_depth_scales,
+                "mono_depth_shifts": mono_depth_shifts,
                 **metadata,
             },
         )

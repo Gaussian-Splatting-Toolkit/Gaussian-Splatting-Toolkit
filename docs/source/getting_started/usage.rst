@@ -111,4 +111,4 @@ Using prompt:
 
    gs-export offline-tsdf --render-path /path/to/rendered/folder --output-dir exports/tsdf/ --seg-prompt your.prompt
 
-These are the basic usage scenarios for the Gaussian Splatting Toolkit. For more advanced features and detailed documentation, please refer to the cli.
+These are the basic usage scenarios for the Gaussian Splatting Toolkit. For more advanced features and detailed documentation, please refer to the :doc:`cli/cli`.

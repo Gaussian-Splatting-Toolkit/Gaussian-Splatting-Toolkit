@@ -108,9 +108,14 @@ class InputDataset(Dataset):
         Args:
             depth_idx: The depth image index in the dataset.
         """
-        depth = torch.from_numpy(
-            self.get_numpy_depth_image(depth_idx).astype("float32") / 1000.0
-        )
+        if self._dataparser_outputs.metadata["mono_depth_scales"] is not None:
+            depth = torch.from_numpy(
+                self.get_numpy_depth_image(depth_idx).astype("float32") / 255.0
+            )
+        else:
+            depth = torch.from_numpy(
+                self.get_numpy_depth_image(depth_idx).astype("float32") / 1000.0
+            )
         return depth
 
     def get_data(self, image_idx: int) -> Dict:
@@ -133,6 +138,14 @@ class InputDataset(Dataset):
             assert (
                 data["mask"].shape[:2] == data["image"].shape[:2]
             ), f"Mask and image have different shapes. Got {data['mask'].shape[:2]} and {data['image'].shape[:2]}"
+        if self._dataparser_outputs.metadata["mono_depth_scales"] is not None:
+            data["mono_depth_scale"] = self._dataparser_outputs.metadata[
+                "mono_depth_scales"
+            ][image_idx]
+        if self._dataparser_outputs.metadata["mono_depth_shifts"] is not None:
+            data["mono_depth_shift"] = self._dataparser_outputs.metadata[
+                "mono_depth_shifts"
+            ][image_idx]
         metadata = self.get_metadata(data)
         data.update(metadata)
         return data
