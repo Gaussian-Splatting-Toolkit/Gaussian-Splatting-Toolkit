@@ -1,5 +1,11 @@
 import math
 import torch
+import numpy as np
+import cv2
+
+
+def l2_loss(network_output, gt):
+    return ((network_output - gt) ** 2).mean()
 
 
 def pearson_depth_loss(depth_src, depth_target):
@@ -36,3 +42,39 @@ def local_pearson_loss(depth_src, depth_target, box_p, p_corr):
             depth_target[x_0[i] : x_1[i], y_0[i] : y_1[i]].reshape(-1),
         )
     return _loss / n_corr
+
+
+def image2canny(image, thres1, thres2, isEdge1=True):
+    """image: (H, W, 3)"""
+    canny_mask = torch.from_numpy(
+        cv2.Canny(
+            (image.detach().cpu().numpy() * 255.0).astype(np.uint8), thres1, thres2
+        )
+        / 255.0
+    )
+    if not isEdge1:
+        canny_mask = 1.0 - canny_mask
+    return canny_mask.float()
+
+
+with torch.no_grad():
+    kernelsize = 3
+    conv = torch.nn.Conv2d(1, 1, kernel_size=kernelsize, padding=(kernelsize // 2))
+    kernel = torch.tensor([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]]).reshape(
+        1, 1, kernelsize, kernelsize
+    )
+    conv.weight.data = kernel  # torch.ones((1,1,kernelsize,kernelsize))
+    conv.bias.data = torch.tensor([0.0])
+    conv.requires_grad_(False)
+    conv = conv.cuda()
+
+
+def nearMean_map(array, mask):
+    """array: (H,W) / mask: (H,W)"""
+    cnt_map = torch.ones_like(array)
+
+    nearMean_map = conv((array * mask)[None, None])
+    cnt_map = conv((cnt_map * mask)[None, None])
+    nearMean_map = (nearMean_map / (cnt_map + 1e-8)).squeeze()
+
+    return nearMean_map

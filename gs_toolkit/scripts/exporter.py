@@ -234,6 +234,8 @@ class ExportTSDF:
     """Voxel length for the volume."""
     sdf_trunc: float = 0.02
     """SDF truncation for the volume."""
+    depth_trunc: float = 10.0
+    """Depth truncation for the volume."""
     using_gt: bool = False
     """Whether to use ground truth for meshing."""
     mask_path: Optional[Path] = None
@@ -276,6 +278,7 @@ class ExportTSDF:
             method="marching_cubes",
             voxel_length=self.vox_length,
             sdf_trunc=self.sdf_trunc,
+            depth_trunc=self.depth_trunc,
             mask=self.mask_path,
             filter_pcd=self.filter_pcd,
             bounding_box=self.bounding_box,

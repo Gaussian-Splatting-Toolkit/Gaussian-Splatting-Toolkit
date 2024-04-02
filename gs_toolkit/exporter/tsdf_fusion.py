@@ -31,6 +31,7 @@ class TSDFFusion:
         method: str = "marching_cubes",
         voxel_length: float = 4.0 / 512.0,
         sdf_trunc: float = 0.04,
+        depth_trunc: float = 10,
         mask: Optional[Path] = None,
         filter_pcd: bool = False,
         bounding_box: bool = False,
@@ -46,6 +47,7 @@ class TSDFFusion:
         self.bounding_box = bounding_box
         self.voxel_length = voxel_length
         self.sdf_trunc = sdf_trunc
+        self.depth_trunc = depth_trunc
         self.using_gt = using_gt
 
     def read_trajectory(self) -> list[CameraPose]:
@@ -127,7 +129,10 @@ class TSDFFusion:
                     masked_depth_np = depth_np * mask_np
                     depth = o3d.geometry.Image(np.uint16(masked_depth_np))
             rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
-                color, depth, depth_trunc=4.0, convert_rgb_to_intensity=False
+                color,
+                depth,
+                depth_trunc=self.depth_trunc,
+                convert_rgb_to_intensity=False,
             )
             volume.integrate(
                 rgbd, camera_pose.intrinsic, np.linalg.inv(camera_pose.pose)

@@ -25,7 +25,12 @@ from gs_toolkit.models.vanilla_gs import (
     GaussianSplattingModel,
 )
 
-from gs_toolkit.utils.losses import local_pearson_loss
+from gs_toolkit.utils.losses import (
+    local_pearson_loss,
+    l2_loss,
+    nearMean_map,
+    image2canny,
+)
 
 
 @dataclass
@@ -115,8 +120,12 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """If True, use estimated depth for depth loss"""
     mono_depth_l1_start_iteration: int = 15_000
     """start iteration of mono depth l1 loss"""
+    use_scaled_est_depth: bool = False
+    """If True, use scaled estimated depth for depth loss"""
     local_patch_size: int = 128
     """size of local patch for local pearson loss"""
+    use_depth_regularization: bool = True
+    """If True, use depth regularization"""
 
 
 class DepthGSModel(GaussianSplattingModel):
@@ -505,7 +514,7 @@ class DepthGSModel(GaussianSplattingModel):
         else:
             scale_reg = torch.tensor(0.0).to(self.device)
 
-        if self.config.use_sparse_loss and self.step % 10 == 0:
+        if self.config.use_sparse_loss and self.step % 100 == 0:
             l_sparse = (
                 torch.log(self.gauss_params["opacities"] + 1e-6)
                 + torch.log(1 - self.gauss_params["opacities"] + 1e-6)
@@ -520,21 +529,37 @@ class DepthGSModel(GaussianSplattingModel):
             and self.step > self.config.depth_loss_start_iteration
         ):
             if self.config.use_est_depth:
-                loss_dict["depth_local_pearson"] = local_pearson_loss(
-                    pred_depth, gt_depth, self.config.local_patch_size, 0.5
-                )
+                if self.step % 10 == 0:
+                    loss_dict["depth_local_pearson"] = local_pearson_loss(
+                        pred_depth, gt_depth, self.config.local_patch_size, 0.5
+                    )
                 # loss_dict["depth_global_pearson"] = pearson_depth_loss(
                 #     pred_depth.reshape(-1), gt_depth.reshape(-1)
                 # )
-                if "mono_depth_scale" in batch:
-                    pred_depth = pred_depth.squeeze(-1)
-                    scaled_pred_depth = (
-                        batch["mono_depth_scale"] * pred_depth
-                        + batch["mono_depth_shift"]
+                pred_depth = pred_depth.squeeze(-1)
+                if self.config.use_scaled_est_depth:
+                    if "mono_depth_scale" in batch:
+                        scaled_pred_depth = (
+                            batch["mono_depth_scale"] * pred_depth
+                            + batch["mono_depth_shift"]
+                        )
+                        loss_dict["log_depth"] = torch.log(
+                            1 + torch.abs(gt_depth - scaled_pred_depth)
+                        ).mean()
+
+                if self.config.use_depth_regularization and self.step % 10 == 0:
+                    canny_mask = (
+                        image2canny(gt_img, 50, 150, isEdge1=False)
+                        .detach()
+                        .to(self.device)
                     )
-                    loss_dict["log_depth"] = torch.log(
-                        1 + torch.abs(gt_depth - scaled_pred_depth)
-                    ).mean()
+                    depth_mask = (pred_depth > 0).detach()
+                    nearDepthMean_map = nearMean_map(
+                        pred_depth, canny_mask * depth_mask
+                    )
+                    loss_dict["depth_reg_loss"] = (
+                        l2_loss(nearDepthMean_map, pred_depth * depth_mask) * 1.0
+                    )
             else:
                 depth_nonzero = gt_depth > 0
                 pred_depth = pred_depth.squeeze(-1)
