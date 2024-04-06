@@ -20,6 +20,7 @@ from gs_toolkit.models.vanilla_gs import GaussianSplattingModelConfig
 from gs_toolkit.models.surface_gs import SurfaceGSConfig
 from gs_toolkit.data.dataparsers.gs_toolkit_dataparser import GSToolkitDataParserConfig
 from gs_toolkit.pipelines.base_pipeline import VanillaPipelineConfig
+from gs_toolkit.pipelines.cogs_pipeline import CogsPipelineConfig
 from gs_toolkit.data.datamanagers.full_images_datamanager import (
     FullImageDatamanagerConfig,
 )
@@ -27,19 +28,19 @@ from gs_toolkit.data.datamanagers.full_images_datamanager import (
 method_configs: Dict[str, TrainerConfig] = {}
 descriptions = {
     "gaussian-splatting": "Vanilla Gaussian Splatting model.",
-    "depth-gs": "Gaussian Splatting model with depth supervision.",
+    "co-gs": "Gaussian Splatting model with various supervision, like depth and planar prior.",
     "surface-gs": "Gaussian Splatting model with fixed means on the surface.",
 }
 
-method_configs["depth-gs"] = TrainerConfig(
-    method_name="depth-gs",
+method_configs["co-gs"] = TrainerConfig(
+    method_name="co-gs",
     steps_per_eval_image=100,
     steps_per_eval_batch=0,
     steps_per_save=2000,
     steps_per_eval_all_images=1000,
     max_num_iterations=30_000,
     mixed_precision=False,
-    pipeline=VanillaPipelineConfig(
+    pipeline=CogsPipelineConfig(
         datamanager=FullImageDatamanagerConfig(dataparser=GSToolkitDataParserConfig()),
         model=DepthGSModelConfig(),
     ),
