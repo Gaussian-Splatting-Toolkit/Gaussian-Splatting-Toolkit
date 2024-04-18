@@ -138,11 +138,11 @@ class InputDataset(Dataset):
             assert (
                 data["mask"].shape[:2] == data["image"].shape[:2]
             ), f"Mask and image have different shapes. Got {data['mask'].shape[:2]} and {data['image'].shape[:2]}"
-        if self._dataparser_outputs.metadata["mono_depth_scales"] is not None:
+        if len(self._dataparser_outputs.metadata["mono_depth_scales"]) != 0:
             data["mono_depth_scale"] = self._dataparser_outputs.metadata[
                 "mono_depth_scales"
             ][image_idx]
-        if self._dataparser_outputs.metadata["mono_depth_shifts"] is not None:
+        if len(self._dataparser_outputs.metadata["mono_depth_shifts"]) != 0:
             data["mono_depth_shift"] = self._dataparser_outputs.metadata[
                 "mono_depth_shifts"
             ][image_idx]

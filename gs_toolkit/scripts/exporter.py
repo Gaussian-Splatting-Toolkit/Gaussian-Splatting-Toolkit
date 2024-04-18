@@ -230,9 +230,9 @@ class ExportTSDF:
     """Path to the rendered images."""
     output_dir: Optional[Path] = None
     """Path to the output directory."""
-    vox_length: float = 4.0 / 512
+    vox_length: float = 6.0 / 512
     """Voxel length for the volume."""
-    sdf_trunc: float = 0.02
+    sdf_trunc: float = 0.06
     """SDF truncation for the volume."""
     depth_trunc: float = 10.0
     """Depth truncation for the volume."""

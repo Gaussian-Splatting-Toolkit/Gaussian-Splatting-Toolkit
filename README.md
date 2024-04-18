@@ -85,9 +85,9 @@ This repository also provides a devcontainer for your convenience.
 
   ```bash
   gs-train gaussian-splatting --data /path/to/processed/data
-  gs-train depth-gs --data /path/to/processed/data
+  gs-train co-gs --data /path/to/processed/data
   # Train with mono depth estimation
-  gs-train depth-gs --data /path/to/processed/data --pipeline.model.use-est-depth True
+  gs-train co-gs --data /path/to/processed/data --pipeline.model.use-est-depth True
   ```
 
   ### Visualize the result

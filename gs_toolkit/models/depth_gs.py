@@ -31,6 +31,7 @@ from gs_toolkit.utils.losses import (
     nearMean_map,
     image2canny,
     local_planar_loss,
+    tv_Loss,
 )
 
 
@@ -117,7 +118,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """weight of depth loss"""
     depth_loss_start_iteration: int = 6_000
     """start iteration of depth loss"""
-    depth_loss_stop_iteration: int = 20_000
+    depth_loss_stop_iteration: int = 25_000
     """stop iteration of depth loss"""
     use_est_depth: bool = True
     """If True, use estimated depth for depth loss"""
@@ -127,12 +128,14 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """If True, use scaled estimated depth for depth loss"""
     local_patch_size: int = 128
     """size of local patch for local pearson loss"""
-    use_depth_regularization: bool = True
+    use_depth_regularization: bool = False
     """If True, use depth regularization"""
     using_planar_loss: bool = False
     """If True, use planar loss"""
     planar_loss_start_iteration: int = 10_000
     """start iteration of planar loss"""
+    using_tv_loss: bool = False
+    """If True, use total variation loss"""
 
 
 class DepthGSModel(GaussianSplattingModel):
@@ -544,22 +547,39 @@ class DepthGSModel(GaussianSplattingModel):
                     #     pred_depth.reshape(-1), gt_depth.reshape(-1)
                     # )
                 pred_depth = pred_depth.squeeze(-1)
+                canny_mask = (
+                    image2canny(gt_img, 50, 150, isEdge1=False).detach().to(self.device)
+                )
                 if self.config.use_scaled_est_depth:
                     if "mono_depth_scale" in batch:
                         scaled_pred_depth = (
                             batch["mono_depth_scale"] * pred_depth
                             + batch["mono_depth_shift"]
                         )
-                        loss_dict["log_depth"] = torch.log(
-                            1 + torch.abs(gt_depth - scaled_pred_depth)
-                        ).mean()
+                        logl1 = torch.log(1 + torch.abs(gt_depth - scaled_pred_depth))
+
+                        grad_img_x = torch.mean(
+                            torch.abs(gt_img[:, :-1, :] - gt_img[:, 1:, :]),
+                            -1,
+                            keepdim=True,
+                        )
+                        grad_img_y = torch.mean(
+                            torch.abs(gt_img[:-1, :, :] - gt_img[1:, :, :]),
+                            -1,
+                            keepdim=True,
+                        )
+                        lambda_x = torch.exp(-grad_img_x).squeeze(-1)
+                        lambda_y = torch.exp(-grad_img_y).squeeze(-1)
+
+                        loss_x = lambda_x * logl1[:, :-1]
+                        loss_y = lambda_y * logl1[:-1, :]
+
+                        # loss_x = loss_x[canny_mask[:, :-1]]
+                        # loss_y = loss_y[canny_mask[:-1, :]]
+
+                        loss_dict["log_depth"] = loss_x.mean() + loss_y.mean()
 
                 if self.config.use_depth_regularization:
-                    canny_mask = (
-                        image2canny(gt_img, 50, 150, isEdge1=False)
-                        .detach()
-                        .to(self.device)
-                    )
                     depth_mask = (pred_depth > 0).detach()
                     nearDepthMean_map = nearMean_map(
                         pred_depth, canny_mask * depth_mask
@@ -567,6 +587,9 @@ class DepthGSModel(GaussianSplattingModel):
                     loss_dict["depth_reg_loss"] = (
                         l2_loss(nearDepthMean_map, pred_depth * depth_mask) * 1.0
                     )
+
+                if self.config.using_tv_loss and self.step < 20_000:
+                    loss_dict["tv_loss"] = tv_Loss(pred_depth)
             else:
                 depth_nonzero = gt_depth > 0
                 pred_depth = pred_depth.squeeze(-1)
@@ -582,7 +605,7 @@ class DepthGSModel(GaussianSplattingModel):
             self.step > self.config.planar_loss_start_iteration
             and self.config.using_planar_loss
         ):
-            loss_dict["planar_loss"] = local_planar_loss(
+            loss_dict["planar_loss"] = 10 * local_planar_loss(
                 output["depth"],
                 self.config.local_patch_size,
                 cameras.fx,

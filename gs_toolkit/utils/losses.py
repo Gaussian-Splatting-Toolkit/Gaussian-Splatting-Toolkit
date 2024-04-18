@@ -192,3 +192,16 @@ def local_planar_loss(depth_src, box_p, fx, fy, cx, cy, ratio=0.5):
             depth_src[x_0[i] : x_1[i], y_0[i] : y_1[i]], fx, fy, cx, cy
         )
     return _loss / n_corr
+
+
+def tv_Loss(pred):
+    """
+    Args:
+        pred: [batch, H, W, 3]
+
+    Returns:
+        tv_loss: [batch]
+    """
+    h_diff = pred[:, :-1] - pred[:, 1:]
+    w_diff = pred[:-1, :] - pred[1:, :]
+    return torch.mean(torch.abs(h_diff)) + torch.mean(torch.abs(w_diff))
