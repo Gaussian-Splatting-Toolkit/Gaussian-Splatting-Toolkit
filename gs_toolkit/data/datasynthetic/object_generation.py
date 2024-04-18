@@ -4,35 +4,53 @@ import os
 
 bsyn.run_this_script()
 
-monkey = bsyn.Mesh.from_primitive("monkey")
-# TODO: load a mesh from file
+# monkey = bsyn.Mesh.from_primitive("monkey")
+mesh = bsyn.Mesh.from_obj("data/meshes/movo_body/movo_upper_body.obj")
+# mesh.material = bsyn.Material.add_source("data/meshes/movo_body/movo_upper_body.mtl")
+bsyn.world.set_color((0.8, 0.7, 0.8))
 
-bsyn.render.set_resolution(640, 480)
-bsyn.render.set_cycles_samples(10)
+# Get the largest dimension of the mesh
+max_dim = max(mesh.dimensions)
+
+bsyn.render.set_resolution(1280, 720)
+bsyn.render.set_cycles_samples(1000)
 
 comp = bsyn.Compositor()
-obj_pass_idx = monkey.assign_pass_index(
+obj_pass_idx = mesh.assign_pass_index(
     1
 )  # To show masking, we assign a pass index to the first object
 
 # we will create 4 cameras, one from each side of the monkey, facing the monkey
-# TODO: increase camera numbers
 cameras = []
-camera_radius = 5
-for i in range(4):
-    camera = bsyn.Camera.create(
-        name=f"Cam{i}",
-        location=(
-            camera_radius * np.cos(i * np.pi / 2),
-            camera_radius * np.sin(i * np.pi / 2),
-            0,
-        ),
-    )
-    camera.look_at_object(monkey)
-    cameras.append(camera)
+extrinsics = []
+camera_radius = 5 * max_dim
+# Generate 8 layers of cameras, each layer has 20 cameras, looking at the mesh from different angles
+no_layers = 8
+no_rot_poses = 20
+vertical_angle = np.pi / (no_layers + 2)
+horizontal_angle = 2 * np.pi / no_rot_poses
 
-    # we'll add a point light at each camera too
-    light = bsyn.Light.create("POINT", location=camera.location, intensity=250)
+for i in range(1, no_layers + 1):
+    for j in range(no_rot_poses):
+        camera = bsyn.Camera.create(
+            name=f"Cam{i}_{j}",
+            location=(
+                camera_radius
+                * np.cos(j * horizontal_angle)
+                * np.sin(i * vertical_angle),
+                camera_radius
+                * np.sin(j * horizontal_angle)
+                * np.sin(i * vertical_angle),
+                camera_radius * np.cos(i * vertical_angle),
+            ),
+        )
+        camera.look_at_object(mesh)
+        cameras.append(camera)
+
+        light = bsyn.Light.create("POINT", location=camera.location, intensity=250)
+
+        # Save the extrinsics for each camera
+        extrinsics.append(camera.matrix_world())
 
 bsyn.render.render_depth()  # Enable standard Blender depth pass
 depth_vis = comp.get_depth_visual(max_depth=20)  # Create a visual of the depth pass
@@ -51,7 +69,7 @@ UVAOV = bsyn.aov.UVAOV()  # UV Coordinates
 NOCAOV = bsyn.aov.GeneratedAOV()  # Normalized Object Coordinates (NOC)
 
 for aov in [normal_aov, instancing_aov, class_aov, UVAOV, NOCAOV]:
-    monkey.assign_aov(aov)
+    mesh.assign_aov(aov)
 
 output_folder = "data/multiview"
 os.makedirs(output_folder, exist_ok=True)
@@ -79,7 +97,7 @@ comp.define_output(UVAOV, output_folder + "/UV", name="UV")
 comp.define_output(NOCAOV, output_folder + "/NOC", name="NOC")
 comp.define_output("Depth", output_folder + "/depth", file_format="OPEN_EXR")
 
-bounding_boxes = bsyn.annotations.bounding_boxes([monkey], cameras)
+bounding_boxes = bsyn.annotations.bounding_boxes([mesh], cameras)
 # keypoints = bsyn.annotations.keypoints.project_keypoints(cube_vertices)
 
 comp.render(camera=cameras, annotations=bounding_boxes)
