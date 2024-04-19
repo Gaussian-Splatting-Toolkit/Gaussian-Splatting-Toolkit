@@ -1,19 +1,38 @@
+import json
 import blendersynth as bsyn
 import numpy as np
 import os
+import open3d as o3d
 
 bsyn.run_this_script()
+bsyn.render.render_with_gpu()
+
+mesh_path = "data/meshes/movo_body/movo_upper_body.obj"
+output_folder = "data/movo"
+# Create colmap folder in the output folder
+os.makedirs(output_folder + "/colmap", exist_ok=True)
+
+# Generate the point cloud from mesh
+o3d_mesh = o3d.io.read_triangle_mesh(mesh_path, True)
+points = o3d_mesh.sample_points_poisson_disk(100000)
+# Save the point cloud
+pcd = o3d.geometry.PointCloud()
+pcd.points = o3d.utility.Vector3dVector(points.points)
+o3d.io.write_point_cloud(output_folder + "/colmap/point_cloud.ply", pcd)
+print("Point cloud saved")
 
 # monkey = bsyn.Mesh.from_primitive("monkey")
-mesh = bsyn.Mesh.from_obj("data/meshes/movo_body/movo_upper_body.obj")
+mesh = bsyn.Mesh.from_obj(mesh_path)
 # mesh.material = bsyn.Material.add_source("data/meshes/movo_body/movo_upper_body.mtl")
 bsyn.world.set_color((0.8, 0.7, 0.8))
 
 # Get the largest dimension of the mesh
 max_dim = max(mesh.dimensions)
 
-bsyn.render.set_resolution(1280, 720)
-bsyn.render.set_cycles_samples(1000)
+w, h = 1280, 720
+
+bsyn.render.set_resolution(w, h)
+bsyn.render.set_cycles_samples(100)
 
 comp = bsyn.Compositor()
 obj_pass_idx = mesh.assign_pass_index(
@@ -23,6 +42,7 @@ obj_pass_idx = mesh.assign_pass_index(
 # we will create 4 cameras, one from each side of the monkey, facing the monkey
 cameras = []
 extrinsics = []
+names = []
 camera_radius = 5 * max_dim
 # Generate 8 layers of cameras, each layer has 20 cameras, looking at the mesh from different angles
 no_layers = 8
@@ -32,8 +52,9 @@ horizontal_angle = 2 * np.pi / no_rot_poses
 
 for i in range(1, no_layers + 1):
     for j in range(no_rot_poses):
+        name = f"Cam{i}_{j}"
         camera = bsyn.Camera.create(
-            name=f"Cam{i}_{j}",
+            name=name,
             location=(
                 camera_radius
                 * np.cos(j * horizontal_angle)
@@ -47,10 +68,11 @@ for i in range(1, no_layers + 1):
         camera.look_at_object(mesh)
         cameras.append(camera)
 
-        light = bsyn.Light.create("POINT", location=camera.location, intensity=250)
+        light = bsyn.Light.create("POINT", location=camera.location, intensity=3)
 
         # Save the extrinsics for each camera
-        extrinsics.append(camera.matrix_world())
+        extrinsics.append(np.array(camera.matrix_world))
+        names.append(name)
 
 bsyn.render.render_depth()  # Enable standard Blender depth pass
 depth_vis = comp.get_depth_visual(max_depth=20)  # Create a visual of the depth pass
@@ -71,7 +93,6 @@ NOCAOV = bsyn.aov.GeneratedAOV()  # Normalized Object Coordinates (NOC)
 for aov in [normal_aov, instancing_aov, class_aov, UVAOV, NOCAOV]:
     mesh.assign_aov(aov)
 
-output_folder = "data/multiview"
 os.makedirs(output_folder, exist_ok=True)
 
 # All of the following will have Blender's Filmic colour correction by default
@@ -97,7 +118,47 @@ comp.define_output(UVAOV, output_folder + "/UV", name="UV")
 comp.define_output(NOCAOV, output_folder + "/NOC", name="NOC")
 comp.define_output("Depth", output_folder + "/depth", file_format="OPEN_EXR")
 
+# Generate the transform.json
+# extrinsics = [extrinsic.tolist() for extrinsic in extrinsics]
+focal_length = camera.focal_length
+cx = w / 2
+cy = h / 2
+
+data = {}
+
+data["w"] = w
+data["h"] = h
+data["fl_x"] = focal_length
+data["fl_y"] = focal_length
+data["cx"] = cx
+data["cy"] = cy
+data["k1"] = 0
+data["k2"] = 0
+data["p1"] = 0
+data["p2"] = 0
+data["camera_model"] = "OPENCV"
+data["ply_file_path"] = "colmap/point_cloud.ply"
+data["applied_scale"] = 1.0
+
+frames = []
+for i, name in enumerate(names):
+    frame = {}
+    frame["file_path"] = "rgb_masked/" + name + "_rgb_masked.png"
+    # c2w = np.linalg.inv(extrinsics[i])
+    c2w = extrinsics[i]
+    # Convert from Blender's camera coordinates to ours (OpenGL)
+    # c2w[0:3, 1:3] *= -1
+    c2w = c2w[np.array([0, 2, 1, 3]), :]
+    c2w[2, :] *= -1
+    frame["transform_matrix"] = c2w.tolist()
+    frame["colmap_id"] = i
+    frames.append(frame)
+
+data["frames"] = frames
+
+with open(output_folder + "/transforms.json", "w") as f:
+    json.dump(data, f)
+
 bounding_boxes = bsyn.annotations.bounding_boxes([mesh], cameras)
 # keypoints = bsyn.annotations.keypoints.project_keypoints(cube_vertices)
-
 comp.render(camera=cameras, annotations=bounding_boxes)
