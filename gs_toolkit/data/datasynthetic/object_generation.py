@@ -21,6 +21,8 @@ pcd.points = o3d.utility.Vector3dVector(points.points)
 o3d.io.write_point_cloud(output_folder + "/colmap/point_cloud.ply", pcd)
 print("Point cloud saved")
 
+include_depth = True
+
 # monkey = bsyn.Mesh.from_primitive("monkey")
 mesh = bsyn.Mesh.from_obj(mesh_path)
 # mesh.material = bsyn.Material.add_source("data/meshes/movo_body/movo_upper_body.mtl")
@@ -121,6 +123,13 @@ comp.define_output("Depth", output_folder + "/depth", file_format="OPEN_EXR")
 # Generate the transform.json
 # extrinsics = [extrinsic.tolist() for extrinsic in extrinsics]
 focal_length = camera.focal_length
+sensor_width = camera.data.sensor_width
+sensor_height = camera.data.sensor_height
+pixel_aspect_ratio = (
+    bsyn.context.scene.render.pixel_aspect_x / bsyn.context.scene.render.pixel_aspect_y
+)
+s_u = w / sensor_width
+s_v = h * pixel_aspect_ratio / sensor_height
 cx = w / 2
 cy = h / 2
 
@@ -128,8 +137,8 @@ data = {}
 
 data["w"] = w
 data["h"] = h
-data["fl_x"] = focal_length
-data["fl_y"] = focal_length
+data["fl_x"] = focal_length * s_u
+data["fl_y"] = focal_length * s_v
 data["cx"] = cx
 data["cy"] = cy
 data["k1"] = 0
@@ -144,10 +153,11 @@ frames = []
 for i, name in enumerate(names):
     frame = {}
     frame["file_path"] = "rgb_masked/" + name + "_rgb_masked.png"
+    if include_depth:
+        frame["depth_file_path"] = "depth/" + name + "_Depth.exr"
     # c2w = np.linalg.inv(extrinsics[i])
     c2w = extrinsics[i]
     # Convert from Blender's camera coordinates to ours (OpenGL)
-    # c2w[0:3, 1:3] *= -1
     c2w = c2w[np.array([0, 2, 1, 3]), :]
     c2w[2, :] *= -1
     frame["transform_matrix"] = c2w.tolist()

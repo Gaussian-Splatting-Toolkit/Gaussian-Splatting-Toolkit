@@ -48,6 +48,7 @@ wandb = "0.16.2"
 sphinx = "5.3.0"
 bpy = "4.0.0"
 pybind11 = "2.11.1"
+OpenEXR = "3.2.4"
 segment-anything = {git = "https://github.com/Gaussian-Splatting-Toolkit/segment-anything.git"}
 GroundingDINO = {git = "https://github.com/Gaussian-Splatting-Toolkit/GroundingDINO.git"}
 rasterizer = {path = "gs_toolkit/gs_components"}

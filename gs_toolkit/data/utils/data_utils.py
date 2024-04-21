@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
+import OpenEXR as exr
+import Imath
 
 
 def get_image_mask_tensor_from_path(
@@ -75,3 +77,21 @@ def get_depth_image_from_path(
         image = image.astype(np.float64) * scale_factor
         image = cv2.resize(image, (width, height), interpolation=interpolation)
     return torch.from_numpy(image[:, :, np.newaxis])
+
+
+def exr_to_array(filepath: Path):
+    exrfile = exr.InputFile(filepath.as_posix())
+    raw_bytes = exrfile.channel("Z", Imath.PixelType(Imath.PixelType.FLOAT))
+    depth_vector = numpy.frombuffer(raw_bytes, dtype=numpy.float32)
+    height = (
+        exrfile.header()["displayWindow"].max.y
+        + 1
+        - exrfile.header()["displayWindow"].min.y
+    )
+    width = (
+        exrfile.header()["displayWindow"].max.x
+        + 1
+        - exrfile.header()["displayWindow"].min.x
+    )
+    depth_map = numpy.reshape(depth_vector, (height, width))
+    return depth_map

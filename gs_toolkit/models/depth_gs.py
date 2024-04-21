@@ -120,7 +120,7 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """start iteration of depth loss"""
     depth_loss_stop_iteration: int = 25_000
     """stop iteration of depth loss"""
-    use_est_depth: bool = True
+    use_est_depth: bool = False
     """If True, use estimated depth for depth loss"""
     mono_depth_l1_start_iteration: int = 15_000
     """start iteration of mono depth l1 loss"""
