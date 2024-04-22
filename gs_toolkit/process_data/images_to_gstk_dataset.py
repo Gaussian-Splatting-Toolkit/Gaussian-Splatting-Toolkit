@@ -78,6 +78,12 @@ class ImagesToGSToolkitDataset(ColmapConverterToGSToolkitDataset):
                 same_dimensions=self.same_dimensions,
                 keep_image_dir=False,
             )
+            if self.using_est_depth:
+                process_data_utils.mono_depth_est(
+                    self.data,
+                    verbose=self.verbose,
+                )
+                self.depth_data = self.data.parent / "depth_est"
             if self.depth_data is not None:
                 depth_image_rename_map_paths = process_data_utils.copy_images(
                     self.depth_data,

@@ -17,10 +17,7 @@ from torch.utils.data import Dataset
 
 from gs_toolkit.cameras.cameras import Cameras
 from gs_toolkit.data.dataparsers.base_dataparser import DataparserOutputs
-from gs_toolkit.data.utils.data_utils import (
-    get_image_mask_tensor_from_path,
-    exr_to_array,
-)
+from gs_toolkit.data.utils.data_utils import get_image_mask_tensor_from_path
 
 
 class InputDataset(Dataset):
@@ -92,22 +89,15 @@ class InputDataset(Dataset):
             image_idx: The image index in the dataset.
         """
         depth_filename = self._dataparser_outputs.metadata["depth_filenames"][image_idx]
-        # If the file end with exr
-        if depth_filename.endswith(".exr"):
-            depth = exr_to_array(depth_filename)
-        else:
-            pil_image = Image.open(depth_filename)
-            if self.scale_factor != 1.0:
-                width, height = pil_image.size
-                newsize = (
-                    int(width * self.scale_factor),
-                    int(height * self.scale_factor),
-                )
-                pil_image = pil_image.resize(newsize, resample=Image.BILINEAR)
-            depth = np.array(pil_image)  # shape is (h, w) or (h, w, 3 or 4)
-        # assert len(depth.shape) == 3
-        # assert depth.dtype == np.uint8
-        # assert depth.shape[2] == 1, f"Image shape of {depth.shape} is in correct."
+        pil_image = Image.open(depth_filename)
+        if self.scale_factor != 1.0:
+            width, height = pil_image.size
+            newsize = (
+                int(width * self.scale_factor),
+                int(height * self.scale_factor),
+            )
+            pil_image = pil_image.resize(newsize, resample=Image.BILINEAR)
+        depth = np.array(pil_image)  # shape is (h, w) or (h, w, 3 or 4)
         return depth
 
     def get_depth_image(

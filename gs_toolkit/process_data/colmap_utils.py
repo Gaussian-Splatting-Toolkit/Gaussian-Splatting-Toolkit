@@ -513,7 +513,7 @@ def colmap_to_json(
         raise RuntimeError("Only single camera shared for all images is supported.")
     out = parse_colmap_camera_params(cam_id_to_camera[1])
     out["applied_scale"] = scale_factor
-    if os.path.exists(recon_dir / "point_cloud.ply"):
+    if os.path.exists(output_dir / "colmap" / "point_cloud.ply"):
         out["ply_file_path"] = "colmap/point_cloud.ply"
     out["frames"] = frames
 

@@ -1,6 +1,7 @@
 """Helper utils for processing data into the gs_toolkit format."""
 
 import math
+import os
 import re
 import shutil
 import sys
@@ -8,7 +9,18 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Literal, Optional, OrderedDict, Tuple, Union
 
+import torch
+import torch.nn.functional as F
+from torchvision.transforms import Compose
+from gs_toolkit.process_data.depth_estimation.dpt import DepthAnything
+from gs_toolkit.process_data.depth_estimation.utils.transform import (
+    Resize,
+    NormalizeImage,
+    PrepareForNet,
+)
+
 import cv2
+from PIL import Image
 import imageio
 
 try:
@@ -19,8 +31,6 @@ except ImportError:
 import numpy as np
 from gs_toolkit.utils.rich_utils import CONSOLE, status
 from gs_toolkit.utils.scripts import run_command
-
-POLYCAM_UPSCALING_TIMES = 2
 
 """Lowercase suffixes to treat as raw image."""
 ALLOWED_RAW_EXTS = [".cr2"]
@@ -368,51 +378,6 @@ def copy_images_list(
     return copied_image_paths
 
 
-def copy_and_upscale_polycam_depth_maps_list(
-    polycam_depth_image_filenames: List[Path],
-    depth_dir: Path,
-    num_downscales: int,
-    crop_border_pixels: Optional[int] = None,
-    verbose: bool = False,
-) -> List[Path]:
-    """
-    Copy depth maps to working location and upscale them to match the RGB images dimensions and finally crop them
-    equally as RGB Images.
-    Args:
-        polycam_depth_image_filenames: List of Paths of images to copy to a new directory.
-        depth_dir: Path to the output directory.
-        crop_border_pixels: If not None, crops each edge by the specified number of pixels.
-        verbose: If True, print extra logging.
-    Returns:
-        A list of the copied depth maps paths.
-    """
-    depth_dir.mkdir(parents=True, exist_ok=True)
-
-    # copy and upscale them to new directory
-    with status(
-        msg="[bold yellow] Upscaling depth maps...",
-        spinner="growVertical",
-        verbose=verbose,
-    ):
-        upscale_factor = 2**POLYCAM_UPSCALING_TIMES
-        assert upscale_factor > 1
-        assert isinstance(upscale_factor, int)
-
-        copied_depth_map_paths = copy_images_list(
-            image_paths=polycam_depth_image_filenames,
-            image_dir=depth_dir,
-            num_downscales=num_downscales,
-            image_prefix="depth_",
-            crop_border_pixels=crop_border_pixels,
-            verbose=verbose,
-            upscale_factor=upscale_factor,
-            nearest_neighbor=True,
-        )
-
-    CONSOLE.log("[bold green]:tada: Done upscaling depth maps.")
-    return copied_depth_map_paths
-
-
 def copy_images(
     data: Path,
     image_dir: Path,
@@ -722,3 +687,82 @@ def save_mask(
         cv2.imwrite(str(mask_path_i), mask_i)
     CONSOLE.log(":tada: Generated and saved masks.")
     return mask_path / "mask.png"
+
+
+def mono_depth_est(
+    image_dir: Path,
+    encoder: str = "vitl",
+    device: str = "cuda",
+    verbose: bool = False,
+):
+    with status(
+        msg="[bold yellow]Estimating the mono depth...",
+        spinner="bouncingBall",
+        verbose=verbose,
+    ):
+        depth_anything = (
+            DepthAnything.from_pretrained(
+                "LiheYoung/depth_anything_{}14".format(encoder)
+            )
+            .to(device)
+            .eval()
+        )
+
+        total_params = sum(param.numel() for param in depth_anything.parameters())
+        print("Total parameters: {:.2f}M".format(total_params / 1e6))
+
+        transform = Compose(
+            [
+                Resize(
+                    width=518,
+                    height=518,
+                    resize_target=False,
+                    keep_aspect_ratio=True,
+                    ensure_multiple_of=14,
+                    resize_method="lower_bound",
+                    image_interpolation_method=cv2.INTER_CUBIC,
+                ),
+                NormalizeImage(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                PrepareForNet(),
+            ]
+        )
+
+        # Read image filenames
+        filenames = list_images(image_dir)
+
+        # Create depth images
+        out_dir = image_dir.parent / "depth_est"
+
+        if not out_dir.exists():
+            os.makedirs(out_dir, exist_ok=True)
+
+            for filename in filenames:
+                filename = str(filename)
+                raw_image = cv2.imread(filename)
+                image = cv2.cvtColor(raw_image, cv2.COLOR_BGR2RGB) / 255.0
+
+                h, w = image.shape[:2]
+
+                image = transform({"image": image})["image"]
+                image = torch.from_numpy(image).unsqueeze(0).to(device)
+
+                with torch.no_grad():
+                    depth = depth_anything(image)
+
+                depth = F.interpolate(
+                    depth[None], (h, w), mode="bilinear", align_corners=False
+                )[0, 0]
+                depth = (depth - depth.min()) / (depth.max() - depth.min())
+                depth = (1 - depth) * 255.0
+
+                depth = depth.cpu().numpy().astype(np.uint8)
+
+                depth_img = Image.fromarray(depth)
+
+                filename = os.path.basename(filename)
+
+                depth_img.save(
+                    os.path.join(
+                        out_dir, filename[: filename.rfind(".")] + "_depth.png"
+                    )
+                )

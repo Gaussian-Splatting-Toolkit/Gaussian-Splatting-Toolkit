@@ -82,7 +82,7 @@ def get_depth_image_from_path(
 def exr_to_array(filepath: Path):
     exrfile = exr.InputFile(filepath.as_posix())
     raw_bytes = exrfile.channel("Z", Imath.PixelType(Imath.PixelType.FLOAT))
-    depth_vector = numpy.frombuffer(raw_bytes, dtype=numpy.float32)
+    depth_vector = np.frombuffer(raw_bytes, dtype=np.float32)
     height = (
         exrfile.header()["displayWindow"].max.y
         + 1
@@ -93,5 +93,5 @@ def exr_to_array(filepath: Path):
         + 1
         - exrfile.header()["displayWindow"].min.x
     )
-    depth_map = numpy.reshape(depth_vector, (height, width))
+    depth_map = np.reshape(depth_vector, (height, width))
     return depth_map
