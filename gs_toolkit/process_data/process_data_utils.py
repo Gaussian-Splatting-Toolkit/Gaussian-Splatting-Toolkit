@@ -695,6 +695,14 @@ def mono_depth_est(
     device: str = "cuda",
     verbose: bool = False,
 ):
+    """Estimate the mono depth of the images in the directory.
+
+    Args:
+        image_dir (Path): The directory containing the images.
+        encoder (str, optional): The encoder used for depth estimation. Defaults to "vitl".
+        device (str, optional): The device to be used. Defaults to "cuda".
+        verbose (bool, optional): Whether to display the detailed log. Defaults to False.
+    """
     with status(
         msg="[bold yellow]Estimating the mono depth...",
         spinner="bouncingBall",
