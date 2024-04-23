@@ -54,7 +54,7 @@ GroundingDINO = {git = "https://github.com/Gaussian-Splatting-Toolkit/GroundingD
 rasterizer = {path = "gs_toolkit/gs_components"}
 deva = {git = "https://github.com/Gaussian-Splatting-Toolkit/Tracking-Anything-with-DEVA.git"}
 blendersynth = {git = "https://github.com/Gaussian-Splatting-Toolkit/BlenderSynth.git"}
-hloc = {git = "https://github.com/Gaussian-Splatting-Toolkit/Hierarchical-Localization.git"}
+hloc = {path = "third_party/Hierarchical-Localization"}
 
 [tool.poetry.scripts]
 gs-process-data = "gs_toolkit.scripts.process_data:entrypoint"

@@ -69,8 +69,6 @@ This repository also provides a devcontainer for your convenience.
   ### Data processing
 
   ```bash
-  # Extract from video
-  gs-process-data video --data /path/to/video --output-dir /path/to/output-dir --num-frames-target 1000
   # Extract from images
   gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir
   # Extract with both rgb and depth

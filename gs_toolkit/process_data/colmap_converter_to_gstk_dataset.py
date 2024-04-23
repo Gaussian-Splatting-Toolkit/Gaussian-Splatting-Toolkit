@@ -1,4 +1,4 @@
-"""Base class to processes a video or image sequence to a gs_toolkit compatible dataset."""
+"""Base class to processes a image sequence to a gs_toolkit compatible dataset."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,27 +15,15 @@ from gs_toolkit.utils.rich_utils import CONSOLE
 
 @dataclass
 class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
-    """Base class to process images or video into a gs_toolkit dataset using colmap"""
+    """Base class to process images into a gs_toolkit dataset using colmap"""
 
     camera_type: Literal["perspective", "fisheye", "equirectangular"] = "perspective"
     """Camera model to use."""
-    matching_method: Literal["exhaustive", "sequential", "vocab_tree"] = "vocab_tree"
-    """Feature matching method to use. Vocab tree is recommended for a balance of speed
-    and accuracy. Exhaustive is slower but more accurate. Sequential is faster but
-    should only be used for videos."""
-    sfm_tool: Literal["any", "colmap", "hloc"] = "any"
-    """Structure from motion tool to use. Colmap will use sift features, hloc can use
-    many modern methods such as superpoint features and superglue matcher"""
-    refine_pixsfm: bool = False
-    """If True, runs refinement using Pixel Perfect SFM.
-    Only works with hloc sfm_tool"""
     refine_intrinsics: bool = True
     """If True, do bundle adjustment to refine intrinsics.
     Only works with colmap sfm_tool"""
     feature_type: Literal[
-        "any",
         "sift",
-        "superpoint",
         "superpoint_aachen",
         "superpoint_max",
         "superpoint_inloc",
@@ -43,11 +31,9 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         "d2net-ss",
         "sosnet",
         "disk",
-    ] = "any"
+    ] = "superpoint_aachen"
     """Type of feature to use."""
     matcher_type: Literal[
-        "any",
-        "NN",
         "superglue",
         "superglue-fast",
         "NN-superpoint",
@@ -56,7 +42,7 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         "adalam",
         "disk+lightglue",
         "superpoint+lightglue",
-    ] = "any"
+    ] = "superpoint+lightglue"
     """Matching algorithm."""
     num_downscales: int = 3
     """Number of times to downscale the images. Downscales by 2 each time. For example a value of 3 will downscale the
@@ -221,60 +207,22 @@ class ColmapConverterToGSToolkitDataset(BaseConverterToGSToolkitDataset):
         """
         self.absolute_colmap_path.mkdir(parents=True, exist_ok=True)
 
-        (
-            sfm_tool,
-            feature_type,
-            matcher_type,
-        ) = process_data_utils.find_tool_feature_matcher_combination(
-            self.sfm_tool, self.feature_type, self.matcher_type
-        )
-        # check that sfm_tool is hloc if using refine_pixsfm
-        if self.refine_pixsfm:
-            assert sfm_tool == "hloc", "refine_pixsfm only works with sfm_tool hloc"
-
         # set the image_dir if didn't copy
         if self.skip_image_processing:
             image_dir = self.data
         else:
             image_dir = self.image_dir
 
-        if sfm_tool == "colmap":
-            colmap_utils.run_colmap(
-                image_dir=image_dir,
-                colmap_dir=self.absolute_colmap_path,
-                camera_model=CAMERA_MODELS[self.camera_type],
-                camera_mask_path=mask_path,
-                gpu=self.gpu,
-                verbose=self.verbose,
-                matching_method=self.matching_method,
-                refine_intrinsics=self.refine_intrinsics,
-                colmap_cmd=self.colmap_cmd,
-            )
-        elif sfm_tool == "hloc":
-            if mask_path is not None:
-                raise RuntimeError(
-                    "Cannot use a mask with hloc. Please remove the cropping options "
-                    "and try again."
-                )
-
-            assert feature_type is not None
-            assert matcher_type is not None
-            assert matcher_type != "NN"  # Only used for colmap.
-            hloc_utils.run_hloc(
-                image_dir=image_dir,
-                colmap_dir=self.absolute_colmap_path,
-                camera_model=CAMERA_MODELS[self.camera_type],
-                verbose=self.verbose,
-                matching_method=self.matching_method,
-                feature_type=feature_type,
-                matcher_type=matcher_type,
-                refine_pixsfm=self.refine_pixsfm,
-            )
-        else:
-            raise RuntimeError(
-                "Invalid combination of sfm_tool, feature_type, and matcher_type, "
-                "exiting"
-            )
+        assert self.feature_type is not None
+        assert self.matcher_type is not None
+        hloc_utils.run_hloc(
+            image_dir=image_dir,
+            colmap_dir=self.absolute_colmap_path,
+            camera_model=CAMERA_MODELS[self.camera_type],
+            verbose=self.verbose,
+            feature_type=self.feature_type,
+            matcher_type=self.matcher_type,
+        )
 
     def __post_init__(self) -> None:
         super().__post_init__()

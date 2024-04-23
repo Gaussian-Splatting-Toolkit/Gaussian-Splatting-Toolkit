@@ -5,12 +5,10 @@ Tools supporting the execution of COLMAP and preparation of COLMAP-based dataset
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
-import appdirs
 import cv2
 import numpy as np
-import requests
 import torch
 from rich.progress import track
 
@@ -24,211 +22,7 @@ from gs_toolkit.data.utils.colmap_parsing_utils import (
 )
 from gs_toolkit.process_data.process_data_utils import CameraModel
 from gs_toolkit.utils import colormaps
-from gs_toolkit.utils.rich_utils import CONSOLE, status
-from gs_toolkit.utils.scripts import run_command
-
-
-def get_colmap_version(colmap_cmd: str, default_version=3.8) -> float:
-    """Returns the version of COLMAP.
-    This code assumes that colmap returns a version string of the form
-    "COLMAP 3.8 ..." which may not be true for all versions of COLMAP.
-
-    Args:
-        default_version: Default version to return if COLMAP version can't be determined.
-    Returns:
-        The version of COLMAP.
-    """
-    output = run_command(f"{colmap_cmd} -h", verbose=False)
-    assert output is not None
-    for line in output.split("\n"):
-        if line.startswith("COLMAP"):
-            version = line.split(" ")[1]
-            version = "".join([c for c in version if c.isdigit() or c == "."])
-            return float(version)
-    CONSOLE.print(
-        f"[bold red]Could not find COLMAP version. Using default {default_version}"
-    )
-    return default_version
-
-
-def get_vocab_tree() -> Path:
-    """Return path to vocab tree. Downloads vocab tree if it doesn't exist.
-
-    Returns:
-        The path to the vocab tree.
-    """
-    vocab_tree_filename = Path(appdirs.user_data_dir("gs_toolkit")) / "vocab_tree.fbow"
-
-    if not vocab_tree_filename.exists():
-        r = requests.get(
-            "https://demuc.de/colmap/vocab_tree_flickr100K_words32K.bin", stream=True
-        )
-        vocab_tree_filename.parent.mkdir(parents=True, exist_ok=True)
-        with open(vocab_tree_filename, "wb") as f:
-            total_length = r.headers.get("content-length")
-            assert total_length is not None
-            for chunk in track(
-                r.iter_content(chunk_size=1024),
-                total=int(total_length) / 1024 + 1,
-                description="Downloading vocab tree...",
-            ):
-                if chunk:
-                    f.write(chunk)
-                    f.flush()
-    return vocab_tree_filename
-
-
-def run_colmap(
-    image_dir: Path,
-    colmap_dir: Path,
-    camera_model: CameraModel,
-    camera_mask_path: Optional[Path] = None,
-    gpu: bool = True,
-    verbose: bool = False,
-    matching_method: Literal["vocab_tree", "exhaustive", "sequential"] = "vocab_tree",
-    refine_intrinsics: bool = True,
-    colmap_cmd: str = "colmap",
-) -> None:
-    """Runs COLMAP on the images.
-
-    Args:
-        image_dir: Path to the directory containing the images.
-        colmap_dir: Path to the output directory.
-        camera_model: Camera model to use.
-        camera_mask_path: Path to the camera mask.
-        gpu: If True, use GPU.
-        verbose: If True, logs the output of the command.
-        matching_method: Matching method to use.
-        refine_intrinsics: If True, refine intrinsics.
-        colmap_cmd: Path to the COLMAP executable.
-    """
-
-    colmap_database_path = colmap_dir / "database.db"
-    colmap_database_path.unlink(missing_ok=True)
-
-    # Feature extraction
-    feature_extractor_cmd = [
-        f"{colmap_cmd} feature_extractor",
-        f"--database_path {colmap_dir / 'database.db'}",
-        f"--image_path {image_dir}",
-        "--ImageReader.single_camera 1",
-        f"--ImageReader.camera_model {camera_model.value}",
-        f"--SiftExtraction.use_gpu {int(gpu)}",
-    ]
-    if camera_mask_path is not None:
-        feature_extractor_cmd.append(
-            f"--ImageReader.camera_mask_path {camera_mask_path}"
-        )
-    feature_extractor_cmd = " ".join(feature_extractor_cmd)
-    with status(
-        msg="[bold yellow]Running COLMAP feature extractor...",
-        spinner="moon",
-        verbose=verbose,
-    ):
-        run_command(feature_extractor_cmd, verbose=verbose)
-
-    CONSOLE.log("[bold green]:tada: Done extracting COLMAP features.")
-
-    # Feature matching
-    feature_matcher_cmd = [
-        f"{colmap_cmd} {matching_method}_matcher",
-        f"--database_path {colmap_dir / 'database.db'}",
-        f"--SiftMatching.use_gpu {int(gpu)}",
-    ]
-    if matching_method == "vocab_tree":
-        vocab_tree_filename = get_vocab_tree()
-        feature_matcher_cmd.append(
-            f'--VocabTreeMatching.vocab_tree_path "{vocab_tree_filename}"'
-        )
-    feature_matcher_cmd = " ".join(feature_matcher_cmd)
-    with status(
-        msg="[bold yellow]Running COLMAP feature matcher...",
-        spinner="runner",
-        verbose=verbose,
-    ):
-        run_command(feature_matcher_cmd, verbose=verbose)
-    CONSOLE.log("[bold green]:tada: Done matching COLMAP features.")
-
-    # Bundle adjustment
-    sparse_dir = colmap_dir / "sparse"
-    sparse_dir.mkdir(parents=True, exist_ok=True)
-    mapper_cmd = [
-        f"{colmap_cmd} mapper",
-        f"--database_path {colmap_dir / 'database.db'}",
-        f"--image_path {image_dir}",
-        f"--output_path {sparse_dir}",
-    ]
-
-    mapper_cmd = " ".join(mapper_cmd)
-
-    with status(
-        msg="[bold yellow]Running COLMAP bundle adjustment... (This may take a while)",
-        spinner="circle",
-        verbose=verbose,
-    ):
-        run_command(mapper_cmd, verbose=verbose)
-    CONSOLE.log("[bold green]:tada: Done COLMAP bundle adjustment.")
-
-    # If there are more than two folders in sparse_dir, raise an error
-    if len(list(sparse_dir.iterdir())) > 2:
-        CONSOLE.log("[bold yellow]Warning: More than two sparse folders found.")
-
-    if len(list(sparse_dir.iterdir())) >= 2:
-        # Merge the first two models
-        with status(
-            msg="[bold yellow]Merging two sparse folders...",
-            spinner="circle",
-            verbose=verbose,
-        ):
-            merge_cmd = [
-                f"{colmap_cmd} model_merger",
-                f"--input_path1 {sparse_dir}/0",
-                f"--input_path2 {sparse_dir}/1",
-                f"--output_path {sparse_dir}/0",
-            ]
-            run_command(" ".join(merge_cmd), verbose=verbose)
-        CONSOLE.log("[bold green]:tada: Done merging two sparse folders.")
-
-    if refine_intrinsics:
-        with status(
-            msg="[bold yellow]Refine intrinsics...", spinner="dqpb", verbose=verbose
-        ):
-            bundle_adjuster_cmd = [
-                f"{colmap_cmd} bundle_adjuster",
-                f"--input_path {sparse_dir}/0",
-                f"--output_path {sparse_dir}/0",
-                "--BundleAdjustment.refine_principal_point 1",
-            ]
-            run_command(" ".join(bundle_adjuster_cmd), verbose=verbose)
-        CONSOLE.log("[bold green]:tada: Done refining intrinsics.")
-
-    # Stereo reconstruction
-    with status(
-        msg="[bold yellow]Running COLMAP stereo reconstruction...",
-        spinner="circle",
-        verbose=verbose,
-    ):
-        stereo_cmd = [
-            f"{colmap_cmd} image_undistorter",
-            f"--image_path {image_dir}",
-            f"--input_path {sparse_dir}/0",
-            f"--output_path {colmap_dir}/undistorted",
-            "--output_type COLMAP",
-            "--max_image_size 2000",
-        ]
-        run_command(" ".join(stereo_cmd), verbose=verbose)
-
-    with status(
-        msg="[bold yellow]Extracting point cloud...", spinner="pipe", verbose=verbose
-    ):
-        point_cloud_cmd = [
-            f"{colmap_cmd} model_converter",
-            f"--input_path {sparse_dir}/0",
-            f"--output_path {colmap_dir}/point_cloud.ply",
-            "--output_type PLY",
-        ]
-        run_command(" ".join(point_cloud_cmd), verbose=verbose)
-    CONSOLE.log("[bold green]:tada: Done extracting point cloud.")
+from gs_toolkit.utils.rich_utils import CONSOLE
 
 
 def parse_colmap_camera_params(camera) -> Dict[str, Any]:
@@ -249,8 +43,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
     # Parameters match https://github.com/colmap/colmap/blob/dev/src/base/camera_models.h
     camera_params = camera.params
     if camera.model == "SIMPLE_PINHOLE":
-        # du = 0
-        # dv = 0
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[0])
         out["cx"] = float(camera_params[1])
@@ -261,10 +53,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["p2"] = 0.0
         camera_model = CameraModel.OPENCV
     elif camera.model == "PINHOLE":
-        # f, cx, cy, k
-
-        # du = 0
-        # dv = 0
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[1])
         out["cx"] = float(camera_params[2])
@@ -275,12 +63,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["p2"] = 0.0
         camera_model = CameraModel.OPENCV
     elif camera.model == "SIMPLE_RADIAL":
-        # f, cx, cy, k
-
-        # r2 = u**2 + v**2;
-        # radial = k * r2
-        # du = u * radial
-        # dv = u * radial
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[0])
         out["cx"] = float(camera_params[1])
@@ -291,12 +73,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["p2"] = 0.0
         camera_model = CameraModel.OPENCV
     elif camera.model == "RADIAL":
-        # f, cx, cy, k1, k2
-
-        # r2 = u**2 + v**2;
-        # radial = k1 * r2 + k2 * r2 ** 2
-        # du = u * radial
-        # dv = v * radial
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[0])
         out["cx"] = float(camera_params[1])
@@ -307,13 +83,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["p2"] = 0.0
         camera_model = CameraModel.OPENCV
     elif camera.model == "OPENCV":
-        # fx, fy, cx, cy, k1, k2, p1, p2
-
-        # uv = u * v;
-        # r2 = u**2 + v**2
-        # radial = k1 * r2 + k2 * r2 ** 2
-        # du = u * radial + 2 * p1 * u*v + p2 * (r2 + 2 * u**2)
-        # dv = v * radial + 2 * p2 * u*v + p1 * (r2 + 2 * v**2)
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[1])
         out["cx"] = float(camera_params[2])
@@ -324,21 +93,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["p2"] = float(camera_params[7])
         camera_model = CameraModel.OPENCV
     elif camera.model == "OPENCV_FISHEYE":
-        # fx, fy, cx, cy, k1, k2, k3, k4
-
-        # r = sqrt(u**2 + v**2)
-
-        # if r > eps:
-        #    theta = atan(r)
-        #    theta2 = theta ** 2
-        #    theta4 = theta2 ** 2
-        #    theta6 = theta4 * theta2
-        #    theta8 = theta4 ** 2
-        #    thetad = theta * (1 + k1 * theta2 + k2 * theta4 + k3 * theta6 + k4 * theta8)
-        #    du = u * thetad / r - u;
-        #    dv = v * thetad / r - v;
-        # else:
-        #    du = dv = 0
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[1])
         out["cx"] = float(camera_params[2])
@@ -349,18 +103,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["k4"] = float(camera_params[7])
         camera_model = CameraModel.OPENCV_FISHEYE
     elif camera.model == "FULL_OPENCV":
-        # fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6
-
-        # u2 = u ** 2
-        # uv = u * v
-        # v2 = v ** 2
-        # r2 = u2 + v2
-        # r4 = r2 * r2
-        # r6 = r4 * r2
-        # radial = (1 + k1 * r2 + k2 * r4 + k3 * r6) /
-        #          (1 + k4 * r2 + k5 * r4 + k6 * r6)
-        # du = u * radial + 2 * p1 * uv + p2 * (r2 + 2 * u2) - u
-        # dv = v * radial + 2 * p2 * uv + p1 * (r2 + 2 * v2) - v
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[1])
         out["cx"] = float(camera_params[2])
@@ -383,17 +125,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["omega"] = float(camera_params[4])
         raise NotImplementedError(f"{camera.model} camera model is not supported yet!")
     elif camera.model == "SIMPLE_RADIAL_FISHEYE":
-        # f, cx, cy, k
-
-        # r = sqrt(u ** 2 + v ** 2)
-        # if r > eps:
-        #     theta = atan(r)
-        #     theta2 = theta ** 2
-        #     thetad = theta * (1 + k * theta2)
-        #     du = u * thetad / r - u;
-        #     dv = v * thetad / r - v;
-        # else:
-        #     du = dv = 0
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[0])
         out["cx"] = float(camera_params[1])
@@ -404,19 +135,6 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
         out["k4"] = 0.0
         camera_model = CameraModel.OPENCV_FISHEYE
     elif camera.model == "RADIAL_FISHEYE":
-        # f, cx, cy, k1, k2
-
-        # r = sqrt(u ** 2 + v ** 2)
-        # if r > eps:
-        #     theta = atan(r)
-        #     theta2 = theta ** 2
-        #     theta4 = theta2 ** 2
-        #     thetad = theta * (1 + k * theta2)
-        #     thetad = theta * (1 + k1 * theta2 + k2 * theta4)
-        #     du = u * thetad / r - u;
-        #     dv = v * thetad / r - v;
-        # else:
-        #     du = dv = 0
         out["fl_x"] = float(camera_params[0])
         out["fl_y"] = float(camera_params[0])
         out["cx"] = float(camera_params[1])
@@ -697,6 +415,25 @@ def align_depth(
     max_repoj_err: float = 2.5,
     min_n_visible: int = 2,
 ) -> Union[Dict[int, Path], float]:
+    """Aligns COLMAP's sparse depth maps with the ground truth depth maps.
+
+    Notes:
+        * This function assumes that the COLMAP depth maps are in the same order as the ground truth depth maps.
+        * This function assumes that the ground truth depth maps are in the same order as the COLMAP images.
+
+    Args:
+        recon_dir: Path to the reconstruction directory, e.g. "sparse/0"
+        depth_dir: Path to the directory containing the ground truth depth maps.
+        verbose: If True, logs progress of depth image alignment.
+        min_depth: Discard points closer than this to the camera.
+        max_depth: Discard points farther than this from the camera.
+        max_repoj_err: Discard points with reprojection error greater than this
+          amount (in pixels).
+        min_n_visible: Discard 3D points that have been triangulated with fewer
+          than this many frames.
+    Returns:
+        Depth file paths indexed by COLMAP image id, and the mean scale factor.
+    """
     if not depth_dir.exists():
         raise RuntimeError(f"You are required to provide depth maps in {depth_dir}")
     ptid_to_info = read_points3D_binary(recon_dir / "points3D.bin")
@@ -858,6 +595,16 @@ def get_mask_files(
     mask_dir: Path,
     verbose: bool = True,
 ) -> Dict[int, Path]:
+    """
+    Get the mask files for each image in the reconstruction.
+
+    Args:
+        recon_dir: Path to the reconstruction directory, e.g. "sparse/0"
+        mask_dir: Path to the directory containing the mask images.
+        verbose: If True, logs progress of mask image creation.
+    Returns:
+        Mask file paths indexed by COLMAP image id
+    """
     if not mask_dir.exists():
         raise RuntimeError(f"You are required to provide masks in {mask_dir}")
     im_id_to_image = read_images_binary(recon_dir / "images.bin")

@@ -1,5 +1,5 @@
 """
-Base class to process images or video into a gs_toolkit dataset
+Base class to process images into a gs_toolkit dataset
 """
 
 from abc import ABC, abstractmethod
@@ -10,14 +10,14 @@ from typing import Optional
 
 @dataclass
 class BaseConverterToGSToolkitDataset(ABC):
-    """Base class to process images or video into a gs_toolkit dataset."""
+    """Base class to process images into a gs_toolkit dataset."""
 
     data: Path
-    """Path the data, either a video file or a directory of images."""
+    """Path the data, a directory of images."""
     output_dir: Path
     """Path to the output directory."""
     eval_data: Optional[Path] = None
-    """Path the eval data, either a video file or a directory of images. If set to None, the first will be used both for training and eval"""
+    """Path the eval data, a directory of images. If set to None, the first will be used both for training and eval"""
     verbose: bool = False
     """If True, print extra logging."""
 

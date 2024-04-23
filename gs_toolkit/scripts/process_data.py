@@ -6,12 +6,10 @@ import tyro
 from typing_extensions import Annotated
 
 from gs_toolkit.process_data.images_to_gstk_dataset import ImagesToGSToolkitDataset
-from gs_toolkit.process_data.video_to_gstk_dataset import VideoToGSToolkitDataset
 from gs_toolkit.utils.rich_utils import CONSOLE
 
 Commands = Union[
     Annotated[ImagesToGSToolkitDataset, tyro.conf.subcommand(name="images")],
-    Annotated[VideoToGSToolkitDataset, tyro.conf.subcommand(name="video")],
 ]
 
 
