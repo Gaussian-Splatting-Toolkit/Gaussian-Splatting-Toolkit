@@ -17,12 +17,6 @@ Data Processing
 
 Process your data for use with the toolkit:
 
-**Extract from video:**
-
-.. code-block:: bash
-
-   gs-process-data video --data /path/to/video --output-dir /path/to/output-dir --num-frames-target 1000
-
 **Extract from images:**
 
 .. code-block:: bash
@@ -35,6 +29,18 @@ Process your data for use with the toolkit:
 
    gs-process-data images --data /path/to/rgb/folder --depth-data /path/to/depth/folder --output-dir /path/to/output-dir
 
+**Process with mono depth estimation**
+
+.. code-block:: bash
+
+   gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir --using-est-depth
+
+**Processing with mask:**
+
+.. code-block:: bash
+
+   gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir --mask-path /path/to/mask [--using-est-depth]
+
 Train the Gaussian Splatting
 ----------------------------
 
@@ -43,6 +49,9 @@ Train the Gaussian Splatting model on your processed data:
 .. code-block:: bash
 
    gs-train gaussian-splatting --data /path/to/processed/data
+   gs-train co-gs --data /path/to/processed/data
+   # Train with mono depth estimation
+   gs-train gaussian-splatting --data /path/to/processed/data --pipeline.model.use-est-depth True
 
 Visualize the Results
 ---------------------
@@ -97,7 +106,7 @@ Export various results such as gaussians, camera poses, point cloud, and TSDF:
 
 .. code-block:: bash
 
-   gs-export offline-tsdf --load-config /path/to/config.yml --output-dir exports/tsdf/
+   gs-export offline-tsdf --render-path /path/to/config.yml --output-dir exports/tsdf/
 
 With mask:
 
