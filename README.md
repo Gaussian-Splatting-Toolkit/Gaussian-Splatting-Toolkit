@@ -1,3 +1,14 @@
+# Gaussian Splatting Toolkit 🛠️
+
+<p align="center">
+<a href="https://gaussian-splatting-toolkit.readthedocs.io">Documentation</a> |
+<a href="https://github.com/Gaussian-Splatting-Toolkit/Gaussian-Splatting-Toolkit">GitHub</a>
+</p>
+
+<p align="center">
+<img arc="assets/milk_box.gif">
+</p>
+
 ![milk_box](assets/milk_box.gif)
 ![workstation](assets/workstation.gif)
 ![rls](assets/rls.gif)
@@ -5,12 +16,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-<p align="center">
-<a href="https://gaussian-splatting-toolkit.readthedocs.io">Documentation</a> |
-<a href="https://github.com/Gaussian-Splatting-Toolkit/Gaussian-Splatting-Toolkit">GitHub</a>
-</p>
 
-# Gaussian Splatting Toolkit 🛠️
 
 The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed for new view synthesis using Gaussian splatting techniques, providing a novel explicit 3D representation for scene rendering.
 
