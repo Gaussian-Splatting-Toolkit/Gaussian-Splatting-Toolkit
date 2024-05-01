@@ -3,18 +3,25 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to GSTK's documentation!
-================================
+Welcome to Gaussian Splatting Toolkit's documentation!
+======================================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: GSTK Documentation
 
+   gstk/gstk
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Getting Started
 
-Indices and tables
-==================
+   getting_started/installation
+   getting_started/quickstart
+   getting_started/usage
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :maxdepth: 2
+   :caption: Command Line Interface
+
+   cli/cli
