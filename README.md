@@ -1,4 +1,8 @@
-[demo video](assets/milk_box.mp4)
+![milk_box](assets/milk_box.gif)
+![workstation](assets/workstation.gif)
+![rls](assets/rls.gif)
+![half_rls](assets/half_rls.gif)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
