@@ -24,7 +24,7 @@ The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed fo
   - [Introduction 🎉](#introduction-)
   - [Features 🌟](#features-)
   - [Installation 💻](#installation-)
-  - [Usage 🚀](#usage-)
+  - [Quick Start 🚀](#quick-start-)
     - [Download the opensource datasets](#download-the-opensource-datasets)
     - [Data processing](#data-processing)
     - [Train the Gaussian Splatting](#train-the-gaussian-splatting)
@@ -64,7 +64,7 @@ pip install -e .
 
 This repository also provides a devcontainer for your convenience.
 
-## Usage 🚀
+## Quick Start 🚀
 
 <details>
   <summary>Table of Content</summary>
@@ -85,7 +85,7 @@ This repository also provides a devcontainer for your convenience.
   # Process with mono depth estimation
   gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir --using-est-depth
   # Process with mask
-  gs-process-data images --data /mnt/d/Datasets/object/milk_2/rgb/ --using-est-depth --mask-data /mnt/d/Datasets/object/milk_2/masks/ --output-dir /mnt/d/Datasets/gs-recon/object/milk_mask
+  gs-process-data images --data /path/to/rgb/folder --using-est-depth --mask-data /path/to/mask/folder --output-dir /path/to/output-dir
   ```
 
   ### Train the Gaussian Splatting

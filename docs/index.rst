@@ -17,7 +17,6 @@ Welcome to Gaussian Splatting Toolkit's documentation!
    :caption: Getting Started
 
    getting_started/installation
-   getting_started/quickstart
    getting_started/usage
 
 .. toctree::

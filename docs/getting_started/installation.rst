@@ -41,7 +41,7 @@ Alternatively, you can use conda to create a virtual environment and install the
 
    conda create -n gstk python=3.10.13 -y
    conda activate gstk
-   pip install torch torchvision
+   pip install torch torchvision # Please make sure you installed the correct torch version with your cuda
    pip install -e .
 
 Note: Replace the Python version and other dependencies as needed based on your project requirements.
