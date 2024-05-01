@@ -1,4 +1,4 @@
-![small object reconstruction](assets/small_obj.png)
+[demo video](assets/milk_box.mp4)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
