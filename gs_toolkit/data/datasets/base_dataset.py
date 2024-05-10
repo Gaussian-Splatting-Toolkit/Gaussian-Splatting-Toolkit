@@ -89,7 +89,7 @@ class InputDataset(Dataset):
             image_idx: The image index in the dataset.
         """
         depth_filename: Path = self._dataparser_outputs.metadata["depth_filenames"][image_idx]
-        image_ext = ["png", "jpg", "jpeg"]
+        image_ext = [".png", ".jpg", ".jpeg"]
         if depth_filename.suffix in image_ext:
             pil_image = Image.open(depth_filename)
             if self.scale_factor != 1.0:
@@ -100,8 +100,10 @@ class InputDataset(Dataset):
                 )
                 pil_image = pil_image.resize(newsize, resample=Image.BILINEAR)
             depth = np.array(pil_image)  # shape is (h, w) or (h, w, 3 or 4)
-        elif depth_filename.suffix == "npy":
+        elif depth_filename.suffix == ".npy":
             depth = np.load(depth_filename)
+        else:
+            raise ValueError(f"Depth file format {depth_filename.suffix} not supported.")
         return depth
 
     def get_depth_image(
@@ -112,6 +114,7 @@ class InputDataset(Dataset):
         Args:
             depth_idx: The depth image index in the dataset.
         """
+        depth = None
         if self._dataparser_outputs.metadata["mono_depth_scales"] is not None:
             depth = torch.from_numpy(
                 self.get_numpy_depth_image(depth_idx).astype("float32") / 255.0
@@ -120,6 +123,8 @@ class InputDataset(Dataset):
             depth = torch.from_numpy(
                 self.get_numpy_depth_image(depth_idx).astype("float32") / 1000.0
             )
+        if depth is None:
+            raise ValueError("Depth image not found.")
         return depth
 
     def get_data(self, image_idx: int) -> Dict:
