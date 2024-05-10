@@ -39,7 +39,7 @@ Process your data for use with the toolkit:
 
 .. code-block:: bash
 
-   gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir --mask-path /path/to/mask [--using-est-depth]
+   gs-process-data images --data /path/to/rgb/folder --output-dir /path/to/output-dir --mask-data /path/to/mask [--using-est-depth]
 
 Train the Gaussian Splatting
 ----------------------------
@@ -51,7 +51,7 @@ Train the Gaussian Splatting model on your processed data:
    gs-train gaussian-splatting --data /path/to/processed/data
    gs-train co-gs --data /path/to/processed/data
    # Train with mono depth estimation
-   gs-train gaussian-splatting --data /path/to/processed/data --pipeline.model.use-est-depth True
+   gs-train co-gs --data /path/to/processed/data --pipeline.model.use-est-depth True
 
 Visualize the Results
 ---------------------
