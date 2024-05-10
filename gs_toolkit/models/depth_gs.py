@@ -122,6 +122,8 @@ class DepthGSModelConfig(GaussianSplattingModelConfig):
     """stop iteration of depth loss"""
     use_est_depth: bool = False
     """If True, use estimated depth for depth loss"""
+    use_pearson_depth: bool = False
+    """If True, use pearson depth loss"""
     mono_depth_l1_start_iteration: int = 15_000
     """start iteration of mono depth l1 loss"""
     use_scaled_est_depth: bool = False
@@ -473,7 +475,10 @@ class DepthGSModel(GaussianSplattingModel):
             and self.step > self.config.depth_loss_start_iteration
         ):
             if self.config.use_est_depth:
-                if self.step < self.config.depth_loss_stop_iteration:
+                if (
+                    self.step < self.config.depth_loss_stop_iteration
+                    and self.config.use_pearson_depth
+                ):
                     loss_dict["depth_local_pearson"] = local_pearson_loss(
                         pred_depth, gt_depth, self.config.local_patch_size, 0.5
                     )
