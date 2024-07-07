@@ -14,6 +14,8 @@
 
 The Gaussian Splatting Toolkit is a cutting-edge collection of tools designed for new view synthesis using Gaussian splatting techniques, providing a novel explicit 3D representation for scene rendering.
 
+📢 **News:** Exciting update! Our 3D reconstruction pipeline is being utilized in the [MANI Foundation Model](https://manifoundationmodel.github.io/). This collaboration highlights the impact and versatility of our work in advancing 3D reconstruction technologies.
+
 ## Table of Contents 📖
 
 <details>
