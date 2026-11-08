@@ -79,7 +79,7 @@ def generate_mask_from_text(
 
     for file_path, url in urls_dict.items():
         if not file_path.exists():
-            r = requests.get(url, stream=True)
+            r = requests.get(url, stream=True, timeout=30)
             with open(file_path, "wb") as f:
                 total_length = int(r.headers.get("content-length"))
                 if file_path == GROUNDING_DINO_CONFIG_PATH:
